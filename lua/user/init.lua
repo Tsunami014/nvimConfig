@@ -25,7 +25,12 @@ _G.initUI = function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "m", false)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>e", true, false, true), "m", false)
 end
-Map("n", "<leader>.", ":lua initUI()<CR>", "Initialise the UI")
+Map("n", "<leader>i", ":lua initUI()<CR>", "Initialise the UI")
+
+_G.loadProject = function(ncwd)
+  vim.fn.chdir(ncwd)
+  _G.initUI()
+end
 
 vim.keymap.set("v", "<leader>D", '"_d', { desc = "Delete selection", remap = false, noremap = true, silent = true })
 

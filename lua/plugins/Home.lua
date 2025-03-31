@@ -38,7 +38,7 @@ return {
           local width = vim.o.columns
           local is_narrow = width < 80 * 2.5
 
-          function split_path(str)
+          local function split_path(str)
             local parts = {}
             for part in string.gmatch(str, "[^/]+") do
                 table.insert(parts, part)
@@ -62,7 +62,7 @@ return {
             local pth, ext = split_path(project)
             table.insert(items, {
               text = { { string.format("  %i  ", i), hl = "SnacksDashboardKey" }, { pth .. "/", hl = "Conceal" }, { ext, hl = "SnacksDashboardDesc" } },
-              action = ':echo "' .. project .. '"',
+              action = ':lua loadProject("' .. project .. '")',
               key = tostring(i),
             })
           end
