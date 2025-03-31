@@ -2,7 +2,7 @@
 vim.defer_fn(function()
   _G.recent_projects = require("project_nvim").get_recent_projects() or {}
   require("snacks.dashboard").update()
-end, 100)
+end, 500)
 
 if true then return end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 

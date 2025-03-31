@@ -35,17 +35,33 @@ return {
         },
         -- Build the panels list dynamically.
         sections = function()
-          local width = vim.api.nvim_get_option "columns"
+          local width = vim.o.columns
           local is_narrow = width < 80 * 2.5
+
+          function split_path(str)
+            local parts = {}
+            for part in string.gmatch(str, "[^/]+") do
+                table.insert(parts, part)
+            end
+
+            if #parts == 0 then
+                return nil, nil
+            end
+
+            local a = table.concat(parts, "/", 1, #parts - 1) -- All but the last part
+            local b = parts[#parts] -- Last part
+
+            return a, b
+          end
 
           -- Use the globally loaded projects (defaults to empty table)
           local project_list = _G.recent_projects or {}
           local items = {}
           for i, project in ipairs(project_list) do
             if i > 5 then break end
+            local pth, ext = split_path(project)
             table.insert(items, {
-              icon = i,
-              text = { { string.format("%d. %s", i, project), hl = "SnacksDashboardDesc" } },
+              text = { { string.format("  %i  ", i), hl = "SnacksDashboardKey" }, { pth .. "/", hl = "Conceal" }, { ext, hl = "SnacksDashboardDesc" } },
               action = ':echo "' .. project .. '"',
               key = tostring(i),
             })
@@ -77,16 +93,19 @@ return {
               {
                 icon = " ",
                 title = "Projects",
-                indent = 2,
                 padding = 0,
               },
             }, items, {
               {
-                icon = "\n ",
-                title = "\nRecent Files",
+                text = { { "" } },
+                indent = 0,
+                padding = 0,
+              },
+              {
+                icon = " ",
+                title = "Recent Files",
                 section = "recent_files",
                 indent = 2,
-                padding = { top = 1, bottom = 1 },
               },
             }),
           }
