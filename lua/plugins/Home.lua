@@ -36,7 +36,7 @@ return {
         -- Build the panels list dynamically.
         sections = function()
           local width = vim.o.columns
-          local is_narrow = width < 80 * 2.5
+          local is_narrow = width < 78 * 2.5
 
           local function split_path(str)
             local parts = {}
@@ -90,6 +90,12 @@ return {
               { section = "startup", padding = 1 },
             },
             mergeThree({
+              {
+                section = "terminal",
+                cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1",
+                height = 17,
+                padding = 1,
+              },
               {
                 icon = " ",
                 title = "Projects",
