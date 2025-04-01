@@ -146,7 +146,13 @@ return {
 	    },
     },
     keys = {
-      { "<leader>ba", "ASToggle<CR>", mode = "n", desc = "Toggle autosave" },
+      { "<leader>ba", ":ASToggle<CR>", mode = "n", desc = "Toggle autosave" },
     }
+  },
+
+  -- Markdown things
+  {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
   }
 }
