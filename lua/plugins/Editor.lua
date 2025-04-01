@@ -133,4 +133,12 @@ return {
       -- Your settings go here
     },
   },
+
+  -- Autosave
+  {
+    'pocco81/auto-save.nvim',
+    keys = {
+      { "<leader>ba", "ASToggle<CR>", mode = "n", desc = "Toggle autosave" },
+    }
+  }
 }

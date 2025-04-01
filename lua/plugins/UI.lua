@@ -58,6 +58,7 @@ return {
       -- but this is not ideal when Lazy is installing plugins,
       -- so clear the messages in this case.
       if vim.o.filetype == "lazy" then vim.cmd [[messages clear]] end
+      vim.opt.showmode = false
       require("noice").setup(opts)
     end,
   },
