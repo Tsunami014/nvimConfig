@@ -4,7 +4,7 @@ return {
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
-    opts_extend = { "spec" },
+  opts_extend = { "spec" },
     opts = {
       preset = "helix",
       defaults = {},
@@ -137,6 +137,14 @@ return {
   -- Autosave
   {
     'pocco81/auto-save.nvim',
+    lazy = false,
+    opts = {
+      execution_message = {
+		    message = "",
+		    dim = 0.08, -- dim the color of `message`
+		    cleaning_interval = 500, -- (milliseconds) automatically clean MsgArea after displaying `message`. See :h MsgArea
+	    },
+    },
     keys = {
       { "<leader>ba", "ASToggle<CR>", mode = "n", desc = "Toggle autosave" },
     }
