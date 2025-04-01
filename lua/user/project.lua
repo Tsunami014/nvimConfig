@@ -50,6 +50,6 @@ end
 
 -- Key mappings for project management
 vim.keymap.set("n", "<leader>P", "", { desc = "󰉓 Projects" })
-vim.keymap.set("n", "<leader>Ps", save_project, { desc = "󰉖 Save project" })
-vim.keymap.set("n", "<leader>Pl", load_project, { desc = " Load project" })
+vim.keymap.set("n", "<leader>Ps", save_project, { desc = "Save project" })
+vim.keymap.set("n", "<leader>Pl", load_project, { desc = "Load project" })
 
