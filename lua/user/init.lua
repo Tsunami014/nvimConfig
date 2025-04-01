@@ -1,4 +1,5 @@
 require "user.lualine-theme"
+require "user.project"
 
 -- Enable wrapping for Markdown files
 vim.api.nvim_create_autocmd("FileType", {
@@ -20,6 +21,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 -- Some keybinds
 function Map(mode, lhs, rhs, desc)
+  if rhs == false then
+    vim.api.nvim_del_keymap(mode, lhs)
+    return
+  end
+  desc = desc or ""
   local opts = { desc = desc }
   local options = { noremap = true, silent = true }
   if opts then
@@ -36,8 +42,27 @@ _G.initUI = function()
 end
 Map("n", "<leader>u.", ":lua initUI()<CR>", "Initialise the UI")
 
-_G.loadProject = function(ncwd)
-  vim.fn.chdir(ncwd)
-  _G.initUI()
-end
+-- Buffer stuff
+Map('n', '<Leader>bn', '<cmd>tabnew<cr>', 'New tab')
+Map('n', '<Leader>bD', function()
+  require("astroui.status").heirline.buffer_picker(function(bufnr)
+    require("astrocore.buffer").close(bufnr)
+  end)
+end, 'Pick to close')
+Map('n', '<Leader>b]', function()
+  require("astrocore.buffer").nav(vim.v.count1)
+end, 'Next buffer')
+Map('n', '<Leader>b[', function()
+  require("astrocore.buffer").nav(-vim.v.count1)
+end, 'Previous buffer')
+Map('n', '<Leader>bp', false)
+
+-- Misc stuff
+Map('n', '<Leader>c', '', ' Symbols')
+Map('n', '<Leader>s', '', ' Todos & Noice')
+Map('n', '<Leader>f', '', '󰍉 Find')
+Map('n', '<Leader>gh', '', ' Hunks')
+Map('n', '<Leader>sn', '', ' Noice')
+
+Map('v', '<Leader>d', '"_d', 'Delete selection')
 

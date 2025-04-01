@@ -21,8 +21,4 @@ git clone https://github.com/Tsunami014/nvimConfig ~/.config/nvim
 ```shell
 nvim
 ```
-Ensure to install the following language support things: (`<space>pm` to bring up the menu)
-1. debugpy
-2. pyright
-3. ruff
 
