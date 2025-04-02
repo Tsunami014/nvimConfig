@@ -1,5 +1,7 @@
 require "user.lualine-theme"
-require "user.project"
+
+vim.o.shell = '/bin/bash -l'
+vim.env.PATH = "/home/tsunami014/.nvm/versions/node/v20.18.0/bin/:" .. vim.env.PATH
 
 -- Enable wrapping for Markdown files
 vim.api.nvim_create_autocmd("FileType", {
@@ -57,12 +59,24 @@ Map('n', '<Leader>b[', function()
 end, 'Previous buffer')
 Map('n', '<Leader>bp', false)
 
+-- Project stuff
+local proj = require("project")
+vim.keymap.set("n", "<leader>P", "", { desc = "󰉓 Projects" })
+vim.keymap.set("n", "<leader>Ps", proj.save_project, { desc = "Save project" })
+vim.keymap.set("n", "<leader>Pl", proj.findProjects, { desc = "Load project" })
+
 -- Misc stuff
 Map('n', '<Leader>c', '', ' Symbols')
 Map('n', '<Leader>s', '', ' Todos & Noice')
 Map('n', '<Leader>f', '', '󰍉 Find')
 Map('n', '<Leader>gh', '', ' Hunks')
 Map('n', '<Leader>sn', '', ' Noice')
+
+Map("n", "<leader>~", "", " Profiles")
+Map("n", "<leader>~c", function()
+  vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
+end, "Show Current Profile")
+Map("n", "<leader>~s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
 Map('v', '<Leader>d', '"_d', 'Delete selection')
 

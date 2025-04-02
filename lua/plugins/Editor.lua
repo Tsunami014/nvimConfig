@@ -1,10 +1,12 @@
+local profile = require("profile").current
+
 return {
   -- which-key helps you remember key bindings by showing a popup
   -- with the active keybindings of the command you started typing.
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
-  opts_extend = { "spec" },
+    opts_extend = { "spec" },
     opts = {
       preset = "helix",
       defaults = {},
@@ -154,5 +156,58 @@ return {
   {
     'MeanderingProgrammer/render-markdown.nvim',
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
-  }
+  },
+  {
+    '3rd/image.nvim',
+    config = function()
+      require('image').setup({
+        backend = "kitty",
+        kitty_method = "normal",
+        processor = "magick_cli",
+        integrations = {
+          markdown = {
+            enabled = true,
+            clear_in_insert_mode = true,
+            download_remote_images = true,
+            only_render_image_at_cursor = false,
+            floating_windows = false, -- if true, images will be rendered in floating markdown windows
+            filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
+          },
+          html = {
+            enabled = true,
+          },
+          css = {
+            enabled = false,
+          },
+        },
+        max_width_window_percentage = 100,
+        max_height_window_percentage = 50,
+      })
+    end
+  },
+  {
+    "3rd/diagram.nvim",
+    dependencies = {
+      "3rd/image.nvim",
+    },
+    enabled = profile ~= "limited",
+    config = function()
+      require("diagram").setup({
+        integrations = {
+          require("diagram.integrations.markdown"),
+        },
+        events = {
+          render_buffer = { "InsertLeave", "BufEnter" },
+          clear_buffer = { "InsertEnter", "BufLeave" },
+        },
+        renderer_options = {
+          mermaid = {
+            background = "transparent", -- nil | "transparent" | "white" | "#hex"
+            theme = "forest", -- nil | "default" | "dark" | "forest" | "neutral"
+            scale = nil,
+          },
+        }
+      })
+    end,
+  },
 }

@@ -1,3 +1,5 @@
+local profile = require("profile").current
+
 ---@type LazySpec
 return {
   {
@@ -24,7 +26,7 @@ return {
               icon = " ",
               key = "p",
               desc = "Projects",
-              action = _G.findProjects,
+              action = require("project").findProjects,
             },
             { icon = "󰗧 ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
             { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
@@ -67,7 +69,7 @@ return {
             local pth, ext = split_path(project)
             table.insert(items, {
               text = { { string.format("  %i  ", i), hl = "SnacksDashboardKey" }, { pth .. "/", hl = "Conceal" }, { ext, hl = "SnacksDashboardDesc" } },
-              action = ':lua loadProject("' .. project .. '")',
+              action = ':lua require("project").loadProject("' .. project .. '")',
               key = tostring(i),
             })
           end
@@ -78,6 +80,11 @@ return {
             for _, v in ipairs(t2) do table.insert(result, v) end
             for _, v in ipairs(t3) do table.insert(result, v) end
             return result
+          end
+
+          local t2Cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1"
+          if profile == "limited" then
+            t2Cmd = ""
           end
 
           local widePanels = {
@@ -97,7 +104,7 @@ return {
             mergeThree({
               {
                 section = "terminal",
-                cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1",
+                cmd = t2Cmd,
                 height = 17,
                 padding = 1,
               },
