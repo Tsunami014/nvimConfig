@@ -72,11 +72,11 @@ Map('n', '<Leader>f', '', '󰍉 Find')
 Map('n', '<Leader>gh', '', ' Hunks')
 Map('n', '<Leader>sn', '', ' Noice')
 
-Map("n", "<leader>~", "", " Profiles")
-Map("n", "<leader>~c", function()
+Map("n", "<leader>|", "", " Profiles")
+Map("n", "<leader>|c", function()
   vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
 end, "Show Current Profile")
-Map("n", "<leader>~s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
+Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
 Map('v', '<Leader>d', '"_d', 'Delete selection')
 
