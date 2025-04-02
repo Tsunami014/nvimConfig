@@ -190,7 +190,7 @@ return {
     dependencies = {
       "3rd/image.nvim",
     },
-    enabled = profile ~= "limited",
+    enabled = profile == "Linux",
     config = function()
       require("diagram").setup({
         integrations = {

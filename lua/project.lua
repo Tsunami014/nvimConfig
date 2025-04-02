@@ -1,8 +1,15 @@
 local M = {}
 
+function M.loadUI()
+  require("resession").load(vim.fn.getcwd(), { dir = "dirsession" })
+  --vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>th", true, false, true), "m", false)
+  --vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "m", false)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>e", true, false, true), "m", false)
+end
+
 function M.loadProject(ncwd)
   vim.fn.chdir(ncwd)
-  _G.initUI()
+  M.loadUI()
 end
 
 function M.findProjects()

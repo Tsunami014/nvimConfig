@@ -1,6 +1,6 @@
 local M = {}
 
-M.OPTS = { "limited", "full" }
+M.OPTS = { "default", "Linux", "Windows" }
 M.DEFAULT = 0
 
 local profile_file = vim.fn.stdpath("config") .. "/profile.json"

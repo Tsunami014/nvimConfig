@@ -82,9 +82,9 @@ return {
             return result
           end
 
-          local t2Cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1"
-          if profile == "limited" then
-            t2Cmd = ""
+          local t2Cmd = ""
+          if profile == "Linux" then
+            t2Cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1"
           end
 
           local widePanels = {

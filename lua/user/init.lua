@@ -36,14 +36,6 @@ function Map(mode, lhs, rhs, desc)
   vim.keymap.set(mode, lhs, rhs, options)
 end
 
-_G.initUI = function()
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>S.", true, false, true), "m", false)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>th", true, false, true), "m", false)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "m", false)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>e", true, false, true), "m", false)
-end
-Map("n", "<leader>u.", ":lua initUI()<CR>", "Initialise the UI")
-
 -- Buffer stuff
 Map('n', '<Leader>bn', '<cmd>tabnew<cr>', 'New tab')
 Map('n', '<Leader>bD', function()
@@ -61,9 +53,11 @@ Map('n', '<Leader>bp', false)
 
 -- Project stuff
 local proj = require("project")
-vim.keymap.set("n", "<leader>P", "", { desc = "󰉓 Projects" })
-vim.keymap.set("n", "<leader>Ps", proj.save_project, { desc = "Save project" })
-vim.keymap.set("n", "<leader>Pl", proj.findProjects, { desc = "Load project" })
+Map("n", "<leader>P", "", "󰉓 Projects")
+Map("n", "<leader>Ps", proj.save_project, "Save project")
+Map("n", "<leader>Pl", proj.findProjects, "Load project")
+
+Map("n", "<leader>u.", proj.loadUI, "Initialise the UI")
 
 -- Misc stuff
 Map('n', '<Leader>c', '', ' Symbols')
