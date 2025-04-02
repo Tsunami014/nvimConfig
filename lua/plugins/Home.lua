@@ -62,6 +62,10 @@ return {
           end
 
           -- Use the globally loaded projects (defaults to empty table)
+          local Recents = true
+          if _G.recent_projects == nil then
+            Recents = false
+          end
           local project_list = _G.recent_projects or {}
           local items = {}
           for i, project in ipairs(project_list) do
@@ -87,21 +91,16 @@ return {
             t2Cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1"
           end
 
-          local widePanels = {
+          local sect3 = {
             {
-              {
-                section = "terminal",
-                cmd = [[cbonsai -li -t 0.001 -w 2 -c "&,O,#,uwu"]],
-                height = 30,
-                padding = 1,
-              },
+              section = "terminal",
+              cmd = t2Cmd,
+              height = 17,
+              padding = 1,
             },
-            {
-              { section = "header" },
-              { section = "keys", gap = 1, padding = 1 },
-              { section = "startup", padding = 1 },
-            },
-            mergeThree({
+          }
+          if Recents then
+            sect3 = mergeThree({
               {
                 section = "terminal",
                 cmd = t2Cmd,
@@ -125,7 +124,24 @@ return {
                 section = "recent_files",
                 indent = 2,
               },
-            }),
+            })
+          end
+
+          local widePanels = {
+            {
+              {
+                section = "terminal",
+                cmd = [[cbonsai -li -t 0.001 -w 2 -c "&,O,#,uwu"]],
+                height = 30,
+                padding = 1,
+              },
+            },
+            {
+              { section = "header" },
+              { section = "keys", gap = 1, padding = 1 },
+              { section = "startup", padding = 1 },
+            },
+            sect3
           }
 
           local panels = {}

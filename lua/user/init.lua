@@ -4,10 +4,31 @@ vim.o.shell = '/bin/bash -l'
 vim.env.PATH = "/home/tsunami014/.nvm/versions/node/v20.18.0/bin/:" .. vim.env.PATH
 
 -- Enable wrapping for Markdown files
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
+local wrap_states = {}
+
+vim.api.nvim_create_autocmd("BufEnter", {
   callback = function()
-    vim.opt.wrap = true
+    local buf = vim.api.nvim_get_current_buf()
+    local filetype = vim.bo[buf].filetype
+
+    if filetype == "markdown" then
+      -- Save wrap state only if not already saved
+      if wrap_states[buf] == nil then
+        wrap_states[buf] = vim.opt.wrap:get()
+      end
+      vim.opt.wrap = true
+    elseif wrap_states[buf] ~= nil then
+      -- Restore wrap state when entering a non-markdown buffer
+      vim.opt.wrap = wrap_states[buf]
+      wrap_states[buf] = nil -- Cleanup
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufDelete", {
+  callback = function(args)
+    local buf = args.buf
+    wrap_states[buf] = nil
   end,
 })
 

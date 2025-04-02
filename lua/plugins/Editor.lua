@@ -1,5 +1,3 @@
-local profile = require("profile").current
-
 return {
   -- which-key helps you remember key bindings by showing a popup
   -- with the active keybindings of the command you started typing.
@@ -184,30 +182,5 @@ return {
         max_height_window_percentage = 50,
       })
     end
-  },
-  {
-    "3rd/diagram.nvim",
-    dependencies = {
-      "3rd/image.nvim",
-    },
-    enabled = profile == "Linux",
-    config = function()
-      require("diagram").setup({
-        integrations = {
-          require("diagram.integrations.markdown"),
-        },
-        events = {
-          render_buffer = { "InsertLeave", "BufEnter" },
-          clear_buffer = { "InsertEnter", "BufLeave" },
-        },
-        renderer_options = {
-          mermaid = {
-            background = "transparent", -- nil | "transparent" | "white" | "#hex"
-            theme = "forest", -- nil | "default" | "dark" | "forest" | "neutral"
-            scale = nil,
-          },
-        }
-      })
-    end,
   },
 }
