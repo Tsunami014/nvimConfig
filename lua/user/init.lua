@@ -3,6 +3,31 @@ require "user.lualine-theme"
 vim.o.shell = '/bin/bash -l'
 vim.env.PATH = "/home/tsunami014/.nvm/versions/node/v20.18.0/bin/:" .. vim.env.PATH
 
+-- Some language server options
+require('lspconfig').pyright.setup{
+  settings = {
+    python = {
+      analysis = {
+        typeCheckingMode = "off",
+        diagnosticSeverityOverrides = {
+          reportArgumentType = "warning",
+          reportTypeCommentUsage = "information",
+          reportWildcardImportFromLibrary = "none",
+        }
+      }
+    }
+  }
+}
+require('lspconfig').ruff.setup{
+  settings = {
+    ruff_lsp = {
+      configuration = {
+        ignore = {"F405", "F841"},
+      }
+    }
+  }
+}
+
 -- Enable wrapping for Markdown files
 local wrap_states = {}
 
@@ -74,11 +99,11 @@ Map('n', '<Leader>bp', false)
 
 -- Project stuff
 local proj = require("project")
-Map("n", "<leader>P", "", "󰉓 Projects")
-Map("n", "<leader>Ps", proj.save_project, "Save project")
-Map("n", "<leader>Pl", proj.findProjects, "Load project")
+Map("n", "<Leader>P", "", "󰉓 Projects")
+Map("n", "<Leader>Ps", proj.save_project, "Save project")
+Map("n", "<Leader>Pl", proj.findProjects, "Load project")
 
-Map("n", "<leader>u.", proj.loadUI, "Initialise the UI")
+Map("n", "<Leader>u.", proj.loadUI, "Initialise the UI")
 
 -- Misc stuff
 Map('n', '<Leader>c', '', ' Symbols')
