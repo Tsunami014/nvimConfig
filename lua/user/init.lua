@@ -1,7 +1,15 @@
 require "user.lualine-theme"
 
-vim.o.shell = '/bin/bash -l'
-vim.env.PATH = "/home/tsunami014/.nvm/versions/node/v20.18.0/bin/:" .. vim.env.PATH
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
+  pattern = "*",
+  callback = function()
+    if vim.bo.filetype ~= "markdown" then
+      vim.opt_local.wrap = false
+    else
+      vim.opt_local.wrap = true
+    end
+  end
+})
 
 -- Some language server options
 require('lspconfig').pyright.setup{
@@ -21,41 +29,10 @@ require('lspconfig').pyright.setup{
 require('lspconfig').ruff.setup{
   settings = {
     ruff_lsp = {
-      configuration = {
-        ignore = {"F405", "F841"},
-      }
+      ignore = {"F405", "F841"},
     }
   }
 }
-
--- Enable wrapping for Markdown files
-local wrap_states = {}
-
-vim.api.nvim_create_autocmd("BufEnter", {
-  callback = function()
-    local buf = vim.api.nvim_get_current_buf()
-    local filetype = vim.bo[buf].filetype
-
-    if filetype == "markdown" then
-      -- Save wrap state only if not already saved
-      if wrap_states[buf] == nil then
-        wrap_states[buf] = vim.opt.wrap:get()
-      end
-      vim.opt.wrap = true
-    elseif wrap_states[buf] ~= nil then
-      -- Restore wrap state when entering a non-markdown buffer
-      vim.opt.wrap = wrap_states[buf]
-      wrap_states[buf] = nil -- Cleanup
-    end
-  end,
-})
-
-vim.api.nvim_create_autocmd("BufDelete", {
-  callback = function(args)
-    local buf = args.buf
-    wrap_states[buf] = nil
-  end,
-})
 
 -- Disable auto formatting
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -110,7 +87,6 @@ Map('n', '<Leader>c', '', ' Symbols')
 Map('n', '<Leader>s', '', ' Todos & Noice')
 Map('n', '<Leader>f', '', '󰍉 Find')
 Map('n', '<Leader>gh', '', ' Hunks')
-Map('n', '<Leader>sn', '', ' Noice')
 
 Map("n", "<leader>|", "", " Profiles")
 Map("n", "<leader>|c", function()
@@ -118,5 +94,5 @@ Map("n", "<leader>|c", function()
 end, "Show Current Profile")
 Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
-Map('v', '<Leader>d', '"_d', 'Delete selection')
+Map('x', '<Leader>d', '"_d', 'Delete selection')
 

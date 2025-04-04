@@ -6,6 +6,63 @@ return {
     priority = 1000,
     opts = {},
   },
+
+  -- Markdown renderer
+  {
+    'MeanderingProgrammer/markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' },
+  },
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = { "markdown" },
+    build = "cd app && npm install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+      vim.cmd([[
+        function! OpenMarkdownPreview(url) abort
+          execute 'lua vim.notify("Opening Markdown Preview in Firefox...", vim.log.levels.INFO, { title = "Markdown Preview" })'
+          execute 'lua vim.fn.jobstart({"firefox", "--new-instance", "--new-window", "' . a:url . '"}, {detach = true})'
+        endfunction
+        ]])
+
+        vim.g.mkdp_browserfunc = "OpenMarkdownPreview"
+    end,
+    keys = {
+      { "<leader>m", ":MarkdownPreview<CR>", desc = "Markdown preview", mode = "n" },
+    }
+  },
+
+  -- Markdown image viewer
+  {
+    '3rd/image.nvim',
+    config = function()
+      require('image').setup({
+        backend = "kitty",
+        kitty_method = "normal",
+        processor = "magick_cli",
+        integrations = {
+          markdown = {
+            enabled = true,
+            clear_in_insert_mode = true,
+            download_remote_images = true,
+            only_render_image_at_cursor = true,
+            floating_windows = false, -- if true, images will be rendered in floating markdown windows
+            filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
+          },
+          html = {
+            enabled = true,
+          },
+          css = {
+            enabled = false,
+          },
+        },
+        max_width_window_percentage = 100,
+        max_height_window_percentage = 50,
+      })
+    end
+  },
+
   -- Very Nice UI (experimental)
   {
     "folke/noice.nvim",
@@ -43,7 +100,7 @@ return {
     },
     -- stylua: ignore
     keys = {
-      { "<leader>sn", "", desc = "+noice"},
+      { "<leader>sn", "", desc = " Noice"},
       { "<S-Enter>", function() require("noice").redirect(vim.fn.getcmdline()) end, mode = "c", desc = "Redirect Cmdline" },
       { "<leader>snl", function() require("noice").cmd("last") end, desc = "Noice Last Message" },
       { "<leader>snh", function() require("noice").cmd("history") end, desc = "Noice History" },
@@ -62,6 +119,7 @@ return {
       require("noice").setup(opts)
     end,
   },
+
   -- statusline
   {
     "nvim-lualine/lualine.nvim",
@@ -78,14 +136,30 @@ return {
       end
     end,
   },
+
+  -- Rainbow brackets
   {
-    "nvim-neo-tree/neo-tree.nvim",
-    opts = {
-      filesystem = {
-        filtered_items = {
-          visible = true,
+    "HiPhish/rainbow-delimiters.nvim",
+    config = function()
+      require("rainbow-delimiters.setup").setup {
+        strategy = {
+          [""] = "rainbow-delimiters.strategy.global",
+          vim = "rainbow-delimiters.strategy.local",
         },
-      },
-    }
-  }
+        query = {
+          [""] = "rainbow-delimiters",
+          lua = "rainbow-blocks",
+        },
+        highlight = {
+          "RainbowDelimiterRed",
+          "RainbowDelimiterYellow",
+          "RainbowDelimiterBlue",
+          "RainbowDelimiterOrange",
+          "RainbowDelimiterGreen",
+          "RainbowDelimiterViolet",
+          "RainbowDelimiterCyan",
+        },
+      }
+    end,
+  },
 }
