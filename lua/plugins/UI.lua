@@ -1,3 +1,5 @@
+local profile = require("profile").current
+
 return {
   -- Theme
   {
@@ -36,6 +38,7 @@ return {
   -- Markdown image viewer
   {
     '3rd/image.nvim',
+    enabled = profile == 'Linux',
     config = function()
       require('image').setup({
         backend = "kitty",

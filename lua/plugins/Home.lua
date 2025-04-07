@@ -61,14 +61,10 @@ return {
             return a, b
           end
 
-          -- Use the globally loaded projects (defaults to empty table)
-          local Recents = true
-          if _G.recent_projects == nil then
-            Recents = false
-          end
-          local project_list = _G.recent_projects or {}
+          local project_list = require('project').projects
           local items = {}
-          for i, project in ipairs(project_list) do
+          local i = 1
+          for project, _ in pairs(project_list) do
             if i > 5 then break end
             local pth, ext = split_path(project)
             table.insert(items, {
@@ -76,6 +72,7 @@ return {
               action = ':lua require("project").loadProject("' .. project .. '")',
               key = tostring(i),
             })
+            i = i + 1
           end
 
           local function mergeThree(t1, t2, t3)
@@ -86,21 +83,31 @@ return {
             return result
           end
 
+          local tCmd = [[cbonsai -li -t 0.001 -w 2 -c "&,O,#,uwu"]]
+          if profile == "Windows" then
+            tCmd = ""
+          end
+
           local t2Cmd = ""
           if profile == "Linux" then
             t2Cmd = "chafa ~/.config/nvim/wall.png --format symbols --symbols vhalf --size 60x17 --stretch; sleep .1"
           end
 
-          local sect3 = {
+          local widePanels = {
             {
-              section = "terminal",
-              cmd = t2Cmd,
-              height = 17,
-              padding = 1,
+              {
+                section = "terminal",
+                cmd = tCmd,
+                height = 30,
+                padding = 1,
+              },
             },
-          }
-          if Recents then
-            sect3 = mergeThree({
+            {
+              { section = "header" },
+              { section = "keys", gap = 1, padding = 1 },
+              { section = "startup", padding = 1 },
+            },
+            mergeThree({
               {
                 section = "terminal",
                 cmd = t2Cmd,
@@ -125,23 +132,6 @@ return {
                 indent = 2,
               },
             })
-          end
-
-          local widePanels = {
-            {
-              {
-                section = "terminal",
-                cmd = [[cbonsai -li -t 0.001 -w 2 -c "&,O,#,uwu"]],
-                height = 30,
-                padding = 1,
-              },
-            },
-            {
-              { section = "header" },
-              { section = "keys", gap = 1, padding = 1 },
-              { section = "startup", padding = 1 },
-            },
-            sect3
           }
 
           local panels = {}
