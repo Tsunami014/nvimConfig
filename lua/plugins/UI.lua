@@ -10,10 +10,10 @@ return {
   },
 
   -- Markdown renderer
-  {
-    'MeanderingProgrammer/markdown.nvim',
-    dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' },
-  },
+  -- {
+  --   'MeanderingProgrammer/markdown.nvim',
+  --   dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' },
+  -- },
   {
     "iamcco/markdown-preview.nvim",
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },

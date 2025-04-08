@@ -1,9 +1,3 @@
--- Delay loading the projects to give project_nvim time to initialize.
-vim.defer_fn(function()
-  _G.recent_projects = require("project_nvim").get_recent_projects() or {}
-  require("snacks.dashboard").update()
-end, 500)
-
 if true then return end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
 
 -- This will run last in the setup process and is a good place to configure

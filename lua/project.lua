@@ -72,6 +72,17 @@ function M.findProjects()
           M.loadProject(selection[1])
         end
       end)
+
+      map("i", "<C-d>", function()
+        local selection = action_state.get_selected_entry()
+        if selection then
+          local project = selection[1]
+          M.projects[project] = nil
+          saveProjects()
+          vim.notify("Project " .. project .. " deleted.", vim.log.levels.INFO)
+          actions.close(prompt_bufnr)
+        end
+      end)
       return true
     end,
   }):find()
@@ -85,9 +96,18 @@ M.save_project = function()
   print("Project saved!")
 end
 
-vim.api.nvim_create_autocmd({"BufWritePost"}, {
+local saving = false
+vim.api.nvim_create_autocmd({"BufLeave", "BufWinLeave", "BufEnter",  "BufWinEnter"}, {
   pattern = "*",
-  callback = M.save_project
+  callback = function()
+    if not saving then
+      saving = true
+      local cwd = vim.fn.getcwd()
+      if M.projects[cwd] then
+        M.save_project()
+      end
+    end
+  end
 })
 
 return M

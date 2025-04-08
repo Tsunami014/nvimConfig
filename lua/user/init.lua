@@ -1,5 +1,13 @@
 require "user.lualine-theme"
 
+-- Load the plugin only for markdown files.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    require("user.markdownHighlight").setup()
+  end,
+})
+
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
   pattern = "*",
   callback = function()
@@ -18,7 +26,7 @@ require('lspconfig').pyright.setup{
       analysis = {
         typeCheckingMode = "off",
         diagnosticSeverityOverrides = {
-          reportArgumentType = "warning",
+          reportArgumentType = "none",
           reportTypeCommentUsage = "information",
           reportWildcardImportFromLibrary = "none",
         }
@@ -94,5 +102,8 @@ Map("n", "<leader>|c", function()
 end, "Show Current Profile")
 Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
-Map('x', '<Leader>d', '"_d', 'Delete selection')
+Map({'n', 'v', 'x'}, '_', '"_', 'Black hole')
+-- Map({'n', 'v', 'x'}, '+', '"+', 'System keyboard')
+Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
+-- "_ black hole, "+ or "* system kbd, "" nvim default kbd
 
