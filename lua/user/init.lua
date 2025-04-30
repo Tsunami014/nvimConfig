@@ -90,20 +90,25 @@ Map("n", "<Leader>Pl", proj.findProjects, "Load project")
 
 Map("n", "<Leader>u.", proj.loadUI, "Initialise the UI")
 
--- Misc stuff
-Map('n', '<Leader>c', '', ' Symbols')
-Map('n', '<Leader>s', '', ' Todos & Noice')
-Map('n', '<Leader>f', '', '󰍉 Find')
-Map('n', '<Leader>gh', '', ' Hunks')
-
+-- Profile stuff
 Map("n", "<leader>|", "", " Profiles")
 Map("n", "<leader>|c", function()
   vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
 end, "Show Current Profile")
 Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
+-- Clipboard stuff
+vim.opt.clipboard = "" -- Use Vim's default clipboard
 Map({'n', 'v', 'x'}, '_', '"_', 'Black hole')
--- Map({'n', 'v', 'x'}, '+', '"+', 'System keyboard')
+Map({'n', 'v', 'x'}, ';', '"+', 'System clipboard')
 Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
--- "_ black hole, "+ or "* system kbd, "" nvim default kbd
+-- "_ black hole, "+ or "* system cbd, "" nvim default cbd
+
+-- Misc stuff
+Map('n', '<Leader>c', '', ' Symbols')
+Map('n', '<Leader>s', '', ' Todos & Noice')
+Map('n', '<Leader>f', '', '󰍉 Find')
+Map('n', '<Leader>gh', '', ' Hunks')
+
+Map({'n', 'v', 'x'}, '<c-a>', '<esc>ggVG', 'Select all')
 
