@@ -91,10 +91,11 @@ function M.redraw(bufnr)
     end
 
     if i ~= cursor then
-      apply_format("%*(.-)%*", "@markup.italic", 1)      -- *italic*
-      apply_format("%*%*(.-)%*%*", "@markup.strong", 2)  -- **bold**
-      apply_format("%*%*%*(.-)%*%*%*", "ItalicBold", 3)  -- ***both***
-      apply_format("`(.-)`", "InlineQuote", 1)           -- `inline`
+      apply_format("%*(.-)%*", "@markup.italic", 1)           -- *italic*
+      apply_format("%*%*(.-)%*%*", "@markup.strong", 2)       -- **bold**
+      apply_format("%*%*%*(.-)%*%*%*", "ItalicBold", 3)       -- ***both***
+      apply_format("^```([^`]-)$", "@markup.list.checked", 3) -- ```Code block```
+      apply_format("`([^`]-)`", "InlineQuote", 1)             -- `inline`
 
       local s = 1
       while s <= #line do
