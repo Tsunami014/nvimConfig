@@ -16,6 +16,7 @@ if not pcall(require, "lazy") then
 end
 
 require "profile"
+require "markdownHighlight"
 
 require "lazy_setup"
 require "user"
