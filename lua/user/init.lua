@@ -1,23 +1,15 @@
 require "user.lualine-theme"
 
--- Load the plugin only for markdown files.
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    require("user.markdownHighlight").setup()
-  end,
-})
-
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
-  pattern = "*",
-  callback = function()
-    if vim.bo.filetype ~= "markdown" then
-      vim.opt_local.wrap = false
-    else
-      vim.opt_local.wrap = true
-    end
-  end
-})
+-- vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
+--   pattern = "*",
+--   callback = function()
+--     if vim.bo.filetype ~= "markdown" then
+--       vim.opt_local.wrap = false
+--     else
+--       vim.opt_local.wrap = true
+--     end
+--   end
+-- })
 
 -- Some language server options
 require('lspconfig').pyright.setup{
@@ -98,7 +90,7 @@ end, "Show Current Profile")
 Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
 
 -- Clipboard stuff
-vim.opt.clipboard = "" -- Use Vim's default clipboard
+vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
 Map({'n', 'v', 'x'}, '_', '"_', 'Black hole')
 Map({'n', 'v', 'x'}, ';', '"+', 'System clipboard')
 Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
