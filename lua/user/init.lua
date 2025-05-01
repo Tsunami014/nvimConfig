@@ -102,5 +102,8 @@ Map('n', '<Leader>s', '', ' Todos & Noice')
 Map('n', '<Leader>f', '', '󰍉 Find')
 Map('n', '<Leader>gh', '', ' Hunks')
 
+Map('n', '<Leader>D', function()
+  vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+end, 'Chdir to parent dir')
 Map({'n', 'v', 'x'}, '<c-a>', '<esc>ggVG', 'Select all')
 
