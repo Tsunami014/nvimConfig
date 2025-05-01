@@ -61,18 +61,21 @@ return {
             return a, b
           end
 
-          local project_list = require('project').projects
+          local project_list = require("project").projects
           local items = {}
-          local i = 1
-          for project, _ in pairs(project_list) do
+
+          for i, project in ipairs(project_list) do
             if i > 5 then break end
             local pth, ext = split_path(project)
             table.insert(items, {
-              text = { { string.format("  %i  ", i), hl = "SnacksDashboardKey" }, { pth .. "/", hl = "Conceal" }, { ext, hl = "SnacksDashboardDesc" } },
+              text = {
+                { string.format("  %i  ", i), hl = "SnacksDashboardKey" },
+                { pth .. "/", hl = "Conceal" },
+                { ext, hl = "SnacksDashboardDesc" },
+              },
               action = ':lua require("project").loadProject("' .. project .. '")',
               key = tostring(i),
             })
-            i = i + 1
           end
 
           local function mergeThree(t1, t2, t3)
