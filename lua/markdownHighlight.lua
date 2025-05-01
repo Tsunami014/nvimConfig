@@ -44,7 +44,7 @@ end
 
 vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
 local hl = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
-vim.api.nvim_set_hl(0, "InlineQuote", { fg = hl.fg or 16745355, italic = true })
+vim.api.nvim_set_hl(0, "InlineQuote", { fg = hl.fg, italic = true })
 
 -- Redraw all overlays, skipping the cursor line
 function M.redraw(bufnr)
@@ -95,6 +95,26 @@ function M.redraw(bufnr)
       apply_format("%*%*(.-)%*%*", "@markup.strong", 2)  -- **bold**
       apply_format("%*%*%*(.-)%*%*%*", "ItalicBold", 3)  -- ***both***
       apply_format("`(.-)`", "InlineQuote", 1)           -- `inline`
+
+      local s = 1
+      while s <= #line do
+        local start_pos, end_pos, begin, content, endd = line:find("(!?%[)(.-)(%]%(.-%))", s)
+        if not start_pos then break end
+
+        local icon = string.len(begin) == 2 and "" or "󰌷"
+
+        if content then
+          -- Apply extmark for the actual content, skipping markdown symbols
+          vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, start_pos - 1, {
+            virt_text = {{string.rep(" ", string.len(begin)-1) .. icon .. content .. string.rep(" ", string.len(endd))}},
+            virt_text_pos = "overlay",
+            hl_mode = "combine",
+          })
+        end
+
+        -- Move past this match
+        s = end_pos + 1
+      end
     end
   end
 end
