@@ -42,6 +42,74 @@ local function make_bar_line(idx, total, line)
   return level, bar .. " " .. text
 end
 
+local function parse_md_links(line)
+  local res        = {}
+  local len        = #line
+  local byte       = string.byte
+  local stack_pos  = {}    -- numeric stack of '[' positions
+  local stack_img  = {}    -- parallel stack: is it '!['?
+  local stack_top  = 0
+  local count      = 0
+  local i          = 1
+
+  while i <= len do
+    local b = byte(line, i)
+    if b == 33 and i < len and byte(line, i+1) == 91 then
+      -- '![' opener
+      stack_top = stack_top + 1
+      stack_pos[stack_top] = i
+      stack_img[stack_top] = true
+      i = i + 2
+
+    elseif b == 91 then
+      -- '[' opener
+      stack_top = stack_top + 1
+      stack_pos[stack_top] = i
+      stack_img[stack_top] = false
+      i = i + 1
+
+    elseif b == 93 and stack_top > 0 then
+      -- ']' matched
+      local start_pos = stack_pos[stack_top]
+      local is_image  = stack_img[stack_top]
+      stack_top = stack_top - 1
+
+      -- only treat as link if it’s followed by '('
+      if i < len and byte(line, i+1) == 40 then
+        local j = i + 2
+        -- find the next ')'
+        while j <= len and byte(line, j) ~= 41 do
+          j = j + 1
+        end
+        if j <= len then
+          count = count + 1
+          res[count] = {
+            start    = start_pos,
+            finish   = j,
+            is_image = is_image,
+            text_s   = start_pos + (is_image and 2 or 1),
+            text_e   = i - 1,
+            url_s    = i + 2,
+            url_e    = j - 1,
+          }
+          i = j + 1  -- jump past ')'
+        else
+          -- no closing ')'
+          i = i + 1
+        end
+      else
+        -- not a link, rewind to just after the original '['
+        i = start_pos + 1
+      end
+
+    else
+      i = i + 1
+    end
+  end
+
+  return res
+end
+
 vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
 local hl = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
 vim.api.nvim_set_hl(0, "InlineQuote", { fg = hl.fg, italic = true })
@@ -97,24 +165,13 @@ function M.redraw(bufnr)
       apply_format("^```([^`]-)$", "@markup.list.checked", 3) -- ```Code block```
       apply_format("`([^`]-)`", "InlineQuote", 1)             -- `inline`
 
-      local s = 1
-      while s <= #line do
-        local start_pos, end_pos, begin, content, endd = line:find("(!?%[)(.-)(%]%(.-%))", s)
-        if not start_pos then break end
-
-        local icon = string.len(begin) == 2 and "" or "󰌷"
-
-        if content then
-          -- Apply extmark for the actual content, skipping markdown symbols
-          vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, start_pos - 1, {
-            virt_text = {{string.rep(" ", string.len(begin)-1) .. icon .. content .. string.rep(" ", string.len(endd))}},
-            virt_text_pos = "overlay",
-            hl_mode = "combine",
-          })
-        end
-
-        -- Move past this match
-        s = end_pos + 1
+      local links = parse_md_links(line)
+      for _, link in ipairs(links) do
+        vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
+          virt_text = {{ (link.is_image and " " or "") .. (link.is_image and "" or "󰌷") .. line:sub(link.text_s, link.text_e) .. string.rep(" ", (link.url_e-link.url_s)+4) }},
+          virt_text_pos = "overlay",
+          hl_mode     = "combine",
+        })
       end
     end
   end
