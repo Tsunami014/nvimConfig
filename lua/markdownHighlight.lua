@@ -114,6 +114,28 @@ vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
 local hl = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
 vim.api.nvim_set_hl(0, "InlineQuote", { fg = hl.fg, italic = true })
 
+local lang_icons = {
+  lua      = "",
+  python   = "",
+  javascript = "",
+  js         = "",
+  typescript = "",
+  html     = "",
+  css      = "",
+  json     = "",
+  markdown = "",
+  md       = "",
+  sh       = "",
+  bash     = "",
+  c        = "",
+  cpp      = "",
+  ["c++"]  = "",
+  java     = "",
+  mermaid  = "󰫺",
+  diff     = "",
+  sql      = "",
+}
+
 -- Redraw all overlays, skipping the cursor line
 function M.redraw(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -165,18 +187,43 @@ function M.redraw(bufnr)
             local list = {}
             if ln:sub(1, 3) == "```" then
               local lang = vim.trim(ln:sub(4))
-              local ico = " "
+              local icon = " "
               if lang ~= "" then
-                ico = ""
+                icon = lang_icons[lang] or ""
               end
               table.insert(list, {
                 start   = 0,
                 stop    = #ln,
-                content = ico .. "  " .. lang,
+                content = icon .. "  " .. lang,
                 hl      = "@markup.list.checked",
                 strip   = 0,
               })
             end
+            return list
+          end
+        },
+
+        -- Horizontal rule
+        {
+          handler = function(ln)
+            local list = {}
+            local trimmed = vim.trim(ln)
+
+            -- Match lines that are only made of -, *, or _ (3 or more)
+            if trimmed:match("^[%-%*_][%-%*_][%-%*_]+$") and trimmed:match("^[%-%*_]+$") then
+              local width = vim.api.nvim_win_get_width(0)
+              local glyph = "━"
+              local linee = string.rep(glyph, width)
+
+              table.insert(list, {
+                start   = 0,
+                stop    = #ln,
+                content = linee,
+                hl      = "@markup.heading.3",
+                strip   = 0,
+              })
+            end
+
             return list
           end
         },
