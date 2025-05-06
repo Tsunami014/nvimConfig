@@ -18,8 +18,8 @@ local function make_bar(percent, level)
     parts[1] = percent >= 50 and "" or ""
   else
     for i = 1, level do
-      local threshold = (i / (level+2)) * 100
-      local is_full = percent > threshold
+      local threshold = (i / level) * 100
+      local is_full = percent >= threshold
       if i == 1 then
         parts[#parts+1] = is_full and "" or ""
       elseif i == level then
