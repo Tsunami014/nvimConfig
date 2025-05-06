@@ -206,7 +206,7 @@ function M.redraw(bufnr)
       -- collect matches
       for _, spec in ipairs(specs) do
         if spec.pat then
-          for s, e, c in line:gmatch("()"..spec.pat.."()") do
+          for s, c, e in line:gmatch("()"..spec.pat.."()") do
             add(s, e, c, spec.hl, spec.strip)
           end
         else
