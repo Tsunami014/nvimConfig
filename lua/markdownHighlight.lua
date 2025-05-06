@@ -135,42 +135,97 @@ function M.redraw(bufnr)
       })
     end
 
-    -- Inline formatting overlays
-    local function apply_format(pattern, hl_group, strip_len)
-      local s = 1
-      while s <= #line do
-        local start_pos, end_pos, content = line:find(pattern, s)
-        if not start_pos then break end
-
-        local spacing = string.rep(" ", strip_len)
-
-        if content then
-          -- Apply extmark for the actual content, skipping markdown symbols
-          vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, start_pos - 1, {
-            virt_text = {{spacing .. content .. spacing, hl_group}},
-            virt_text_pos = "overlay",
-            hl_mode = "combine",
-          })
-        end
-
-        -- Move past this match
-        s = end_pos + 1
-      end
-    end
-
     if i ~= cursor then
-      apply_format("%*(.-)%*", "@markup.italic", 1)           -- *italic*
-      apply_format("%*%*(.-)%*%*", "@markup.strong", 2)       -- **bold**
-      apply_format("%*%*%*(.-)%*%*%*", "ItalicBold", 3)       -- ***both***
-      apply_format("^```([^`]-)$", "@markup.list.checked", 3) -- ```Code block```
-      apply_format("`([^`]-)`", "InlineQuote", 1)             -- `inline`
+      local overlays = {}
 
-      local links = parse_md_links(line)
-      for _, link in ipairs(links) do
-        vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
-          virt_text = {{ (link.is_image and " " or "") .. (link.is_image and "" or "󰌷") .. line:sub(link.text_s, link.text_e) .. string.rep(" ", (link.url_e-link.url_s)+4) }},
+      -- helper to add an overlay spec
+      local function add(s, e, content, hl, strip)
+        table.insert(overlays, {
+          start   = s - 1,
+          stop    = e - 1,
+          content = content,
+          hl      = hl,
+          strip   = strip,
+        })
+      end
+
+      -- specs: pattern-based or handler-based
+      local specs = {
+        -- bold+italic
+        { pat   = "%*%*%*(.-)%*%*%*",      hl = "ItalicBold",       strip = 3 },
+        -- bold
+        { pat   = "%*%*(.-)%*%*",          hl = "@markup.strong",   strip = 2 },
+        -- italic
+        { pat   = "%*(.-)%*",              hl = "@markup.italic",   strip = 1 },
+        -- inline code
+        { pat   = "`([^`]-)`",             hl = "InlineQuote",      strip = 1 },
+        -- code block line
+        { pat   = "^```([^`]-)$",          hl = "@markup.list.checked", strip = 3 },
+
+        -- handler for markdown checkboxes
+        {
+          handler = function(ln)
+            local list = {}
+            -- match items like '- [ ] Task' or '* [x] Task', capturing start and end
+            for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
+              local checked = mark:lower() == 'x'
+              local icon    = checked and "☑" or "☐"
+              table.insert(list, {
+                start   = s - 1 + #bullet,
+                stop    = e - 1,
+                content = " " .. icon .. " ",
+                hl      = checked and "TodoChecked" or "TodoUnchecked",
+                strip   = 0,
+              })
+            end
+            return list
+          end
+        },
+        -- custom handler for markdown links/images
+        {
+          handler = function(ln)
+            local list = {}
+            for _, link in ipairs(parse_md_links(ln)) do
+              local icon = link.is_image and "" or "󰌷"
+              local pad  = string.rep(" ", (link.url_e - link.url_s) + 4)
+              local txt  = (link.is_image and " " or "") .. icon
+                              .. ln:sub(link.text_s, link.text_e) .. pad
+              table.insert(list, {
+                start   = link.start - 1,
+                stop    = link.url_e - 1,
+                content = txt,
+                hl      = link.is_image and "ImageLink" or "Urllink",
+                strip   = 0,
+              })
+            end
+            return list
+          end
+        },
+      }
+
+      -- collect matches
+      for _, spec in ipairs(specs) do
+        if spec.pat then
+          for s, e, c in line:gmatch("()"..spec.pat.."()") do
+            add(s, e, c, spec.hl, spec.strip)
+          end
+        else
+          for _, m in ipairs(spec.handler(line)) do
+            table.insert(overlays, m)
+          end
+        end
+      end
+
+      -- sort overlays by start pos
+      table.sort(overlays, function(a, b) return a.start < b.start end)
+
+      -- apply extmarks
+      for _, m in ipairs(overlays) do
+        local spacing = string.rep(" ", m.strip)
+        vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, m.start, {
+          virt_text     = { { spacing .. m.content .. spacing, m.hl } },
           virt_text_pos = "overlay",
-          hl_mode     = "combine",
+          hl_mode       = "combine",
         })
       end
     end
