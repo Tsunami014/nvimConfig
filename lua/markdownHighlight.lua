@@ -160,7 +160,26 @@ function M.redraw(bufnr)
         -- inline code
         { pat   = "`([^`]-)`",             hl = "InlineQuote",      strip = 1 },
         -- code block line
-        { pat   = "^```([^`]-)$",          hl = "@markup.list.checked", strip = 3 },
+        {
+          handler = function(ln)
+            local list = {}
+            if ln:sub(1, 3) == "```" then
+              local lang = vim.trim(ln:sub(4))
+              local ico = " "
+              if lang ~= "" then
+                ico = ""
+              end
+              table.insert(list, {
+                start   = 0,
+                stop    = #ln,
+                content = ico .. "  " .. lang,
+                hl      = "@markup.list.checked",
+                strip   = 0,
+              })
+            end
+            return list
+          end
+        },
 
         -- handler for markdown checkboxes
         {
