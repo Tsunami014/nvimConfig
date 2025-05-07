@@ -110,9 +110,18 @@ local function parse_md_links(line)
   return res
 end
 
-vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
-local hl = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
-vim.api.nvim_set_hl(0, "InlineQuote", { fg = hl.fg, italic = true })
+vim.schedule(function () -- Schedule to ensure the colours have loaded by then
+  vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
+  local hlRaw = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
+  vim.api.nvim_set_hl(0, "InlineQuote", { fg = hlRaw.fg, italic = true })
+
+  local bqBg = "#383838"
+  local hlTx1 = vim.api.nvim_get_hl(0, { name = "Special" })
+  vim.api.nvim_set_hl(0, "BlockQuoteSurround", { fg = hlTx1.fg, bg = bqBg, bold = true })
+  local hlTx2 = vim.api.nvim_get_hl(0, { name = "@markup.list.checked" })
+  vim.api.nvim_set_hl(0, "BlockQuoteSurroundIco", { fg = hlTx2.fg, bg = bqBg, bold = true })
+  vim.api.nvim_set_hl(0, "BlockQuote", { bg = bqBg })
+end)
 
 local lang_icons = {
   lua      = "",
@@ -174,34 +183,13 @@ function M.redraw(bufnr)
       -- specs: pattern-based or handler-based
       local specs = {
         -- bold+italic
-        { pat   = "%*%*%*(.-)%*%*%*",      hl = "ItalicBold",       strip = 3 },
+        { pat   = "%*%*%*(..-)%*%*%*",      hl = "ItalicBold",       strip = 3 },
         -- bold
-        { pat   = "%*%*(.-)%*%*",          hl = "@markup.strong",   strip = 2 },
+        { pat   = "%*%*(..-)%*%*",          hl = "@markup.strong",   strip = 2 },
         -- italic
-        { pat   = "%*(.-)%*",              hl = "@markup.italic",   strip = 1 },
+        { pat   = "%*(..-)%*",              hl = "@markup.italic",   strip = 1 },
         -- inline code
-        { pat   = "`([^`]-)`",             hl = "InlineQuote",      strip = 1 },
-        -- code block line
-        {
-          handler = function(ln)
-            local list = {}
-            if ln:sub(1, 3) == "```" then
-              local lang = vim.trim(ln:sub(4))
-              local icon = " "
-              if lang ~= "" then
-                icon = lang_icons[lang] or ""
-              end
-              table.insert(list, {
-                start   = 0,
-                stop    = #ln,
-                content = icon .. "  " .. lang,
-                hl      = "@markup.list.checked",
-                strip   = 0,
-              })
-            end
-            return list
-          end
-        },
+        { pat   = "`([^`][^`]-)`",             hl = "InlineQuote",      strip = 1 },
 
         -- Horizontal rule
         {
@@ -293,6 +281,48 @@ function M.redraw(bufnr)
           virt_text_pos = "overlay",
           hl_mode       = "combine",
         })
+      end
+    end
+  end
+
+  local start = nil
+  for i, line in ipairs(lines) do
+    if line:sub(1, 3) == "```" then
+      if start ~= nil then
+        local max_length = 0
+        for index = start, i do
+          max_length = math.max(max_length, #lines[index])
+        end
+        max_length = max_length + 1
+        for j=start,i do
+          local out = {}
+          local txt = lines[j]
+          local tlen = #txt
+          if j == start then
+            local lang = vim.trim(txt:sub(4))
+            local icon = lang_icons[lang] or ""
+            tlen = 3 + #lang
+            out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
+          else
+            if j ~= i then
+              out = { { lines[j], "BlockQuote" } }
+            else
+              out = { { string.rep("━", max_length), "BlockQuoteSurroundIco" } }
+              tlen = max_length
+            end
+          end
+          if j ~= cursor then
+            table.insert(out, { string.rep(" ", max_length-tlen), "BlockQuote" })
+            vim.api.nvim_buf_set_extmark(bufnr, ns, j - 1, 0, {
+              virt_text     = out,
+              virt_text_pos = "overlay",
+              hl_mode       = "combine",
+            })
+          end
+        end
+        start = nil
+      else
+        start = i
       end
     end
   end
