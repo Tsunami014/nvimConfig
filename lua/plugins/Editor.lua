@@ -130,10 +130,11 @@ return {
     lazy = false,
     branch = "regexp", -- This is the regexp branch, use this for the new version
     keys = {
-      { ",v", "<cmd>VenvSelect<cr>" },
+      { "<leader>dv", "<cmd>VenvSelect<cr>", desc = "Select venv" },
     },
     opts = {
-      -- Your settings go here
+      dap_enabled = true,
+      parents = 1
     },
   },
 

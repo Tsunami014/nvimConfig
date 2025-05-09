@@ -11,6 +11,17 @@ require "user.lualine-theme"
 --   end
 -- })
 
+table.insert(require("dap").configurations.python, {
+  type = "python",
+  request = "launch",
+  name = "Launch file with current venv",
+
+  program = "${file}",
+  pythonPath = function()
+    return require("venv-selector").python()
+  end,
+})
+
 -- Some language server options
 require('lspconfig').pyright.setup{
   settings = {
