@@ -79,6 +79,16 @@ return {
     },
   },
 
+  -- find and replace
+  {
+    'MagicDuck/grug-far.nvim',
+    config = function()
+      require('grug-far').setup({
+        -- no options are required, but you can add your own here
+      })
+    end,
+  },
+
   -- better diagnostics list and others
   {
     "folke/trouble.nvim",

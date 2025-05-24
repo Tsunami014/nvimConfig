@@ -189,7 +189,8 @@ function M.redraw(bufnr)
         -- italic
         { pat   = "%*(..-)%*",              hl = "@markup.italic",   strip = 1 },
         -- inline code
-        { pat   = "`([^`][^`]-)`",             hl = "InlineQuote",      strip = 1 },
+        { pat   = "`([^`][^`]-)`",          hl = "InlineQuote",      strip = 1 },
+        -- TODO: Backslash (\` or \* or \~ etc.)
 
         -- Horizontal rule
         {

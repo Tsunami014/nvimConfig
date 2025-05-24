@@ -1,5 +1,8 @@
 require "user.lualine-theme"
 
+vim.opt.exrc = true
+vim.opt.secure = true
+
 -- vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
 --   pattern = "*",
 --   callback = function()
@@ -70,6 +73,11 @@ function Map(mode, lhs, rhs, desc)
   vim.keymap.set(mode, lhs, rhs, options)
 end
 
+-- Grug stuff
+Map('n', '<leader>fR', '<cmd>GrugFar<cr>', 'Find & replace in all files')
+Map('n', '/', ':SearchBoxIncSearch<CR>', 'Search')
+Map({'v', 'x'}, '/', ':SearchBoxIncSearch visual_mode=true<CR>', 'Search')
+
 -- Buffer stuff
 Map('n', '<Leader>bn', '<cmd>tabnew<cr>', 'New tab')
 Map('n', '<Leader>bD', function()
@@ -110,7 +118,7 @@ Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
 -- Misc stuff
 Map('n', '<Leader>c', '', ' Symbols')
 Map('n', '<Leader>s', '', ' Todos & Noice')
-Map('n', '<Leader>f', '', '󰍉 Find')
+Map('n', '<Leader>f', '', '󰍉 Find', true)
 Map('n', '<Leader>gh', '', ' Hunks')
 
 Map('n', '<Leader>D', function()

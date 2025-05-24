@@ -66,15 +66,33 @@ return {
     end
   },
 
+  -- Search in a nice bubble
+  {
+    'VonHeikemen/searchbox.nvim',
+    requires = {
+      {'MunifTanjim/nui.nvim'}
+    }
+  },
+
+  -- Notifications in nice bubbles
+  {
+    "rcarriga/nvim-notify",
+    opts = {
+      minimum_width = 30,
+    }
+  },
+
   -- Very Nice UI (experimental)
   {
     "folke/noice.nvim",
     event = "VeryLazy",
     dependencies = {
       "MunifTanjim/nui.nvim",
-      "rcarriga/nvim-notify",
+      --"rcarriga/nvim-notify",
     },
     opts = {
+      -- Get rid of messages (interferes with ! commands)
+      messages = { enabled = false },
       lsp = {
         override = {
           ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
