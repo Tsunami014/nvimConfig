@@ -1,6 +1,36 @@
 return {
-  -- which-key helps you remember key bindings by showing a popup
-  -- with the active keybindings of the command you started typing.
+  -- File system viewer
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    opts = {
+      filesystem = {
+        filtered_items = {
+          visible = true,
+          hide_dotfiles = false,
+          hide_gitignored = false,
+          never_show = { ".git", "package-lock.json" },
+        },
+      },
+    },
+  },
+
+  {
+    'nmac427/guess-indent.nvim',
+    config = function() require('guess-indent').setup {} end,
+  },
+
+  {
+    "folke/lazydev.nvim",
+    ft = "lua", -- only load on lua files
+    opts = {},
+  },
+
+  -- Auto complete brackets and things
+  {
+    "cohama/lexima.vim",
+  },
+
+  -- Keybindings popup
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -8,15 +38,6 @@ return {
     opts = {
       preset = "helix",
       defaults = {},
-      spec = {
-        {
-          { "<Leader>q", desc = "Quit", mode = { "n", "v" } },
-        },
-      },
-      keys = {
-        scroll_down = "<c-d>",
-        scroll_up = "<c-u>",
-      },
     },
   },
 
@@ -42,40 +63,6 @@ return {
         topdelete = { text = "" },
         changedelete = { text = "▎" },
       },
-      on_attach = function(buffer)
-        local gs = package.loaded.gitsigns
-
-        local function map(mode, l, r, desc) vim.keymap.set(mode, l, r, { buffer = buffer, desc = desc }) end
-
-        -- stylua: ignore start
-        map("n", "]h", function()
-          if vim.wo.diff then
-            vim.cmd.normal({ "]c", bang = true })
-          else
-            gs.nav_hunk("next")
-          end
-        end, "Next Hunk")
-        map("n", "[h", function()
-          if vim.wo.diff then
-            vim.cmd.normal({ "[c", bang = true })
-          else
-            gs.nav_hunk("prev")
-          end
-        end, "Prev Hunk")
-        map("n", "]H", function() gs.nav_hunk("last") end, "Last Hunk")
-        map("n", "[H", function() gs.nav_hunk("first") end, "First Hunk")
-        map({ "n", "v" }, "<leader>ghs", ":Gitsigns stage_hunk<CR>", "Stage Hunk")
-        map({ "n", "v" }, "<leader>ghr", ":Gitsigns reset_hunk<CR>", "Reset Hunk")
-        map("n", "<leader>ghS", gs.stage_buffer, "Stage Buffer")
-        map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")
-        map("n", "<leader>ghR", gs.reset_buffer, "Reset Buffer")
-        map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview Hunk Inline")
-        map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, "Blame Line")
-        map("n", "<leader>ghB", function() gs.blame() end, "Blame Buffer")
-        map("n", "<leader>ghd", gs.diffthis, "Diff This")
-        map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
-        map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
-      end,
     },
   },
 
@@ -100,14 +87,6 @@ return {
         },
       },
     },
-    keys = {
-      { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" },
-      { "<leader>xX", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics (Trouble)" },
-      { "<leader>cs", "<cmd>Trouble symbols toggle<cr>", desc = "Symbols (Trouble)" },
-      { "<leader>cS", "<cmd>Trouble lsp toggle<cr>", desc = "LSP references/definitions/... (Trouble)" },
-      { "<leader>xL", "<cmd>Trouble loclist toggle<cr>", desc = "Location List (Trouble)" },
-      { "<leader>xQ", "<cmd>Trouble qflist toggle<cr>", desc = "Quickfix List (Trouble)" },
-    },
   },
 
   -- Finds and lists all of the TODO, HACK, BUG, etc comment
@@ -117,15 +96,6 @@ return {
     cmd = { "TodoTrouble", "TodoTelescope" },
     event = "VeryLazy",
     opts = {},
-    -- stylua: ignore
-    keys = {
-      { "]t", function() require("todo-comments").jump_next() end, desc = "Next Todo Comment" },
-      { "[t", function() require("todo-comments").jump_prev() end, desc = "Previous Todo Comment" },
-      { "<leader>xt", "<cmd>Trouble todo toggle<cr>", desc = "Todo (Trouble)" },
-      { "<leader>xT", "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", desc = "Todo/Fix/Fixme (Trouble)" },
-      { "<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo" },
-      { "<leader>sT", "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", desc = "Todo/Fix/Fixme" },
-    },
   },
 
   -- Venv selector
@@ -139,9 +109,6 @@ return {
     },
     lazy = false,
     branch = "regexp", -- This is the regexp branch, use this for the new version
-    keys = {
-      { "<leader>dv", "<cmd>VenvSelect<cr>", desc = "Select venv" },
-    },
     opts = {
       dap_enabled = true,
       parents = 1
@@ -155,13 +122,10 @@ return {
     opts = {
       execution_message = {
 		    message = "",
-		    dim = 0.08, -- dim the color of `message`
-		    cleaning_interval = 500, -- (milliseconds) automatically clean MsgArea after displaying `message`. See :h MsgArea
+		    dim = 0.08,
+		    cleaning_interval = 10,
 	    },
     },
-    keys = {
-      { "<leader>ba", ":ASToggle<CR>", mode = "n", desc = "Toggle autosave" },
-    }
   },
 
   -- DOcstring GEnerator
@@ -170,11 +134,8 @@ return {
       "kkoomen/vim-doge",
       lazy = false,
       build = ":call doge#install()",
-      keys = {
-        { '<Leader>"', "<Plug>(doge-generate)", mode = "n", desc = "Generate Docstring" },
-      },
       init = function()
-        vim.g.doge_doc_standard_python = "google" -- Use Google-style docstrings
+        vim.g.doge_doc_standard_python = "google"
       end,
     },
   },

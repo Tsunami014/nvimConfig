@@ -1,5 +1,4 @@
 # Tsunami014's Neovim configuration
-**NOTE:** This is for AstroNvim v5+
 
 ## 🛠️ Installation
 

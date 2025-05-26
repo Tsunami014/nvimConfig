@@ -1,4 +1,66 @@
 require "user.lualine-theme"
+require "user.keybinds"
+
+local resession = require("resession")
+local session_cache = {}
+local function get_session_name()
+  local cwd = vim.fn.getcwd()
+  -- Try to find existing session
+  local sessions = resession.list()
+  if sessions[cwd] then
+    return cwd
+  end
+  return "Last Session"
+end
+
+local function save_session()
+  local name = get_session_name()
+  resession.save(name, { notify = false })
+end
+local function debounced_save()
+  if session_cache.saving then return end
+  session_cache.saving = true
+  vim.defer_fn(function()
+    save_session()
+    session_cache.saving = false
+  end, 200)
+end
+
+vim.api.nvim_create_autocmd({ "BufEnter", "BufDelete" }, {
+  callback = debounced_save,
+})
+
+
+require('nvim-treesitter.configs').setup {
+  ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash",
+                       "css", "html", "javascript", "latex", "norg", "scss", "svelte", "tsx", "typst", "vue" },
+}
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client then
+      local hover = client.handlers["textDocument/hover"]
+      client.handlers["textDocument/hover"] = function(...)
+        local result = select(2, ...)
+        if not (result and result.contents) then return end
+        vim.lsp.util.open_floating_preview(result.contents, "markdown", {
+          border = "rounded",
+        })
+      end
+
+      local signature = client.handlers["textDocument/signatureHelp"]
+      client.handlers["textDocument/signatureHelp"] = function(...)
+        local result = select(2, ...)
+        if not (result and result.signatures) then return end
+        vim.lsp.util.open_floating_preview({ result.signatures[1].label }, "markdown", {
+          border = "rounded",
+        })
+      end
+    end
+  end,
+})
+
 
 vim.opt.exrc = true
 vim.opt.secure = true
@@ -57,72 +119,4 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
   end,
 })
-
--- Some keybinds
-function Map(mode, lhs, rhs, desc)
-  if rhs == false then
-    vim.api.nvim_del_keymap(mode, lhs)
-    return
-  end
-  desc = desc or ""
-  local opts = { desc = desc }
-  local options = { noremap = true, silent = true }
-  if opts then
-      options = vim.tbl_extend("force", options, opts)
-  end
-  vim.keymap.set(mode, lhs, rhs, options)
-end
-
--- Grug stuff
-Map('n', '<leader>fR', '<cmd>GrugFar<cr>', 'Find & replace in all files')
-Map('n', '/', ':SearchBoxIncSearch<CR>', 'Search')
-Map({'v', 'x'}, '/', ':SearchBoxIncSearch visual_mode=true<CR>', 'Search')
-
--- Buffer stuff
-Map('n', '<Leader>bn', '<cmd>tabnew<cr>', 'New tab')
-Map('n', '<Leader>bD', function()
-  require("astroui.status").heirline.buffer_picker(function(bufnr)
-    require("astrocore.buffer").close(bufnr)
-  end)
-end, 'Pick to close')
-Map('n', '<Leader>b]', function()
-  require("astrocore.buffer").nav(vim.v.count1)
-end, 'Next buffer')
-Map('n', '<Leader>b[', function()
-  require("astrocore.buffer").nav(-vim.v.count1)
-end, 'Previous buffer')
-Map('n', '<Leader>bp', false)
-
--- Project stuff
-local proj = require("project")
-Map("n", "<Leader>P", "", "󰉓 Projects")
-Map("n", "<Leader>Ps", proj.save_project, "Save project")
-Map("n", "<Leader>Pl", proj.findProjects, "Load project")
-
-Map("n", "<Leader>u.", proj.loadUI, "Initialise the UI")
-
--- Profile stuff
-Map("n", "<leader>|", "", " Profiles")
-Map("n", "<leader>|c", function()
-  vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
-end, "Show Current Profile")
-Map("n", "<leader>|s", "<cmd>lua require('profile').choose_profile()<CR>", "Switch Profile")
-
--- Clipboard stuff
-vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
-Map({'n', 'v', 'x'}, '_', '"_', 'Black hole')
-Map({'n', 'v', 'x'}, ';', '"+', 'System clipboard')
-Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
--- "_ black hole, "+ or "* system cbd, "" nvim default cbd
-
--- Misc stuff
-Map('n', '<Leader>c', '', ' Symbols')
-Map('n', '<Leader>s', '', ' Todos & Noice')
-Map('n', '<Leader>f', '', '󰍉 Find', true)
-Map('n', '<Leader>gh', '', ' Hunks')
-
-Map('n', '<Leader>D', function()
-  vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-end, 'Chdir to parent dir')
-Map({'n', 'v', 'x'}, '<c-a>', '<esc>ggVG', 'Select all')
 

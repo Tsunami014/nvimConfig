@@ -46,7 +46,7 @@ loadProjects()
 function M.loadUI()
   local cwd = vim.fn.getcwd()
   require("resession").load(cwd, { dir = "dirsession" })
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>e", true, false, true), "m", false)
+  vim.api.nvim_feedkeys("<CMD>Neotree<Cr>", "m", false)
 end
 
 function M.loadProject(ncwd)

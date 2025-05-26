@@ -7,6 +7,35 @@ return {
     lazy = false,
     priority = 1000,
     opts = {},
+    config = function()
+      vim.cmd.colorscheme("tokyonight-night")
+    end,
+  },
+
+  -- Highlight similar words
+  {
+    "RRethy/vim-illuminate",
+    event = { "BufReadPost", "BufNewFile" },
+    config = function()
+      -- You can customize delay, filetypes, etc. if desired
+      require("illuminate").configure({
+        delay = 200,
+        large_file_cutoff = 2000,
+        large_file_overrides = {
+          providers = { "lsp" },
+        },
+      })
+    end,
+  },
+  -- Highlight colours (e.g. #2F34E2)
+  {
+    "brenoprata10/nvim-highlight-colors",
+    event = { "BufReadPost", "BufNewFile" },
+    opts = {
+      render = "background", -- "foreground" | "first_column" | "background"
+      enable_tailwind = true,
+      custom_colors = {},    -- hex override table
+    },
   },
 
   -- Markdown renderer
@@ -19,20 +48,6 @@ return {
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
     ft = { "markdown" },
     build = "cd app && npm install",
-    init = function()
-      vim.g.mkdp_filetypes = { "markdown" }
-      vim.cmd([[
-        function! OpenMarkdownPreview(url) abort
-          execute 'lua vim.notify("Opening Markdown Preview in Firefox...", vim.log.levels.INFO, { title = "Markdown Preview" })'
-          execute 'lua vim.fn.jobstart({"firefox", "--new-instance", "--new-window", "' . a:url . '"}, {detach = true})'
-        endfunction
-        ]])
-
-        vim.g.mkdp_browserfunc = "OpenMarkdownPreview"
-    end,
-    keys = {
-      { "<leader>m", ":MarkdownPreview<CR>", desc = "Markdown preview", mode = "n" },
-    }
   },
 
   -- Markdown image viewer
@@ -119,26 +134,6 @@ return {
         long_message_to_split = true,
       },
     },
-    -- stylua: ignore
-    keys = {
-      { "<leader>sn", "", desc = " Noice"},
-      { "<S-Enter>", function() require("noice").redirect(vim.fn.getcmdline()) end, mode = "c", desc = "Redirect Cmdline" },
-      { "<leader>snl", function() require("noice").cmd("last") end, desc = "Noice Last Message" },
-      { "<leader>snh", function() require("noice").cmd("history") end, desc = "Noice History" },
-      { "<leader>sna", function() require("noice").cmd("all") end, desc = "Noice All" },
-      { "<leader>snd", function() require("noice").cmd("dismiss") end, desc = "Dismiss All" },
-      { "<leader>snt", function() require("noice").cmd("pick") end, desc = "Noice Picker (Telescope/FzfLua)" },
-      { "<c-f>", function() if not require("noice.lsp").scroll(4) then return "<c-f>" end end, silent = true, expr = true, desc = "Scroll Forward", mode = {"i", "n", "s"} },
-      { "<c-b>", function() if not require("noice.lsp").scroll(-4) then return "<c-b>" end end, silent = true, expr = true, desc = "Scroll Backward", mode = {"i", "n", "s"}},
-    },
-    config = function(_, opts)
-      -- HACK: noice shows messages from before it was enabled,
-      -- but this is not ideal when Lazy is installing plugins,
-      -- so clear the messages in this case.
-      if vim.o.filetype == "lazy" then vim.cmd [[messages clear]] end
-      vim.opt.showmode = false
-      require("noice").setup(opts)
-    end,
   },
 
   -- statusline
