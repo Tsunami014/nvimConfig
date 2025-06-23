@@ -50,37 +50,6 @@ return {
     build = "cd app && npm install",
   },
 
-  -- Markdown image viewer
-  {
-    '3rd/image.nvim',
-    enabled = profile == 'Linux',
-    config = function()
-      require('image').setup({
-        backend = "kitty",
-        kitty_method = "normal",
-        processor = "magick_cli",
-        integrations = {
-          markdown = {
-            enabled = true,
-            clear_in_insert_mode = true,
-            download_remote_images = true,
-            only_render_image_at_cursor = true,
-            floating_windows = false, -- if true, images will be rendered in floating markdown windows
-            filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
-          },
-          html = {
-            enabled = true,
-          },
-          css = {
-            enabled = false,
-          },
-        },
-        max_width_window_percentage = 100,
-        max_height_window_percentage = 50,
-      })
-    end
-  },
-
   -- Search in a nice bubble
   {
     'VonHeikemen/searchbox.nvim',

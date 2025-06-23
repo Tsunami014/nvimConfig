@@ -26,13 +26,15 @@ function Register(prefix, group, icon, mappings, leader)
   wk.add({mode = 'n', result})
 end
 
-function Map(mode, lhs, rhs, desc)
+function Map(mode, lhs, rhs, desc, options)
   if rhs == false then
     vim.api.nvim_del_keymap(mode, lhs)
     return
   end
 
-  local options = { noremap = true, silent = true }
+  if options == nil then
+    options = { noremap = true, silent = true }
+  end
   if desc then options.desc = desc end
   vim.keymap.set(mode, lhs, rhs, options)
 end
@@ -75,12 +77,18 @@ Register("|", "Profiles", "", {
 
 Register("f", "Find", "󰍉", {
   n = { "<cmd>Telescope notify<cr>", "Find notifications" },
-  f = { "<cmd>Telescope find_files<cr>", "Find Files" },
-  g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live)" },
+  f = { function()
+    require('telescope.builtin').find_files({ cwd = vim.fn.getcwd() })
+  end, "Find Files" },
+  F = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
+  g = { function()
+    require('telescope.builtin').live_grep({ cwd = vim.fn.getcwd() })
+  end, "Find Grep (Live)" },b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
+  G = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
   b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
   h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
   w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
-  F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
+  R = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
   c = { "<cmd>Telescope commands<cr>", "Find Commands" },
   k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
   s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
@@ -251,16 +259,25 @@ wk.add({
 
       comms.toggle_comment_lines(start_line - 1, end_line - 1)
     end)
-  end, "Toggle comments", "/", nil, "v")
-})
+  end, "Toggle comments", "/", nil, "v"),
 
+  ToMap("<C-.>", "<C-t>", "Indent line", ">", "", "i"),
+  ToMap("<C-,>", "<C-d>", "De-indent line", "<", "", "i"),
+  ToMap("<C-S-.>", "<C-t>", "Indent line", ">", "", "i"),
+  ToMap("<C-S-,>", "<C-d>", "De-indent line", "<", "", "i"),
+})
 
 local cmp = require("cmp")
 Map({'i', 's'}, '<Tab>', function()
   if cmp.visible() then
     cmp.select_next_item()
+    return ""
+  else
+    local col = vim.fn.col(".")
+    local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
+    return string.rep(" ", spaces)
   end
-end, 'Next completion')
+end, 'Next completion', { silent = true, expr = true })
 Map({'i', 's'}, '<S-Tab>', function()
   if cmp.visible() then
     cmp.select_prev_item()

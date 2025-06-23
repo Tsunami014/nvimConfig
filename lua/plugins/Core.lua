@@ -77,6 +77,9 @@ return {
           { name = "buffer" },
           { name = "path" },
           { name = "nvim_lua" },
+          per_filetype = {
+            codecompanion = { "codecompanion" },
+          }
         },
         window = {
           completion = cmp.config.window.bordered(),

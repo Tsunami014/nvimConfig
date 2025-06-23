@@ -2,6 +2,15 @@
 
 ## 🛠️ Installation
 
+To use the AI you will need to add a file in `lua/user/secrets.lua` which contains:
+```lua
+return {
+  OPENAI_API_KEY = "sk-xxxxxxx",
+  GEMINI_API_KEY = "your-gemini-key",
+  DEEPSEEK_API_KEY = "your-deepseek-key",
+}
+```
+
 ### Make a backup of your current nvim and shared folder
 ```shell
 mv ~/.config/nvim ~/.config/nvim.bak

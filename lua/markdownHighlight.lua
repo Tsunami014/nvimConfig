@@ -1,6 +1,5 @@
 local M = {}
 local ns = vim.api.nvim_create_namespace("markdownHighlight")
-local filetype = "markdown"
 
 local heading_hl = {
   "@markup.heading.1.markdown",
@@ -148,7 +147,10 @@ local lang_icons = {
 -- Redraw all overlays, skipping the cursor line
 function M.redraw(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_option(bufnr, "filetype") ~= filetype then return end
+  local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+  if ft ~= "markdown" and ft ~= "codecompanion" then
+    return
+  end
   vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -333,7 +335,7 @@ end
 function M.setup()
   vim.cmd([[augroup MarkdownNumberDisplay
     autocmd!
-    autocmd CursorMoved,CursorMovedI,BufEnter,BufWritePost,TextChanged,TextChangedI *.md lua require('markdownHighlight').redraw()
+    autocmd CursorMoved,CursorMovedI,BufEnter,BufWritePost,TextChanged,TextChangedI * lua require('markdownHighlight').redraw()
   augroup END]])
 end
 

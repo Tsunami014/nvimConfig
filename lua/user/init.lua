@@ -1,6 +1,16 @@
 require "user.lualine-theme"
 require "user.keybinds"
 
+-- Pretend code completion windows are markdown
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "codecompanion",
+    callback = function()
+        vim.opt.filetype = "markdown"
+        vim.cmd("doautocmd FileType markdown")
+    end
+})
+
+
 local resession = require("resession")
 local session_cache = {}
 local function get_session_name()
@@ -32,7 +42,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufDelete" }, {
 
 
 require('nvim-treesitter.configs').setup {
-  ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash",
+  ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash", "yaml",
                        "css", "html", "javascript", "latex", "norg", "scss", "svelte", "tsx", "typst", "vue" },
 }
 

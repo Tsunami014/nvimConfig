@@ -14,8 +14,10 @@ return {
     },
   },
 
+  -- You can probably *guess* what this does
   {
     'nmac427/guess-indent.nvim',
+    lazy = false,
     config = function() require('guess-indent').setup {} end,
   },
 
