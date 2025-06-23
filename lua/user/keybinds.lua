@@ -77,18 +77,12 @@ Register("|", "Profiles", "", {
 
 Register("f", "Find", "󰍉", {
   n = { "<cmd>Telescope notify<cr>", "Find notifications" },
-  f = { function()
-    require('telescope.builtin').find_files({ cwd = vim.fn.getcwd() })
-  end, "Find Files" },
-  F = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
-  g = { function()
-    require('telescope.builtin').live_grep({ cwd = vim.fn.getcwd() })
-  end, "Find Grep (Live)" },b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
-  G = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
+  f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
+  g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
   b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
   h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
   w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
-  R = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
+  F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
   c = { "<cmd>Telescope commands<cr>", "Find Commands" },
   k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
   s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
