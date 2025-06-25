@@ -1,9 +1,12 @@
 local ok, secrets = pcall(require, "lua.user.secrets")
 if not ok then
-  vim.notify(
-    "[codecompanion] secrets.lua not found. Skipping API key setup.",
-    vim.log.levels.WARN
-  )
+  vim.schedule(
+    function()
+      vim.notify(
+        "[codecompanion] secrets.lua not found. Skipping API key setup.",
+        vim.log.levels.WARN
+      )
+    end)
   secrets = {}  -- fallback to empty table
 end
 
@@ -14,14 +17,6 @@ return {
   },
   config = function()
     require("codecompanion").setup({
-      display = {
-        chat = {
-          show_settings         = true,
-          show_header_separator = true,
-        },
-      },
-
-
       adapters = {
         openai = function()
           return require("codecompanion.adapters").extend("openai", {
@@ -64,44 +59,5 @@ return {
         agent  = { adapter = secrets.OPENAI_API_KEY and "openai"   or "ollama" },
       },
     })
-    local cc_cfg = require("codecompanion.config")
-
-    -- 3) Define your custom “choose provider → choose model” picker:
-    vim.keymap.set("n", "<leader>cp", function()
-      -- your hard-coded whitelist (just keys from cc_cfg.adapters)
-      local whitelist = { "openai", "anthropic" }
-
-      -- build the list of actually available providers
-      local providers = {}
-      for _, name in ipairs(whitelist) do
-        if cc_cfg.adapters[name] then
-          table.insert(providers, name)
-        end
-      end
-
-      -- pick a provider
-      vim.ui.select(providers, { prompt = "Choose AI provider" }, function(provider)
-        if not provider then return end
-
-        -- pick a model from that provider
-        local adapter = cc_cfg.adapters[provider]()
-        local schema = adapter.schema or {}
-        local model_field = schema.model or {}
-
-        -- get list of model choices
-        local models = model_field.choices or {}
-        if #models == 0 and model_field.default then
-          models = { model_field.default }
-        end
-        vim.ui.select(models, { prompt = provider .. " model" }, function(model)
-          if not model then return end
-
-          vim.g.codecompanion_adapter = provider
-          vim.g.codecompanion_model   = model
-
-          vim.cmd("CodeCompanionChat")
-        end)
-      end)
-    end, { desc = "⟡ CodeCompanion: pick whitelisted provider + model" })
   end
 }

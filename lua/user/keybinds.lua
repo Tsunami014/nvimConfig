@@ -260,31 +260,23 @@ wk.add({
 })
 
 local cmp = require("cmp")
-Map({'i', 's'}, '<Tab>', function(fallback)
+Map({'i', 's'}, '<Tab>', function()
   if cmp.visible() then
     cmp.select_next_item()
   else
-    fallback()
+    local col = vim.fn.col(".")
+    local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
+    vim.api.nvim_feedkeys(string.rep(" ", spaces), "n", false)
   end
 end, 'Next completion')
 
-Map({'i', 's'}, '<S-Tab>', function(fallback)
+Map({'i', 's'}, '<S-Tab>', function()
   if cmp.visible() then
     cmp.select_prev_item()
-  else
-    fallback()
   end
 end, 'Previous completion')
 
 Map({'i', 's'}, '<C-Space>', function() cmp.complete() end, 'Open completions')
-
-Map({'i', 's'}, '<CR>', function(fallback)
-  if cmp.visible() and cmp.get_selected_entry() ~= nil then
-    cmp.confirm({ select = true })
-  else
-    fallback()
-  end
-end, 'Confirm completion')
 
 
 
