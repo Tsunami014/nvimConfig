@@ -130,6 +130,7 @@ Register("g", "Hunks", "", {
 local dap = require("dap")
 local dapui = require("dapui")
 Map("n", "<F5>", dap.continue, "DAP Continue")
+Map("n", "<F6>", dap.run_last, "DAP Run last config")
 Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_into, "DAP Step Into")
 Map("n", "<F12>", dap.step_out, "DAP Step Out")

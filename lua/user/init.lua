@@ -87,10 +87,10 @@ vim.opt.swapfile = false
 --   end
 -- })
 
-table.insert(require("dap").configurations.python, {
+table.insert(require("dap").configurations.python, 1, {
   type = "python",
   request = "launch",
-  name = "Launch file with current venv",
+  name = "Python: Launch file with current venv",
 
   program = "${file}",
   pythonPath = function()
