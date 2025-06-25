@@ -74,6 +74,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 vim.opt.exrc = true
 vim.opt.secure = true
+vim.opt.swapfile = false
 
 -- vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
 --   pattern = "*",
