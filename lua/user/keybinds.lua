@@ -257,48 +257,37 @@ wk.add({
 
   ToMap("<C-.>", "<C-t>", "Indent line", ">", "", "i"),
   ToMap("<C-,>", "<C-d>", "De-indent line", "<", "", "i"),
-  ToMap("<C-S-.>", "<C-t>", "Indent line", ">", "", "i"),
-  ToMap("<C-S-,>", "<C-d>", "De-indent line", "<", "", "i"),
 })
 
 local cmp = require("cmp")
-Map({'i', 's'}, '<Tab>', function()
+Map({'i', 's'}, '<Tab>', function(fallback)
   if cmp.visible() then
     cmp.select_next_item()
-    return ""
   else
-    local col = vim.fn.col(".")
-    local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
-    return string.rep(" ", spaces)
+    fallback()
   end
-end, 'Next completion', { silent = true, expr = true })
-Map({'i', 's'}, '<S-Tab>', function()
+end, 'Next completion')
+
+Map({'i', 's'}, '<S-Tab>', function(fallback)
   if cmp.visible() then
     cmp.select_prev_item()
+  else
+    fallback()
   end
 end, 'Previous completion')
-Map({'i', 's'}, '<C-Space>', function() cmp.mapping.complete() end, 'Open completions')
-Map({'i', 's'}, '<C-e>', function() cmp.mapping.abort() end, 'Abort mapping')
-Map({'i', 's'}, '<CR>', function()
-  if cmp.visible() then
-    cmp.mapping.confirm({select = true})
+
+Map({'i', 's'}, '<C-Space>', function() cmp.complete() end, 'Open completions')
+
+Map({'i', 's'}, '<CR>', function(fallback)
+  if cmp.visible() and cmp.get_selected_entry() ~= nil then
+    cmp.confirm({ select = true })
+  else
+    fallback()
   end
-end)
-
-
-
-
-
-
-
-
-
-
+end, 'Confirm completion')
 
 
 
 Map("n", "<leader>cs", "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)")
 Map("n", "<leader>cS", "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)")
-
-
 
