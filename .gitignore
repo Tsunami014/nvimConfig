@@ -2,3 +2,5 @@ profile.json
 projects.json
 lua/user/secrets.lua
 
+lazy-lock.json
+
