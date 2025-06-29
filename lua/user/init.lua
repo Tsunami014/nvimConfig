@@ -87,7 +87,8 @@ vim.opt.swapfile = false
 --   end
 -- })
 
-table.insert(require("dap").configurations.python, 1, {
+local dap = require("dap")
+table.insert(dap.configurations.python, 1, {
   type = "python",
   request = "launch",
   name = "Python: Launch file with current venv",
@@ -96,6 +97,11 @@ table.insert(require("dap").configurations.python, 1, {
   pythonPath = function()
     return require("venv-selector").python()
   end,
+})
+-- Use python debug config for 'debugpy' configurations
+dap.adapters.debugpy = dap.adapters.python
+require("dap.ext.vscode").load_launchjs(nil, {
+  debugpy = dap.configurations.python,
 })
 
 -- Some language server options
