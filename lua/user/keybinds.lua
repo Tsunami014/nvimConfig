@@ -120,7 +120,7 @@ Register("g", "Git", "󰊢", {
   d = { gs.diffthis, "Diff This" },
   D = { function() gs.diffthis("~") end, "Diff This ~" },
 })
-Register("g", "Hunks", "", {
+Register("h", "Hunks", "", {
   s = { ":Gitsigns stage_hunk<CR>", "Stage Hunk" },
   r = { ":Gitsigns reset_hunk<CR>", "Reset Hunk" },
   p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
