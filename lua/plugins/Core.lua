@@ -1,4 +1,7 @@
 return {
+  -- Wakatime - for keeping track of time spent coding
+  { 'wakatime/vim-wakatime', lazy = false },
+
   {
     'nvim-telescope/telescope.nvim',
     tag = '0.1.8',
