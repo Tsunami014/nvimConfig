@@ -94,6 +94,14 @@ Register("f", "Find", "󰍉", {
   T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
 })
 
+Register("r", "Find & replace", "󰗧", {
+  r = { "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer" },
+  R = { "<cmd>SearchReplaceMultiBufferOpen<cr>", "Replace in all buffers" },
+  w = { "<cmd>SearchReplaceSingleBufferCWord<cr>", "Replace current word" },
+  W = { "<cmd>SearchReplaceSingleBufferCWORD<cr>", "Replace current word (greedy)" },
+  e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
+})
+
 Register("x", "Todos & Troubles", "", {
   x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
   X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
@@ -202,6 +210,8 @@ Map({'v', 'x'}, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 Map({'n', 'v'}, '?', '<cmd>WhichKey', 'Activate which-key')
 
 Map("n", "<leader>dv", "<cmd>VenvSelect<cr>", "Select venv")
+
+Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
 
 
 Map({"n", "v"}, "Q", "<cmd>q<CR>", "Quit")

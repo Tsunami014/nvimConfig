@@ -70,11 +70,9 @@ return {
 
   -- find and replace
   {
-    'MagicDuck/grug-far.nvim',
+    "roobert/search-replace.nvim",
     config = function()
-      require('grug-far').setup({
-        -- no options are required, but you can add your own here
-      })
+      require("search-replace").setup({})
     end,
   },
 

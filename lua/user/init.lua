@@ -76,6 +76,9 @@ vim.opt.exrc = true
 vim.opt.secure = true
 vim.opt.swapfile = false
 
+-- Show the effects of a search / replace in a live preview window
+vim.o.inccommand = "split"
+
 -- vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
 --   pattern = "*",
 --   callback = function()
