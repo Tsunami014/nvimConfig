@@ -1,138 +1,138 @@
 local wk = require("which-key")
 
 function Register(prefix, group, icon, mappings, leader)
-  if leader == nil then
-    leader = "<leader>"
-  end
-  local result = {
-    {leader .. prefix, group = group, icon = icon}
-  }
-
-  for k, v in pairs(mappings) do
-    local key = leader .. prefix .. k
-    local rhs = v[1]
-    local desc = v[2]
-    local ico = icon
-    if v.icon ~= nil then
-      ico = v.icon
+    if leader == nil then
+        leader = "<leader>"
     end
-    local mode = "n"
-    if v.mode ~= nil then
-      mode = v.mode
-    end
-    table.insert(result, {key, rhs, desc = desc, icon = ico, mode = mode})
-  end
+    local result = {
+        { leader .. prefix, group = group, icon = icon }
+    }
 
-  wk.add({mode = 'n', result})
+    for k, v in pairs(mappings) do
+        local key = leader .. prefix .. k
+        local rhs = v[1]
+        local desc = v[2]
+        local ico = icon
+        if v.icon ~= nil then
+            ico = v.icon
+        end
+        local mode = "n"
+        if v.mode ~= nil then
+            mode = v.mode
+        end
+        table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
+    end
+
+    wk.add({ mode = 'n', result })
 end
 
 function Map(mode, lhs, rhs, desc, options)
-  if rhs == false then
-    vim.api.nvim_del_keymap(mode, lhs)
-    return
-  end
+    if rhs == false then
+        vim.api.nvim_del_keymap(mode, lhs)
+        return
+    end
 
-  if options == nil then
-    options = { noremap = true, silent = true }
-  end
-  if desc then options.desc = desc end
-  vim.keymap.set(mode, lhs, rhs, options)
+    if options == nil then
+        options = { noremap = true, silent = true }
+    end
+    if desc then options.desc = desc end
+    vim.keymap.set(mode, lhs, rhs, options)
 end
 
 function ToMap(key, rhs, desc, icon, leader, mode)
-  leader = leader or "<leader>"
-  local fullKey = leader .. key
-  local map = {
-    fullKey,
-    rhs,
-    desc = desc,
-  }
-  if icon then map.icon = icon end
-  if mode then map.mode = mode end
-  return map
+    leader = leader or "<leader>"
+    local fullKey = leader .. key
+    local map = {
+        fullKey,
+        rhs,
+        desc = desc,
+    }
+    if icon then map.icon = icon end
+    if mode then map.mode = mode end
+    return map
 end
-
 
 -- Clipboard stuff
 vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
-Map({'n', 'v', 'x'}, '_', '"_', 'Black hole')
-Map({'n', 'v', 'x'}, ';', '"+', 'System clipboard')
-Map({'n', 'v', 'x'}, "'", '""', 'Vim clipboard')
+Map({ 'n', 'v', 'x' }, '_', '"_', 'Black hole')
+Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
+Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
 -- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
 
 local proj = require("project")
 Register("p", "Projects", "󰉓", {
-  s = { proj.save_project, "Save project" },
-  l = { proj.findProjects, "Load project" }
+    s = { proj.save_project, "Save project" },
+    l = { proj.findProjects, "Load project" }
 })
 
 Register("|", "Profiles", "", {
-  c = { function()
-    vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
-  end, "Show Current Profile" },
-  s = {function() require('profile').choose_profile() end, "Switch Profile" }
+    c = { function()
+        vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
+    end, "Show Current Profile" },
+    s = { function() require('profile').choose_profile() end, "Switch Profile" }
 })
 
 
 Register("f", "Find", "󰍉", {
-  n = { "<cmd>Telescope notify<cr>", "Find notifications" },
-  f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
-  g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
-  b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
-  h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
-  w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
-  F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
-  c = { "<cmd>Telescope commands<cr>", "Find Commands" },
-  k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
-  s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
-  d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics" },
+    n = { "<cmd>Telescope notify<cr>", "Find notifications" },
+    f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
+    g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
+    b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
+    h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
+    H = { "<cmd>Telescope highlights<cr>", "Find highlights" },
+    w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
+    F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
+    c = { "<cmd>Telescope commands<cr>", "Find Commands" },
+    k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
+    s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
+    d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics" },
 
-  r = { "<cmd>GrugFar<cr>", "Find & replace in all files", icon = "󰗧" },
+    r = { "<cmd>GrugFar<cr>", "Find & replace in all files", icon = "󰗧" },
 
-  t = { "<cmd>TodoTelescope<cr>", "Find Todos", icon = "" },
-  T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
+    t = { "<cmd>TodoTelescope<cr>", "Find Todos", icon = "" },
+    T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
 })
 
 Register("r", "Find & replace", "󰗧", {
-  r = { "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer" },
-  R = { "<cmd>SearchReplaceMultiBufferOpen<cr>", "Replace in all buffers" },
-  w = { "<cmd>SearchReplaceSingleBufferCWord<cr>", "Replace current word" },
-  W = { "<cmd>SearchReplaceSingleBufferCWORD<cr>", "Replace current word (greedy)" },
-  e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
+    r = { "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer" },
+    R = { "<cmd>SearchReplaceMultiBufferOpen<cr>", "Replace in all buffers" },
+    w = { "<cmd>SearchReplaceSingleBufferCWord<cr>", "Replace current word" },
+    W = { "<cmd>SearchReplaceSingleBufferCWORD<cr>", "Replace current word (greedy)" },
+    e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
 })
 
 Register("x", "Todos & Troubles", "", {
-  x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
-  X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
-  l = { "<cmd>Trouble loclist toggle<cr>", "Location List (Trouble)", icon = "" },
-  q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List (Trouble)", icon = "" },
-  t = { "<cmd>Trouble todo toggle<cr>", "Todo (Trouble)" },
-  T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme (Trouble)" }
+    x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
+    X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
+    l = { "<cmd>Trouble loclist toggle<cr>", "Location List (Trouble)", icon = "" },
+    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List (Trouble)", icon = "" },
+    t = { "<cmd>Trouble todo toggle<cr>", "Todo (Trouble)" },
+    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme (Trouble)" }
 })
 
 Register("s", "Session", "", {
-  s = { function() require("resession").save() end, "Save Session" },
-  l = { "<cmd>Telescope resession<CR>", "Session picker" },
-  L = { function() require("resession").load() end, "Load Session" },
-  d = { function() require("resession").delete() end, "Delete Session" }
+    s = { function() require("resession").save() end, "Save Session" },
+    l = { "<cmd>Telescope resession<CR>", "Session picker" },
+    L = { function() require("resession").load() end, "Load Session" },
+    d = { function() require("resession").delete() end, "Delete Session" }
 })
 
 local gs = require("gitsigns")
 Register("g", "Git", "󰊢", {
-  g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
+    g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
 
-  s = { gs.stage_buffer, "Stage Buffer" },
-  R = { gs.reset_buffer, "Reset Buffer" },
-  b = { function() gs.blame() end, "Blame Buffer" },
-  d = { gs.diffthis, "Diff This" },
-  D = { function() gs.diffthis("~") end, "Diff This ~" },
+    s = { gs.stage_buffer, "Stage Buffer" },
+    R = { gs.reset_buffer, "Reset Buffer" },
+    b = { function() gs.blame() end, "Blame Buffer" },
+    d = { gs.diffthis, "Diff This" },
+    D = { function() gs.diffthis("~") end, "Diff This ~" },
 })
 Register("h", "Hunks", "", {
-  s = { ":Gitsigns stage_hunk<CR>", "Stage Hunk" },
-  r = { ":Gitsigns reset_hunk<CR>", "Reset Hunk" },
-  p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
-  b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
+    s = { ":Gitsigns stage_hunk<CR>", "Stage Hunk" },
+    r = { ":Gitsigns reset_hunk<CR>", "Reset Hunk" },
+    p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
+    b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
 }, "<leader>g")
 
 local dap = require("dap")
@@ -143,79 +143,91 @@ Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_into, "DAP Step Into")
 Map("n", "<F12>", dap.step_out, "DAP Step Out")
 Register("d", "Debug", "", {
-  b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
-  B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
-  r = { dap.repl.open, "Open REPL" },
-  l = { dap.run_last, "Run Last DAP" },
-  u = { dapui.toggle, "DAP UI Toggle" },
-  e = { dapui.eval, "DAP Eval" }
+    b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
+    B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
+    r = { dap.repl.open, "Open REPL" },
+    l = { dap.run_last, "Run Last DAP" },
+    u = { dapui.toggle, "DAP UI Toggle" },
+    e = { dapui.eval, "DAP Eval" }
 })
 
 Register("t", "Terminal", "", {
-  t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
-  h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
-  v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
-  f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
+    t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
+    h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
+    v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
+    f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
 })
 
 Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
 Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
 Register("b", "Buffer", "󰓩", {
-  n = { "<cmd>tabnew<cr>", "New Buffer" },
-  p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
-  c = { "<cmd>BufferClose<cr>", "Close Buffer" },
-  o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
-  r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
-  a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" }
+    n = { "<cmd>tabnew<cr>", "New Buffer" },
+    p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
+    c = { "<cmd>BufferClose<cr>", "Close Buffer" },
+    o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
+    r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
+    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" }
 })
 
 local quotes = {
-  "YOU GOT THIS!",
-  "I BELIEVE IN YOU!",
-  "DON'T GIVE UP!",
-  "KEEP GOING!",
-  "IT'S ALL THE CODE'S FAULT NOT YOURS!",
-  "BUGS ARE INEVITABLE DURING PRODUCTION."
+    "YOU GOT THIS!",
+    "I BELIEVE IN YOU!",
+    "DON'T GIVE UP!",
+    "KEEP GOING!",
+    "IT'S ALL THE CODE'S FAULT NOT YOURS!",
+    "BUGS ARE INEVITABLE DURING PRODUCTION."
 }
 Register("u", "UI", "", {
-  m = { ":MarkdownPreview<CR>", "Markdown preview", icon = "󰈈" },
-  M = { function()
-    local quote = quotes[math.random(#quotes)]
-    vim.notify(quote, vim.log.levels.INFO, { title = "🔥 Motivation Boost" })
-  end, "Motivation", icon = ""},
+    m = { ":MarkdownPreview<CR>", "Markdown preview", icon = "󰈈" },
+    M = {
+        function()
+            local quote = quotes[math.random(#quotes)]
+            vim.notify(quote, vim.log.levels.INFO, { title = "Motivation Boost" })
+        end,
+        "Motivation",
+        icon = ""
+    },
 
-  ["."] = { proj.loadUI, "Initialise the UI", }
-  -- TODO: Wrap
+    ["."] = { proj.loadUI, "Initialise the UI", },
+    w = {
+        function()
+            vim.cmd("set wrap!")
+            local wrap_status = vim.wo.wrap and "enabled" or "disabled"
+            vim.notify("Wrap " .. wrap_status, vim.log.levels.INFO, { title = "Wrap Toggle" })
+        end,
+        "Toggle wrap",
+        icon = "󰖶"
+    },
 })
 
 Register("P", "Packages", "", {
-  m = { "<cmd>Mason<cr>", "Open Mason" }
+    m = { "<cmd>Mason<cr>", "Open Mason" }
 })
 
 Register("]", "Next", "󰒭", {
-  t = { function() require("todo-comments").jump_next() end, "Next Todo Comment", icon = "" },
-  h = { function() gs.nav_hunk("next") end, "Next Hunk", icon = "󰊢" },
-  H = { function() gs.nav_hunk("last") end, "Last Hunk", icon = "󰊢" }
+    t = { function() require("todo-comments").jump_next() end, "Next Todo Comment", icon = "" },
+    h = { function() gs.nav_hunk("next") end, "Next Hunk", icon = "󰊢" },
+    H = { function() gs.nav_hunk("last") end, "Last Hunk", icon = "󰊢" }
 })
 Register("[", "Previous", "󰒮", {
-  t = { function() require("todo-comments").jump_prev() end, "Previous Todo Comment", icon = "" },
-  h = { function() gs.nav_hunk("prev") end, "Prev Hunk", icon = "󰊢" },
-  H = { function() gs.nav_hunk("first") end, "First Hunk", icon = "󰊢" }
+    t = { function() require("todo-comments").jump_prev() end, "Previous Todo Comment", icon = "" },
+    h = { function() gs.nav_hunk("prev") end, "Prev Hunk", icon = "󰊢" },
+    H = { function() gs.nav_hunk("first") end, "First Hunk", icon = "󰊢" }
 })
 
 -- Misc stuff
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
-Map({'v', 'x'}, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
+Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 
-Map({'n', 'v'}, '?', '<cmd>WhichKey', 'Activate which-key')
+Map({ 'n', 'v' }, '?', '<cmd>WhichKey', 'Activate which-key')
 
 Map("n", "<leader>dv", "<cmd>VenvSelect<cr>", "Select venv")
 
 Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
 
 
-Map({"n", "v"}, "Q", "<cmd>q<CR>", "Quit")
-Map({'n', 'v', 'x'}, '<c-a>', '<esc>ggVG', 'Select all')
+Map({ "n", "v" }, "Q", "<cmd>q<CR>", "Quit")
+Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
@@ -223,74 +235,73 @@ Map("v", "<", "<gv", "Deindent selection")
 
 comms = require("user.commenter")
 wk.add({
-  ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree"),
-  ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
+    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree"),
+    ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
-  ToMap("L", function()
-    local cwd = vim.fn.getcwd()
-    local lua_rc = cwd .. "/.nvim.lua"
-    local vim_rc = cwd .. "/.nvimrc"
+    ToMap("L", function()
+        local cwd = vim.fn.getcwd()
+        local lua_rc = cwd .. "/.nvim.lua"
+        local vim_rc = cwd .. "/.nvimrc"
 
-    if vim.fn.filereadable(lua_rc) == 1 then
-      dofile(lua_rc)
-      print("Loaded .nvim.lua from " .. lua_rc)
-    elseif vim.fn.filereadable(vim_rc) == 1 then
-      vim.cmd("source " .. vim_rc)
-      print("Sourced .nvimrc from " .. vim_rc)
-    else
-      print("No .nvim.lua or .nvimrc found in current directory.")
-    end
-  end, "Load cwd/.nvimrc", ""),
+        if vim.fn.filereadable(lua_rc) == 1 then
+            dofile(lua_rc)
+            print("Loaded .nvim.lua from " .. lua_rc)
+        elseif vim.fn.filereadable(vim_rc) == 1 then
+            vim.cmd("source " .. vim_rc)
+            print("Sourced .nvimrc from " .. vim_rc)
+        else
+            print("No .nvim.lua or .nvimrc found in current directory.")
+        end
+    end, "Load cwd/.nvimrc", ""),
 
-  ToMap("D", function()
-    vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-  end, "Chdir to parent dir", "󰌑"),
+    ToMap("D", function()
+        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+    end, "Chdir to parent dir", "󰌑"),
 
-  ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", ""), -- <cmd>DogeGenerate<cr>
+    ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", ""), -- <cmd>DogeGenerate<cr>
 
-  ToMap("/", function()
-    local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-    comms.toggle_comment_lines(line, line)
-  end, "Toggle comment", "/"),
-  ToMap("/", function()
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
-    vim.schedule(function()
-      local start_line = vim.fn.line("'<")
-      local end_line = vim.fn.line("'>")
+    ToMap("/", function()
+        local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+        comms.toggle_comment_lines(line, line)
+    end, "Toggle comment", "/"),
+    ToMap("/", function()
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+        vim.schedule(function()
+            local start_line = vim.fn.line("'<")
+            local end_line = vim.fn.line("'>")
 
-      if start_line > end_line then
-        start_line, end_line = end_line, start_line
-      end
+            if start_line > end_line then
+                start_line, end_line = end_line, start_line
+            end
 
-      comms.toggle_comment_lines(start_line - 1, end_line - 1)
-    end)
-  end, "Toggle comments", "/", nil, "v"),
+            comms.toggle_comment_lines(start_line - 1, end_line - 1)
+        end)
+    end, "Toggle comments", "/", nil, "v"),
 
-  ToMap("<C-.>", "<C-t>", "Indent line", ">", "", "i"),
-  ToMap("<C-,>", "<C-d>", "De-indent line", "<", "", "i"),
+    ToMap("<C-.>", "<C-t>", "Indent line", ">", "", "i"),
+    ToMap("<C-,>", "<C-d>", "De-indent line", "<", "", "i"),
 })
 
 local cmp = require("cmp")
-Map({'i', 's'}, '<Tab>', function()
-  if cmp.visible() then
-    cmp.select_next_item()
-  else
-    local col = vim.fn.col(".")
-    local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
-    vim.api.nvim_feedkeys(string.rep(" ", spaces), "n", false)
-  end
+Map({ 'i', 's' }, '<Tab>', function()
+    if cmp.visible() then
+        cmp.select_next_item()
+    else
+        local col = vim.fn.col(".")
+        local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
+        vim.api.nvim_feedkeys(string.rep(" ", spaces), "n", false)
+    end
 end, 'Next completion')
 
-Map({'i', 's'}, '<S-Tab>', function()
-  if cmp.visible() then
-    cmp.select_prev_item()
-  end
+Map({ 'i', 's' }, '<S-Tab>', function()
+    if cmp.visible() then
+        cmp.select_prev_item()
+    end
 end, 'Previous completion')
 
-Map({'i', 's'}, '<C-Space>', function() cmp.complete() end, 'Open completions')
+Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
 
 
 Map("n", "<leader>cs", "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)")
 Map("n", "<leader>cS", "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)")
-
