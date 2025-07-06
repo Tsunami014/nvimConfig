@@ -80,7 +80,7 @@ Register("f", "Find", "󰍉", {
     g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
     h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
-    H = { "<cmd>Telescope highlights<cr>", "Find highlights" },
+    H = { "<cmd>DumpHighlights<cr>", "Find highlights" },
     w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
     F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
     c = { "<cmd>Telescope commands<cr>", "Find Commands" },
@@ -224,6 +224,8 @@ Map({ 'n', 'v' }, '?', '<cmd>WhichKey', 'Activate which-key')
 Map("n", "<leader>dv", "<cmd>VenvSelect<cr>", "Select venv")
 
 Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
+
+Map("n", "<leader>i", "<cmd>Inspect<cr>", "Inspect")
 
 
 Map({ "n", "v" }, "Q", "<cmd>q<CR>", "Quit")

@@ -10,65 +10,90 @@ vim.api.nvim_create_autocmd("FileType", {
     end
 })
 
+-- Add a dump highlights command to dump highlights to a temporary buffer
+vim.api.nvim_create_user_command("DumpHighlights", function()
+    -- Get highlight output as string
+    local output = vim.api.nvim_exec2("highlight", { output = true }).output
+    local lines = vim.split(output, "\n")
+
+    -- Open a scratch buffer
+    vim.cmd("tabnew")
+    local buf = vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    vim.bo[buf].buftype = "nofile"
+    vim.bo[buf].bufhidden = "wipe"
+    vim.bo[buf].swapfile = false
+
+    -- Actually highlight group names on each line
+    for lnum, line in ipairs(lines) do
+        -- get the first word of each line — usually the group name
+        local group = line:match("^([%w_]+)")
+        if group then
+            -- Apply the highlight to the group name itself (col 0 to its length)
+            vim.api.nvim_buf_add_highlight(buf, -1, group, lnum - 1, 0, #group)
+        end
+    end
+end, {})
+
 
 local resession = require("resession")
 local session_cache = {}
 local function get_session_name()
-  local cwd = vim.fn.getcwd()
-  -- Try to find existing session
-  local sessions = resession.list()
-  if sessions[cwd] then
-    return cwd
-  end
-  return "Last Session"
+    local cwd = vim.fn.getcwd()
+    -- Try to find existing session
+    local sessions = resession.list()
+    if sessions[cwd] then
+        return cwd
+    end
+    return "Last Session"
 end
 
 local function save_session()
-  local name = get_session_name()
-  resession.save(name, { notify = false })
+    local name = get_session_name()
+    resession.save(name, { notify = false })
 end
 local function debounced_save()
-  if session_cache.saving then return end
-  session_cache.saving = true
-  vim.defer_fn(function()
-    save_session()
-    session_cache.saving = false
-  end, 200)
+    if session_cache.saving then return end
+    session_cache.saving = true
+    vim.defer_fn(function()
+        save_session()
+        session_cache.saving = false
+    end, 200)
 end
 
 vim.api.nvim_create_autocmd({ "BufEnter", "BufDelete" }, {
-  callback = debounced_save,
+    callback = debounced_save,
 })
 
 
 require('nvim-treesitter.configs').setup {
-  ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash", "yaml",
-                       "css", "html", "javascript", "latex", "norg", "scss", "svelte", "tsx", "typst", "vue" },
+    ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash", "yaml",
+        "css", "html", "javascript", "latex", "norg", "scss", "svelte", "tsx", "typst", "vue" },
 }
 
 vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client then
-      local hover = client.handlers["textDocument/hover"]
-      client.handlers["textDocument/hover"] = function(...)
-        local result = select(2, ...)
-        if not (result and result.contents) then return end
-        vim.lsp.util.open_floating_preview(result.contents, "markdown", {
-          border = "rounded",
-        })
-      end
+    callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client then
+            local hover = client.handlers["textDocument/hover"]
+            client.handlers["textDocument/hover"] = function(...)
+                local result = select(2, ...)
+                if not (result and result.contents) then return end
+                vim.lsp.util.open_floating_preview(result.contents, "markdown", {
+                    border = "rounded",
+                })
+            end
 
-      local signature = client.handlers["textDocument/signatureHelp"]
-      client.handlers["textDocument/signatureHelp"] = function(...)
-        local result = select(2, ...)
-        if not (result and result.signatures) then return end
-        vim.lsp.util.open_floating_preview({ result.signatures[1].label }, "markdown", {
-          border = "rounded",
-        })
-      end
-    end
-  end,
+            local signature = client.handlers["textDocument/signatureHelp"]
+            client.handlers["textDocument/signatureHelp"] = function(...)
+                local result = select(2, ...)
+                if not (result and result.signatures) then return end
+                vim.lsp.util.open_floating_preview({ result.signatures[1].label }, "markdown", {
+                    border = "rounded",
+                })
+            end
+        end
+    end,
 })
 
 
@@ -92,51 +117,50 @@ vim.o.inccommand = "split"
 
 local dap = require("dap")
 table.insert(dap.configurations.python, 1, {
-  type = "python",
-  request = "launch",
-  name = "Python: Launch file with current venv",
+    type = "python",
+    request = "launch",
+    name = "Python: Launch file with current venv",
 
-  program = "${file}",
-  pythonPath = function()
-    return require("venv-selector").python()
-  end,
+    program = "${file}",
+    pythonPath = function()
+        return require("venv-selector").python()
+    end,
 })
 -- Use python debug config for 'debugpy' configurations
 dap.adapters.debugpy = dap.adapters.python
 require("dap.ext.vscode").load_launchjs(nil, {
-  debugpy = dap.configurations.python,
+    debugpy = dap.configurations.python,
 })
 
 -- Some language server options
-require('lspconfig').pyright.setup{
-  settings = {
-    python = {
-      analysis = {
-        typeCheckingMode = "off",
-        diagnosticSeverityOverrides = {
-          reportArgumentType = "none",
-          reportTypeCommentUsage = "information",
-          reportWildcardImportFromLibrary = "none",
+require('lspconfig').pyright.setup {
+    settings = {
+        python = {
+            analysis = {
+                typeCheckingMode = "off",
+                diagnosticSeverityOverrides = {
+                    reportArgumentType = "none",
+                    reportTypeCommentUsage = "information",
+                    reportWildcardImportFromLibrary = "none",
+                }
+            }
         }
-      }
     }
-  }
 }
-require('lspconfig').ruff.setup{
-  settings = {
-    ruff_lsp = {
-      ignore = {"F405", "F841"},
+require('lspconfig').ruff.setup {
+    settings = {
+        ruff_lsp = {
+            ignore = { "F405", "F841" },
+        }
     }
-  }
 }
 
 -- Disable auto formatting
 vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client and client.server_capabilities.documentFormattingProvider then
-      client.server_capabilities.documentFormattingProvider = false
-    end
-  end,
+    callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client and client.server_capabilities.documentFormattingProvider then
+            client.server_capabilities.documentFormattingProvider = false
+        end
+    end,
 })
-

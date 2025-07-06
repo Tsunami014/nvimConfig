@@ -112,13 +112,13 @@ end
 
 vim.schedule(function() -- Schedule to ensure the colours have loaded by then
     vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
-    local hlRaw = vim.api.nvim_get_hl(0, { name = "@constant" })
+    local hlRaw = vim.api.nvim_get_hl(0, { name = "Constant" })
     vim.api.nvim_set_hl(0, "InlineQuote", { fg = hlRaw.fg, italic = true })
 
     local bqBg = "#383838"
-    local hlTx1 = vim.api.nvim_get_hl(0, { name = "Special" })
+    local hlTx1 = vim.api.nvim_get_hl(0, { name = "Macro" })
     vim.api.nvim_set_hl(0, "BlockQuoteSurround", { fg = hlTx1.fg, bg = bqBg, bold = true })
-    local hlTx2 = vim.api.nvim_get_hl(0, { name = "@function.builtin" })
+    local hlTx2 = vim.api.nvim_get_hl(0, { name = "Special" })
     vim.api.nvim_set_hl(0, "BlockQuoteSurroundIco", { fg = hlTx2.fg, bg = bqBg, bold = true })
     vim.api.nvim_set_hl(0, "BlockQuote", { bg = bqBg })
 end)
