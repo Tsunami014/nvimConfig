@@ -8,6 +8,8 @@ local heading_hl = {
     "@markup.heading.4.markdown",
     "@markup.heading.5.markdown",
     "@markup.heading.6.markdown",
+    "@markup.heading.7.markdown",
+    "@markup.heading.8.markdown"
 }
 
 -- Build progress bar based on percent and heading level
@@ -110,13 +112,13 @@ end
 
 vim.schedule(function() -- Schedule to ensure the colours have loaded by then
     vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
-    local hlRaw = vim.api.nvim_get_hl(0, { name = "@markup.raw" })
+    local hlRaw = vim.api.nvim_get_hl(0, { name = "@constant" })
     vim.api.nvim_set_hl(0, "InlineQuote", { fg = hlRaw.fg, italic = true })
 
     local bqBg = "#383838"
     local hlTx1 = vim.api.nvim_get_hl(0, { name = "Special" })
     vim.api.nvim_set_hl(0, "BlockQuoteSurround", { fg = hlTx1.fg, bg = bqBg, bold = true })
-    local hlTx2 = vim.api.nvim_get_hl(0, { name = "@markup.list.checked" })
+    local hlTx2 = vim.api.nvim_get_hl(0, { name = "@function.builtin" })
     vim.api.nvim_set_hl(0, "BlockQuoteSurroundIco", { fg = hlTx2.fg, bg = bqBg, bold = true })
     vim.api.nvim_set_hl(0, "BlockQuote", { bg = bqBg })
 end)
@@ -124,6 +126,7 @@ end)
 local lang_icons = {
     lua = "",
     python = "",
+    py = "",
     javascript = "",
     js = "",
     typescript = "",
@@ -184,13 +187,15 @@ function M.redraw(bufnr)
             -- specs: pattern-based or handler-based
             local specs = {
                 -- bold+italic
-                { pat = "%*%*%*(..-)%*%*%*", hl = "ItalicBold",     strip = 3 },
+                { pat = "%*%*%*([^*].-[^*])%*%*%*", hl = "ItalicBold",            strip = 3 },
                 -- bold
-                { pat = "%*%*(..-)%*%*",     hl = "@markup.strong", strip = 2 },
+                { pat = "%*%*([^*].-[^*])%*%*",     hl = "@markup.strong",        strip = 2 },
                 -- italic
-                { pat = "%*(..-)%*",         hl = "@markup.italic", strip = 1 },
+                { pat = "%*([^*].-[^*])%*",         hl = "@markup.italic",        strip = 1 },
                 -- inline code
-                { pat = "`([^`][^`]-)`",     hl = "InlineQuote",    strip = 1 },
+                { pat = "`([^`][^`]-)`",            hl = "InlineQuote",           strip = 1 },
+                -- strikethrough
+                { pat = "~~(..-)~~",                hl = "@markup.strikethrough", strip = 2 },
                 -- TODO: Backslash (\` or \* or \~ etc.)
 
                 -- Horizontal rule
@@ -260,14 +265,33 @@ function M.redraw(bufnr)
             }
 
             -- collect matches
+            local used = {}
+            local function is_range_free(s, e)
+                for i = s, e - 1 do
+                    if used[i] then return false end
+                end
+                return true
+            end
+            local function mark_range(s, e)
+                for i = s, e - 1 do
+                    used[i] = true
+                end
+            end
+
             for _, spec in ipairs(specs) do
                 if spec.pat then
                     for s, c, e in line:gmatch("()" .. spec.pat .. "()") do
-                        add(s, e, c, spec.hl, spec.strip)
+                        if is_range_free(s, e) then
+                            add(s, e, c, spec.hl, spec.strip)
+                            mark_range(s, e)
+                        end
                     end
                 else
                     for _, m in ipairs(spec.handler(line)) do
-                        table.insert(overlays, m)
+                        if is_range_free(m.start + 1, m.stop + 1) then
+                            table.insert(overlays, m)
+                            mark_range(m.start + 1, m.stop + 1)
+                        end
                     end
                 end
             end
