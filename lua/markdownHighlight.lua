@@ -163,18 +163,25 @@ function M.redraw(bufnr)
     local total = #lines
     local cursor = vim.api.nvim_win_get_cursor(0)[1]
 
+    local inside = false
     for i, line in ipairs(lines) do
-        -- Heading overlays
-        local level, disp = make_bar_line(i, total, line)
-        if disp and i ~= cursor then
-            local hl = heading_hl[level] or heading_hl[#heading_hl]
-            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                virt_text = { { disp, hl } },
-                virt_text_pos = "overlay",
-            })
+        if line:sub(1, 3) == "```" then
+            inside = not inside
+        end
+        -- Skip all fancy overlays if inside code block
+        if not inside then
+            -- Heading overlays
+            local level, disp = make_bar_line(i, total, line)
+            if disp and i ~= cursor then
+                local hl = heading_hl[level] or heading_hl[#heading_hl]
+                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                    virt_text = { { disp, hl } },
+                    virt_text_pos = "overlay",
+                })
+            end
         end
 
-        if i ~= cursor then
+        if i ~= cursor and not inside then
             local highlights = {}
 
             -- helper to add a highlight spec
@@ -312,42 +319,79 @@ function M.redraw(bufnr)
     for i, line in ipairs(lines) do
         if line:sub(1, 3) == "```" then
             if start ~= nil then
-                local max_length = 0
-                for index = start, i do
-                    max_length = math.max(max_length, #lines[index])
-                end
-                max_length = max_length + 1
-                local win_width = vim.api.nvim_win_get_width(0)
-                for j = start, i do
-                    local out = {}
-                    local txt = lines[j]
-                    local tlen = #txt
-                    if j == start then
-                        local lang = vim.trim(txt:sub(4))
-                        local icon = lang_icons[lang] or ""
-                        tlen = 3 + #lang
-                        out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
-                    else
-                        if j ~= i then
-                            out = { { lines[j], "BlockQuote" } }
+                if vim.wo.wrap then
+                    local max_length = 0
+                    for index = start, i do
+                        max_length = math.max(max_length, #lines[index])
+                    end
+                    max_length = max_length + 1
+                    local win_width = vim.api.nvim_win_get_width(0)
+                    for j = start, i do
+                        local out = {}
+                        local txt = lines[j]
+                        local tlen = #txt
+                        if j == start then
+                            local lang = vim.trim(txt:sub(4))
+                            local icon = lang_icons[lang] or ""
+                            tlen = 3 + #lang
+                            out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
                         else
-                            out = { { string.rep("━", max_length), "BlockQuoteSurroundIco" } }
-                            tlen = max_length
+                            if j ~= i then
+                                out = { { lines[j], "BlockQuote" } }
+                            else
+                                out = { { string.rep("━", max_length), "BlockQuoteSurroundIco" } }
+                                tlen = max_length
+                            end
+                        end
+                        if j ~= cursor then
+                            local extmark_opts = {
+                                virt_text = out,
+                                virt_text_pos = "overlay",
+                            }
+                            if max_length > win_width then
+                                extmark_opts.line_hl_group = "BlockQuote"
+                            else
+                                table.insert(out, { string.rep(" ", max_length - tlen), "BlockQuote" })
+                            end
+                            -- overlay the blockquote content
+                            vim.api.nvim_buf_set_extmark(bufnr, ns, j - 1, 0, extmark_opts)
                         end
                     end
-                    if j ~= cursor then
-                        local extmark_opts = {
-                            virt_text = out,
-                            virt_text_pos = "overlay",
-                            hl_mode = "combine",
-                        }
-                        if max_length > win_width then
-                            extmark_opts.line_hl_group = "BlockQuote"
+                else
+                    local max_length = 0
+                    for index = start, i do
+                        max_length = math.max(max_length, #lines[index])
+                    end
+                    max_length = max_length + 1
+                    local x_scroll = vim.fn.winsaveview().leftcol
+
+                    for j = start, i do
+                        local out = {}
+                        local txt = lines[j]
+                        local tlen
+                        if j == start then
+                            local lang = vim.trim(txt:sub(4))
+                            local icon = lang_icons[lang] or ""
+                            tlen = 3 + #lang + x_scroll
+                            out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
                         else
-                            table.insert(out, { string.rep(" ", max_length - tlen), "BlockQuote" })
+                            if j ~= i then
+                                out = { { lines[j]:sub(x_scroll + 1), "BlockQuote" } }
+                                tlen = #txt + math.max(x_scroll - #txt, 0)
+                            else
+                                out = { { "━━━" .. string.rep("━", max_length - 3 - x_scroll), "BlockQuoteSurroundIco" } }
+                                tlen = max_length
+                            end
                         end
-                        -- overlay the blockquote content
-                        vim.api.nvim_buf_set_extmark(bufnr, ns, j - 1, 0, extmark_opts)
+                        if j ~= cursor then
+                            local extmark_opts = {
+                                virt_text = out,
+                                virt_text_pos = "overlay",
+                            }
+                            table.insert(out, { string.rep(" ", max_length - tlen), "BlockQuote" })
+                            -- overlay the blockquote content
+                            vim.api.nvim_buf_set_extmark(bufnr, ns, j - 1, 0, extmark_opts)
+                        end
                     end
                 end
                 start = nil
@@ -360,10 +404,16 @@ end
 
 -- Setup autocommands
 function M.setup()
-    vim.cmd([[augroup MarkdownNumberDisplay
-    autocmd!
-    autocmd CursorMoved,CursorMovedI,BufEnter,BufWritePost,TextChanged,TextChangedI * lua require('markdownHighlight').redraw()
-  augroup END]])
+    local group = vim.api.nvim_create_augroup("MarkdownNumberDisplay", { clear = true })
+    vim.api.nvim_create_autocmd(
+        { "CursorMoved", "CursorMovedI", "BufEnter", "BufWritePost", "TextChanged", "TextChangedI", "WinScrolled" },
+        {
+            group = group,
+            callback = function()
+                require('markdownHighlight').redraw()
+            end,
+        }
+    )
 end
 
 M.setup()
