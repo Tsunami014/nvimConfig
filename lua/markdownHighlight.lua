@@ -9,7 +9,7 @@ local heading_hl = {
     "@markup.heading.5.markdown",
     "@markup.heading.6.markdown",
     "@markup.heading.7.markdown",
-    "@markup.heading.8.markdown"
+    "@markup.heading.8.markdown",
 }
 
 -- Build progress bar based on percent and heading level
@@ -121,6 +121,10 @@ vim.schedule(function() -- Schedule to ensure the colours have loaded by then
     local hlTx2 = vim.api.nvim_get_hl(0, { name = "Special" })
     vim.api.nvim_set_hl(0, "BlockQuoteSurroundIco", { fg = hlTx2.fg, bg = bqBg, bold = true })
     vim.api.nvim_set_hl(0, "BlockQuote", { bg = bqBg })
+
+    -- Highlight group to hide markdown markers
+    local normal_hl = vim.api.nvim_get_hl(0, { name = "Normal" })
+    vim.api.nvim_set_hl(0, "MarkdownHide", { fg = normal_hl.bg, bg = normal_hl.bg })
 end)
 
 local lang_icons = {
@@ -171,54 +175,39 @@ function M.redraw(bufnr)
         end
 
         if i ~= cursor then
-            local overlays = {}
+            local highlights = {}
 
-            -- helper to add an overlay spec
-            local function add(s, e, content, hl, strip)
-                table.insert(overlays, {
-                    start = s - 1,
-                    stop = e - 1,
-                    content = content,
-                    hl = hl,
-                    strip = strip,
-                })
+            -- helper to add a highlight spec
+            local function add_hl(s, e, hl)
+                table.insert(highlights, { s = s, e = e, hl = hl })
             end
 
             -- specs: pattern-based or handler-based
             local specs = {
                 -- bold+italic
-                { pat = "%*%*%*([^*].-[^*])%*%*%*", hl = "ItalicBold",            strip = 3 },
+                { pat = "(%*%*%*)([^*].-[^*])(%*%*%*)", hl = "ItalicBold" },
                 -- bold
-                { pat = "%*%*([^*].-[^*])%*%*",     hl = "@markup.strong",        strip = 2 },
+                { pat = "(%*%*)([^*].-[^*])(%*%*)",     hl = "@markup.strong" },
                 -- italic
-                { pat = "%*([^*].-[^*])%*",         hl = "@markup.italic",        strip = 1 },
+                { pat = "(%*)([^*].-[^*])(%*)",         hl = "@markup.italic" },
                 -- inline code
-                { pat = "`([^`][^`]-)`",            hl = "InlineQuote",           strip = 1 },
+                { pat = "(`)([^`][^`]-)(`)",            hl = "InlineQuote" },
                 -- strikethrough
-                { pat = "~~(..-)~~",                hl = "@markup.strikethrough", strip = 2 },
-                -- TODO: Backslash (\` or \* or \~ etc.)
+                { pat = "(~~)(..-)(~~)",                hl = "@markup.strikethrough" },
 
                 -- Horizontal rule
                 {
                     handler = function(ln)
                         local list = {}
                         local trimmed = vim.trim(ln)
-
-                        -- Match lines that are only made of -, *, or _ (3 or more)
                         if trimmed:match("^[%-%*_][%-%*_][%-%*_]+$") and trimmed:match("^[%-%*_]+$") then
+                            table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
                             local width = vim.api.nvim_win_get_width(0)
-                            local glyph = "━"
-                            local linee = string.rep(glyph, width)
-
-                            table.insert(list, {
-                                start = 0,
-                                stop = #ln,
-                                content = linee,
-                                hl = "@markup.heading.3",
-                                strip = 0,
+                            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                                virt_text = { { string.rep("━", width), "@markup.heading.3" } },
+                                virt_text_pos = "overlay",
                             })
                         end
-
                         return list
                     end,
                 },
@@ -227,16 +216,17 @@ function M.redraw(bufnr)
                 {
                     handler = function(ln)
                         local list = {}
-                        -- match items like '- [ ] Task' or '* [x] Task', capturing start and end
                         for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
                             local checked = mark:lower() == "x"
                             local icon = checked and "☑" or "☐"
-                            table.insert(list, {
-                                start = s - 1 + #bullet,
-                                stop = e - 1,
-                                content = " " .. icon .. " ",
-                                hl = checked and "TodoChecked" or "TodoUnchecked",
-                                strip = 0,
+                            local hl = checked and "TodoChecked" or "TodoUnchecked"
+                            -- Hide the original '[x]'
+                            add_hl(s + #bullet, s + #bullet + 3, "MarkdownHide")
+                            -- Add virtual text for the icon
+                            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1 + #bullet, {
+                                virt_text = { { icon, hl } },
+                                virt_text_pos = "inline",
+                                hl_group = hl,
                             })
                         end
                         return list
@@ -248,15 +238,14 @@ function M.redraw(bufnr)
                         local list = {}
                         for _, link in ipairs(parse_md_links(ln)) do
                             local icon = link.is_image and "" or "󰌷"
-                            local pad = string.rep(" ", (link.url_e - link.url_s) + 4)
-                            local txt = (link.is_image and " " or "") .. icon
-                                .. ln:sub(link.text_s, link.text_e) .. pad
-                            table.insert(list, {
-                                start = link.start - 1,
-                                stop = link.url_e - 1,
-                                content = txt,
-                                hl = link.is_image and "ImageLink" or "Urllink",
-                                strip = 0,
+                            local hl = link.is_image and "ImageLink" or "Urllink"
+                            -- Hide the full link syntax `[text](url)`
+                            add_hl(link.start, link.finish + 1, "MarkdownHide")
+                            -- Add virtual text for the icon and link text
+                            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
+                                virt_text = { { icon .. " " .. ln:sub(link.text_s, link.text_e), hl } },
+                                virt_text_pos = "inline",
+                                hl_group = hl,
                             })
                         end
                         return list
@@ -267,47 +256,53 @@ function M.redraw(bufnr)
             -- collect matches
             local used = {}
             local function is_range_free(s, e)
-                for i = s, e - 1 do
-                    if used[i] then return false end
+                for j = s, e - 1 do
+                    if used[j] then return false end
                 end
                 return true
             end
             local function mark_range(s, e)
-                for i = s, e - 1 do
-                    used[i] = true
+                for j = s, e - 1 do
+                    used[j] = true
                 end
             end
 
             for _, spec in ipairs(specs) do
                 if spec.pat then
-                    for s, c, e in line:gmatch("()" .. spec.pat .. "()") do
+                    -- The pattern must have 3 captures: open marker, content, close marker
+                    for s, open, content, close, e in line:gmatch("()" .. spec.pat .. "()") do
+                        -- s: start index of match (1-based)
+                        -- open: opening marker (e.g. ***)
+                        -- content: the highlighted content
+                        -- close: closing marker (e.g. ***)
+                        -- e: end index (1-based, exclusive)
                         if is_range_free(s, e) then
-                            add(s, e, c, spec.hl, spec.strip)
+                            local open_len = #open
+                            local close_len = #close
+                            local content_s = s + open_len
+                            local content_e = e - close_len
+
+                            add_hl(s, content_s, "MarkdownHide")
+                            add_hl(content_s, content_e, spec.hl)
+                            add_hl(content_e, e, "MarkdownHide")
                             mark_range(s, e)
                         end
                     end
                 else
                     for _, m in ipairs(spec.handler(line)) do
-                        if is_range_free(m.start + 1, m.stop + 1) then
-                            table.insert(overlays, m)
-                            mark_range(m.start + 1, m.stop + 1)
+                        if is_range_free(m.s, m.e) then
+                            add_hl(m.s, m.e, m.hl)
+                            mark_range(m.s, m.e)
                         end
                     end
                 end
             end
 
-            -- sort overlays by start pos
-            table.sort(overlays, function(a, b)
-                return a.start < b.start
-            end)
-
             -- apply extmarks
-            for _, m in ipairs(overlays) do
-                local spacing = string.rep(" ", m.strip)
-                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, m.start, {
-                    virt_text = { { spacing .. m.content .. spacing, m.hl } },
-                    virt_text_pos = "overlay",
-                    hl_mode = "combine",
+            for _, h in ipairs(highlights) do
+                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, h.s - 1, {
+                    end_col = h.e - 1,
+                    hl_group = h.hl,
                 })
             end
         end
@@ -342,9 +337,9 @@ function M.redraw(bufnr)
                     end
                     if j ~= cursor then
                         local extmark_opts = {
-                            virt_text     = out,
+                            virt_text = out,
                             virt_text_pos = "overlay",
-                            hl_mode       = "combine",
+                            hl_mode = "combine",
                         }
                         if max_length > win_width then
                             extmark_opts.line_hl_group = "BlockQuote"
