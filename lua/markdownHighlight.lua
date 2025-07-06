@@ -153,6 +153,7 @@ local lang_icons = {
 -- Redraw all overlays, skipping the cursor line
 function M.redraw(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
+    local x_scroll = vim.fn.winsaveview().leftcol
     local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
     if ft ~= "markdown" and ft ~= "codecompanion" then
         return
@@ -225,16 +226,22 @@ function M.redraw(bufnr)
                         local list = {}
                         for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
                             local checked = mark:lower() == "x"
-                            local icon = checked and "☑" or "☐"
+                            local icon = checked and "󰄵 " or "󰄱 "
                             local hl = checked and "TodoChecked" or "TodoUnchecked"
+                            local pos = s + #bullet
                             -- Hide the original '[x]'
-                            add_hl(s + #bullet, s + #bullet + 3, "MarkdownHide")
+                            add_hl(pos, pos + 3, "MarkdownHide")
                             -- Add virtual text for the icon
-                            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1 + #bullet, {
-                                virt_text = { { icon, hl } },
-                                virt_text_pos = "inline",
-                                hl_group = hl,
-                            })
+                            if x_scroll == pos + 1 then
+                                icon = icon:sub(0, #icon - 1)
+                            end
+                            if x_scroll <= pos + 1 then
+                                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, pos, {
+                                    virt_text = { { icon, hl } },
+                                    virt_text_pos = "overlay",
+                                    hl_group = hl,
+                                })
+                            end
                         end
                         return list
                     end,
@@ -244,14 +251,23 @@ function M.redraw(bufnr)
                     handler = function(ln)
                         local list = {}
                         for _, link in ipairs(parse_md_links(ln)) do
-                            local icon = link.is_image and "" or "󰌷"
+                            local icon = link.is_image and " " or "󰌷"
                             local hl = link.is_image and "ImageLink" or "Urllink"
-                            -- Hide the full link syntax `[text](url)`
-                            add_hl(link.start, link.finish + 1, "MarkdownHide")
+                            --local hl = "markdownBold"
+                            if link.start - x_scroll == 0 then
+                                icon = link.is_image and "" or ""
+                            elseif link.start - x_scroll < 0 then
+                                icon = link.is_image and " " or ""
+                            end
+                            local txt = icon ..
+                                ln:sub(link.text_s, link.text_e) .. string.rep(" ", link.url_e - link.url_s + 4)
+                            if link.start - x_scroll < 0 then
+                                txt = txt:sub(x_scroll - link.start + 1)
+                            end
                             -- Add virtual text for the icon and link text
                             vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
-                                virt_text = { { icon .. " " .. ln:sub(link.text_s, link.text_e), hl } },
-                                virt_text_pos = "inline",
+                                virt_text = { { txt, hl } },
+                                virt_text_pos = "overlay",
                                 hl_group = hl,
                             })
                         end
@@ -363,7 +379,6 @@ function M.redraw(bufnr)
                         max_length = math.max(max_length, #lines[index])
                     end
                     max_length = max_length + 1
-                    local x_scroll = vim.fn.winsaveview().leftcol
 
                     for j = start, i do
                         local out = {}
