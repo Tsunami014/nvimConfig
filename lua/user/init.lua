@@ -116,20 +116,41 @@ vim.o.inccommand = "split"
 -- })
 
 local dap = require("dap")
-table.insert(dap.configurations.python, 1, {
+local vs = require("venv-selector")
+local config = {
     type = "python",
     request = "launch",
     name = "Python: Launch file with current venv",
 
     program = "${file}",
+    console = "integratedTerminal",
     pythonPath = function()
-        return require("venv-selector").python()
+        return vs.python()
     end,
-})
+}
+table.insert(dap.configurations.python, 1, config)
 -- Use python debug config for 'debugpy' configurations
-dap.adapters.debugpy = dap.adapters.python
+function pyadapter(callback, config)
+    local venv = vs.python()
+    if not venv then
+        vim.notify("[DAP] No venv selected — falling back to system Python", vim.log.levels.WARN)
+        venv = vim.fn.exepath("python3")
+    end
+
+    callback({
+        type = "executable",
+        command = venv,
+        args = { '-m', 'debugpy.adapter' };
+        options = {
+          source_filetype = 'python',
+        }
+    })
+end
+dap.adapters.python  = pyadapter
+dap.adapters.debugpy = pyadapter
 require("dap.ext.vscode").load_launchjs(nil, {
-    debugpy = dap.configurations.python,
+    python  = config,
+    debugpy = config
 })
 
 -- Some language server options
