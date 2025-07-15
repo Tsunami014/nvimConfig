@@ -1,5 +1,12 @@
 local profile = require("profile").current
 
+local confDir
+if vim.fn.has("win32") == 1 then
+    confDir = "$APPDATA"
+else
+    confDir = "~/.config"
+end
+
 ---@type LazySpec
 return {
   {
@@ -25,6 +32,12 @@ return {
             { icon = "󰍉 ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
             { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
             {
+              icon = " ",
+              key = "F",
+              desc = "Find Folder",
+              action = ":lua require('user.folder-pick').pick_folder_in()",
+            },
+            {
               icon = " ",
               key = "p",
               desc = "Projects",
@@ -36,7 +49,7 @@ return {
               icon = " ",
               key = "c",
               desc = "Config",
-              action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})",
+              action = ":lua require('user.folder-pick').pick_folder_in('" .. confDir:gsub("'", "\\'") .. "')",
             },
             { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
             { icon = "󰩈 ", key = "q", desc = "Quit", action = ":qa" },

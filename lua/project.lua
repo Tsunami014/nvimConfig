@@ -73,7 +73,7 @@ function M.findProjects()
   local conf = require("telescope.config").values
 
   pickers.new({}, {
-    prompt_title = "Projects",
+    prompt_title = "Projects (Press <ctrl>+d to delete)",
     finder = finders.new_table { results = M.projects },
     sorter = conf.generic_sorter({}),
     attach_mappings = function(prompt_bufnr, map)
@@ -91,7 +91,13 @@ function M.findProjects()
           end
           saveProjects()
           vim.notify("Removed project: " .. sel[1], vim.log.levels.INFO)
-          actions.close(prompt_bufnr)
+          -- Refresh the picker with the updated list
+          local picker = action_state.get_current_picker(prompt_bufnr)
+          local finders = require("telescope.finders")
+          picker:refresh(
+            finders.new_table { results = M.projects },
+            { reset_prompt = false }
+          )
         end
       end)
       return true

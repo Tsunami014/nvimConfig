@@ -42,4 +42,3 @@ function M.toggle_comment_lines(start_line, end_line)
 end
 
 return M
-
