@@ -59,6 +59,15 @@ Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
 Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
 -- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
+-- Move = keybinds to \
+Map({ 'n', 'v', 'x' }, '\\', '=', 'Correct indentation')
+Map({ 'n', 'v', 'x' }, '\\\\', '==', 'Correct indent of current line')
+-- Replace = with - ; So the one button has both + and -
+Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
+Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
+-- Now add the delete to black hole!
+Map({ 'n', 'v', 'x' }, '-', '"_d', 'Delete to black hole')
+
 
 local proj = require("project")
 Register("p", "Projects", "󰉓", {
