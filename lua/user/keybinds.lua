@@ -256,9 +256,13 @@ wk.add({
         end
     end, "Load cwd/.nvimrc", ""),
 
-    ToMap("D", function()
+    ToMap("C", function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
     end, "Chdir to parent dir", "󰌑"),
+
+    ToMap(".", function()
+        require("notify").dismiss()
+    end, "Dismiss notification", "󱠡"),
 
     ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", ""), -- <cmd>DogeGenerate<cr>
 
