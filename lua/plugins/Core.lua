@@ -26,6 +26,7 @@ return {
   {
     'stevearc/resession.nvim',
     opts = {
+      load_order = "modification_time",
       autosave = {
         enabled = true,
         interval = 60,

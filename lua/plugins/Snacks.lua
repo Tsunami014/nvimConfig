@@ -17,6 +17,8 @@ return {
       dashboard = {
         preset = {
           header = [[
+
+
  ███▄    █ ▓█████  ▒█████   ██▒   █▓ ██▓ ███▄ ▄███▓
  ██ ▀█   █ ▓█   ▀ ▒██▒  ██▒▓██░   █▒▓██▒▓██▒▀█▀ ██▒
 ▓██  ▀█ ██▒▒███   ▒██░  ██▒ ▓██  █▒░▒██▒▓██    ▓██░
@@ -58,7 +60,7 @@ return {
         -- Build the panels list dynamically.
         sections = function()
           local width = vim.o.columns
-          local is_narrow = width < 78 * 2.5
+          local is_narrow = width < 70 * 2
 
           local function split_path(str)
             local parts = {}
@@ -82,11 +84,14 @@ return {
           for i, project in ipairs(project_list) do
             if i > 5 then break end
             local pth, ext = split_path(project)
+            local itxt = tostring(i)
             table.insert(items, {
               text = {
-                { string.format("  %i  ", i), hl = "SnacksDashboardKey" },
-                { pth .. "/", hl = "Conceal" },
-                { ext, hl = "SnacksDashboardDesc" },
+                { "  󰉋  ", hl = "SnacksDashboardDesc" },
+                { pth .. "/", hl = "SnacksDashboardDir" },
+                { ext, hl = "SnacksNotifierTitleInfo" },
+                { string.rep(" ", 54-#pth-#ext-#itxt) },
+                { itxt, hl = "SnacksDashboardKey" },
               },
               action = ':lua require("project").loadProject("' .. project .. '")',
               key = tostring(i),
@@ -101,17 +106,12 @@ return {
             return result
           end
 
-          local tCmd = [[cbonsai -li -t 0.001 -w 2 -c "&,O,#,uwu"]]
-          if profile == "Windows" then
-            tCmd = ""
-          end
-
           local widePanels = {
             {
               {
                 section = "terminal",
-                cmd = tCmd,
-                height = 30,
+                cmd = vim.fn.stdpath('config') .. "/pipes.sh",
+                height = 15,
                 padding = 1,
               },
             },
