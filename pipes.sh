@@ -26,6 +26,7 @@
 
 
 VERSION=1.3.0
+# Modified by Tsunami014
 
 M=32768  # Bash RANDOM maximum + 1
 p=1      # number of pipes
@@ -33,8 +34,8 @@ f=75     # frame rate
 s=13     # probability of straight fitting
 r=2000   # characters limit
 t=0      # iteration counter for -r character limit
-w=80     # terminal size
-h=24
+w=60     # terminal size
+h=15
 
 # ab -> sets[][idx] = a*4 + b
 # 0: up, 1: right, 2: down, 3: left
@@ -287,7 +288,10 @@ main() {
 
     # +_CP_init_VC
     # set default values if not by options
-    ((${#V[@]})) || V=(0)
+    if ((${#V[@]} == 0)); then
+        # Choose a random index from the sets array
+        V+=($((RANDOM % ${#sets[@]})))
+    fi
     VN=${#V[@]}
     ((${#C[@]})) || C=(1 2 3 4 5 6 7 0)
     CN=${#C[@]}
