@@ -164,6 +164,30 @@ function M.redraw(bufnr)
     local visible_lines = vim.api.nvim_buf_get_lines(bufnr, top - 1, bottom, false)
     local cursor = vim.api.nvim_win_get_cursor(0)[1]
 
+    local function not_cursor_or_visual(line_num)
+        if line_num == cursor then
+            return false
+        end
+
+        local mode = vim.fn.mode()
+        local s, e
+
+        if mode == 'v' or mode == 'V' or mode == '\22' then
+            s = vim.fn.getpos('v')[2]
+            e = vim.fn.getpos('.')[2]
+            if s == 0 or e == 0 then
+                return true
+            end
+            if s > e then
+                s, e = e, s
+            end
+            if line_num >= s and line_num <= e then
+                return false
+            end
+        end
+        return true
+    end
+
     -- determine whether we are inside a code fence at the top of the window
     local pre_count = 0
     for j = 1, math.max(0, top - 1) do
@@ -186,7 +210,7 @@ function M.redraw(bufnr)
         if not inside then
             -- Heading overlays
             local level, disp = make_bar_line(i, total, line)
-            if disp and i ~= cursor then
+            if disp and not_cursor_or_visual(i) then
                 local hl = heading_hl[level] or heading_hl[#heading_hl]
                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
                     virt_text = { { disp, hl } },
@@ -195,7 +219,7 @@ function M.redraw(bufnr)
             end
         end
 
-        if i ~= cursor and not inside then
+        if not_cursor_or_visual(i) and not inside then
             local highlights = {}
 
             local function add_hl(s, e, hl)
@@ -203,9 +227,9 @@ function M.redraw(bufnr)
             end
 
             local specs = {
-                { pat = "(%*%*%*)([^*].-[^*])(%*%*%*)", hl = "ItalicBold" },
-                { pat = "(%*%*)([^*].-[^*])(%*%*)",     hl = "@markup.strong" },
-                { pat = "(%*)([^*].-[^*])(%*)",         hl = "@markup.italic" },
+                { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
+                { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
+                { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
                 { pat = "(`)([^`][^`]-)(`)",            hl = "InlineQuote" },
                 { pat = "(~~)(..-)(~~)",                hl = "@markup.strikethrough" },
 
@@ -289,22 +313,38 @@ function M.redraw(bufnr)
                 end
             end
 
+            local first_non_ws = line:find("%S") or 1
+            local scan_line = line
+            local line_offset = 0
+            -- If the first (non-space) char + next char are "* " treat this line as a bullet:
+            -- start scanning one char after the star so the initial bullet isn't captured.
+            if line:sub(first_non_ws, first_non_ws + 1) == "* " then
+                scan_line = line:sub(first_non_ws + 1)
+                line_offset = first_non_ws
+            end
+
+            -- now use scan_line for pattern matching; map back to original columns when adding highlights
             for _, spec in ipairs(specs) do
                 if spec.pat then
-                    for s, open, content, close, e in line:gmatch("()" .. spec.pat .. "()") do
-                        if is_range_free(s, e) then
+                    for s, open, content, close, e in scan_line:gmatch("()" .. spec.pat .. "()") do
+                        -- s..e are indices within scan_line; map them to original line indices:
+                        local orig_s = s + line_offset
+                        local orig_e = e + line_offset
+
+                        if is_range_free(orig_s, orig_e) then
                             local open_len = #open
                             local close_len = #close
-                            local content_s = s + open_len
-                            local content_e = e - close_len
+                            local content_s = orig_s + open_len
+                            local content_e = orig_e - close_len
 
-                            add_hl(s, content_s, "MarkdownHide")
+                            add_hl(orig_s, content_s, "MarkdownHide")
                             add_hl(content_s, content_e, spec.hl)
-                            add_hl(content_e, e, "MarkdownHide")
-                            mark_range(s, e)
+                            add_hl(content_e, orig_e, "MarkdownHide")
+                            mark_range(orig_s, orig_e)
                         end
                     end
                 else
+                    -- handler branch unchanged (handlers operate on the original line)
                     for _, m in ipairs(spec.handler(line)) do
                         if is_range_free(m.s, m.e) then
                             add_hl(m.s, m.e, m.hl)
@@ -373,7 +413,7 @@ function M.redraw(bufnr)
                             tlen = max_length
                         end
                     end
-                    if j ~= cursor then
+                    if not_cursor_or_visual(j) then
                         local extmark_opts = {
                             virt_text = out,
                             virt_text_pos = "overlay",
@@ -411,7 +451,7 @@ function M.redraw(bufnr)
                             tlen = max_length
                         end
                     end
-                    if j ~= cursor then
+                    if not_cursor_or_visual(j) then
                         local extmark_opts = {
                             virt_text = out,
                             virt_text_pos = "overlay",
@@ -427,15 +467,21 @@ end
 
 function M.setup()
     local group = vim.api.nvim_create_augroup("MarkdownNumberDisplay", { clear = true })
+    local function redraw()
+        M.redraw()  -- So it does not run with arguments
+    end
     vim.api.nvim_create_autocmd(
         { "CursorMoved", "CursorMovedI", "BufEnter", "BufWritePost", "TextChanged", "TextChangedI", "WinScrolled" },
         {
             group = group,
-            callback = function()
-                require('markdownHighlight').redraw()
-            end,
+            callback = redraw,
         }
     )
+    -- also fire when entering or leaving visual mode
+    vim.api.nvim_create_autocmd("ModeChanged", {
+      pattern = { "*:[vV]*", "[vV]*:*" },  -- entering or leaving any visual mode
+      callback = redraw,
+    })
 end
 
 M.setup()
