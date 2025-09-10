@@ -230,8 +230,87 @@ function M.redraw(bufnr)
                 { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
                 { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
                 { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
-                { pat = "(`)([^`][^`]-)(`)",            hl = "InlineQuote" },
-                { pat = "(~~)(..-)(~~)",                hl = "@markup.strikethrough" },
+                { pat = "(`)([^`][^`]-)(`)",           hl = "InlineQuote" },
+                { pat = "(~~)(..-)(~~)",               hl = "@markup.strikethrough" },
+                { pat = "(==)(.-)(==)",                hl = "Todo" },
+
+                {
+                  handler = function(ln)
+                    local list = {}
+
+                    -- capture leading and trailing whitespace
+                    local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(.*%S)(%s*)$") 
+                    if not trimmed then
+                      -- line is empty or all whitespace
+                      return list
+                    end
+
+                    -- quick reject: must contain at least one pipe to be a table line
+                    if not trimmed:find("|", 1, true) then
+                      return list
+                    end
+
+                    -- Count pipes and ensure all characters are from the allowed set for a separator
+                    local pipe_count = 0
+                    local all_sep_chars = true
+                    for j = 1, #trimmed do
+                      local ch = trimmed:sub(j, j)
+                      if ch == "|" then
+                        pipe_count = pipe_count + 1
+                      end
+                      if not (ch == "|" or ch == "-" or ch == ":" or ch == " ") then
+                        all_sep_chars = false
+                      end
+                    end
+
+                    -- CASE 2 (separator): line is composed only of |, -, :, and spaces, and has >= 2 pipes
+                    if all_sep_chars and pipe_count >= 2 then
+                      local chars = {}
+                      local L = #trimmed
+                      for j = 1, L do
+                        local c = trimmed:sub(j, j)
+                        if c == "|" then
+                          if j == 1 then
+                            table.insert(chars, "├")   -- left connector (middle-left)
+                          elseif j == L then
+                            table.insert(chars, "┤")   -- right connector (middle-right)
+                          else
+                            table.insert(chars, "┼")   -- middle intersection (connects all around)
+                          end
+                        elseif c == "-" or c == " " then
+                          table.insert(chars, "─")
+                        elseif c == ":" then
+                          table.insert(chars, ".")    -- colon-specific horizontal marker
+                        else
+                          table.insert(chars, c)
+                        end
+                      end
+                      local new_line = lead_ws .. table.concat(chars)
+
+                      -- hide original and overlay the new box-drawn line (no bg change)
+                      table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
+                      vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                        virt_text = { { new_line, "Normal" } },
+                        virt_text_pos = "overlay",
+                      })
+
+                      return list
+                    end
+
+                    -- CASE 1 (content row): starts with a pipe and contains other content
+                    if trimmed:match("^|[^|]*|") then
+                      local new_line = lead_ws .. trimmed:gsub("|", "│")
+                      table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
+                      vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                        virt_text = { { new_line, "Normal" } },
+                        virt_text_pos = "overlay",
+                      })
+                      return list
+                    end
+
+                    return list
+                  end
+                },
 
                 {
                     handler = function(ln)
