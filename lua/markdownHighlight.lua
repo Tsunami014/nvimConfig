@@ -328,9 +328,50 @@ function M.redraw(bufnr)
                     end,
                 },
 
+
                 {
                     handler = function(ln)
-                        local list = {}
+                        local start_pos = 1
+                        local ln2 = ln .. " "
+                        local spacing = ""
+
+                        while true do
+                            -- Find the next -> and <- after start_pos
+                            local s1, e1 = string.find(ln2, spacing .. "-> ", start_pos, true)
+                            local s2, e2 = string.find(ln2, spacing .. "<- ", start_pos, true)
+
+                            -- If neither found, break
+                            if not s1 and not s2 then break end
+
+                            -- Determine which comes first
+                            local s, e, icon
+                            if s1 and (not s2 or s1 <= s2) then
+                                s, e = s1, e1
+                                icon = " "  -- icon for ->
+                            else
+                                s, e = s2, e2
+                                icon = " "  -- icon for <-
+                            end
+                            s = s + #spacing
+                            spacing = " "
+
+                            -- Skip if the arrow is before the scroll position
+                            if x_scroll < s then
+                                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
+                                    virt_text = { { icon, hl } },
+                                    virt_text_pos = "overlay",
+                                })
+                            end
+
+                            -- Move start_pos to after this arrow
+                            start_pos = e + 1
+                        end
+                        return {}
+                    end,
+                },
+
+                {
+                    handler = function(ln)
                         for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
                             local checked = mark:lower() == "x"
                             local icon = checked and "󰄵 " or "󰄱 "
@@ -348,7 +389,7 @@ function M.redraw(bufnr)
                                 })
                             end
                         end
-                        return list
+                        return {}
                     end,
                 },
 
