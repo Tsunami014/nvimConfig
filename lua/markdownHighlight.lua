@@ -140,6 +140,29 @@ local lang_icons = {
     sql = "",
 }
 
+local function utf8_offset(s, n)
+  if n == 0 then return 1 end
+  local i, count = 1, 0
+  local len = #s
+  while i <= len do
+    local c = s:byte(i)
+    local char_len
+    if c < 0x80 then
+      char_len = 1
+    elseif c < 0xE0 then
+      char_len = 2
+    elseif c < 0xF0 then
+      char_len = 3
+    else
+      char_len = 4
+    end
+    count = count + 1
+    if count == n then return i end
+    i = i + char_len
+  end
+  return i
+end
+
 -- Redraw overlays only for visible lines (w0..w$). Still scan the whole buffer to find fenced-code blocks
 function M.redraw(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -236,18 +259,16 @@ function M.redraw(bufnr)
 
                 {
                   handler = function(ln)
-                    local list = {}
-
                     -- capture leading and trailing whitespace
                     local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(.*%S)(%s*)$") 
                     if not trimmed then
                       -- line is empty or all whitespace
-                      return list
+                      return {}
                     end
 
                     -- quick reject: must contain at least one pipe to be a table line
                     if not trimmed:find("|", 1, true) then
-                      return list
+                      return {}
                     end
 
                     -- Count pipes and ensure all characters are from the allowed set for a separator
@@ -287,44 +308,39 @@ function M.redraw(bufnr)
                       end
                       local new_line = lead_ws .. table.concat(chars)
 
-                      -- hide original and overlay the new box-drawn line (no bg change)
-                      table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
+                      local offs = utf8_offset(new_line, x_scroll+1)
                       vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { new_line, "Normal" } },
+                        virt_text = { { new_line:sub(offs), "Normal" } },
                         virt_text_pos = "overlay",
                       })
 
-                      return list
+                      return {}
                     end
 
                     -- CASE 1 (content row): starts with a pipe and contains other content
                     if trimmed:match("^|[^|]*|") then
                       local new_line = lead_ws .. trimmed:gsub("|", "│")
-                      table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
+                      local offs = utf8_offset(new_line, x_scroll+1)
                       vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { new_line, "Normal" } },
+                        virt_text = { { new_line:sub(offs), "Normal" } },
                         virt_text_pos = "overlay",
                       })
-                      return list
                     end
-
-                    return list
+                    return {}
                   end
                 },
 
                 {
                     handler = function(ln)
-                        local list = {}
                         local trimmed = vim.trim(ln)
                         if trimmed:match("^[%-%*_][%-%*_][%-%*_]+$") and trimmed:match("^[%-%*_]+$") then
-                            table.insert(list, { s = 1, e = #ln + 1, hl = "MarkdownHide" })
                             local width = vim.api.nvim_win_get_width(0)
                             vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
                                 virt_text = { { string.rep("━", width), "@markup.heading.3" } },
                                 virt_text_pos = "overlay",
                             })
                         end
-                        return list
+                        return {}
                     end,
                 },
 
@@ -395,7 +411,6 @@ function M.redraw(bufnr)
 
                 {
                     handler = function(ln)
-                        local list = {}
                         for _, link in ipairs(parse_md_links(ln)) do
                             local icon = link.is_image and " " or "󰌷"
                             local hl = link.is_image and "ImageLink" or "Urllink"
@@ -404,18 +419,17 @@ function M.redraw(bufnr)
                             elseif link.start - x_scroll < 0 then
                                 icon = link.is_image and " " or ""
                             end
-                            local txt = icon ..
-                                ln:sub(link.text_s, link.text_e) .. string.rep(" ", link.url_e - link.url_s + 4)
                             if link.start - x_scroll < 0 then
-                                txt = txt:sub(x_scroll - link.start + 1)
+                                icon = icon:sub(x_scroll - link.start + 1)
                             end
                             vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
-                                virt_text = { { txt, hl } },
+                                virt_text = { { icon, hl } },
                                 virt_text_pos = "overlay",
                                 hl_group = hl,
                             })
+                            add_hl(orig_s, content_s, "MarkdownHide")
                         end
-                        return list
+                        return {}
                     end,
                 },
             }
