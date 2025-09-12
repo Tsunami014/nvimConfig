@@ -23,6 +23,7 @@ return {
           "lua-language-server",
           "ruff",
           "pyright",
+          "clangd",
 
           -- install formatters
           "stylua",

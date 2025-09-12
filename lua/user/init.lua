@@ -166,7 +166,9 @@ require("dap.ext.vscode").load_launchjs(nil, {
 })
 
 -- Some language server options
-require('lspconfig').pyright.setup {
+lspconfig = require('lspconfig')
+
+lspconfig.pyright.setup {
     settings = {
         python = {
             analysis = {
@@ -180,12 +182,15 @@ require('lspconfig').pyright.setup {
         }
     }
 }
-require('lspconfig').ruff.setup {
+lspconfig.ruff.setup {
     settings = {
         ruff_lsp = {
             ignore = { "F405", "F841" },
         }
     }
+}
+lspconfig.clangd.setup {
+    capabilities = require("cmp_nvim_lsp").default_capabilities(),
 }
 
 -- Disable auto formatting
