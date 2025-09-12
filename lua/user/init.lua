@@ -116,18 +116,24 @@ vim.o.inccommand = "split"
 -- })
 
 local dap = require("dap")
+
+-- Stop closing after finish execution
+dap.listeners.before.event_terminated["dapui_config"] = nil
+dap.listeners.before.event_exited["dapui_config"] = nil
+
 local vs = require("venv-selector")
-
 local pyconfig = {
-    type = "python",
-    request = "launch",
-    name = "Python: Launch file with current venv",
+    {
+        type = "python",
+        request = "launch",
+        name = "Python: Launch file with current venv",
 
-    program = "${file}",
-    console = "integratedTerminal",
-    pythonPath = function()
-        return vs.python()
-    end,
+        program = "${file}",
+        console = "integratedTerminal",
+        pythonPath = function()
+            return vs.python()
+        end,
+    }
 }
 dap.configurations.python = pyconfig
 -- Use python debug config for 'debugpy' configurations
