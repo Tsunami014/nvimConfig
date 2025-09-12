@@ -111,6 +111,7 @@ Register("r", "Find & replace", "󰗧", {
     e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
 })
 
+
 Register("x", "Todos & Troubles", "", {
     x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
     X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
@@ -152,6 +153,9 @@ Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_into, "DAP Step Into")
 Map("n", "<F12>", dap.step_out, "DAP Step Out")
 Register("d", "Debug", "", {
+    v = { "<cmd>VenvSelect<cr>", "Select venv python" },
+    c = { function() require("user.cpp").set_new_build_args() end, "Set build args c/c++" },
+
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
     r = { dap.repl.open, "Open REPL" },
@@ -229,8 +233,6 @@ Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
 Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 
 Map({ 'n', 'v' }, '?', '<cmd>WhichKey', 'Activate which-key')
-
-Map("n", "<leader>dv", "<cmd>VenvSelect<cr>", "Select venv")
 
 Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
 

@@ -117,7 +117,8 @@ vim.o.inccommand = "split"
 
 local dap = require("dap")
 local vs = require("venv-selector")
-local config = {
+
+local pyconfig = {
     type = "python",
     request = "launch",
     name = "Python: Launch file with current venv",
@@ -128,7 +129,7 @@ local config = {
         return vs.python()
     end,
 }
-table.insert(dap.configurations.python, 1, config)
+dap.configurations.python = pyconfig
 -- Use python debug config for 'debugpy' configurations
 function pyadapter(callback, config)
     local venv = vs.python()
@@ -148,9 +149,14 @@ function pyadapter(callback, config)
 end
 dap.adapters.python  = pyadapter
 dap.adapters.debugpy = pyadapter
+
+cppconfig = require("user.cpp").config
+
 require("dap.ext.vscode").load_launchjs(nil, {
-    python  = config,
-    debugpy = config
+    python  = pyconfig,
+    debugpy = pyconfig,
+    cpp     = cppconfig,
+    c       = cppconfig
 })
 
 -- Some language server options
