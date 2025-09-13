@@ -236,6 +236,8 @@ Map({ 'n', 'v' }, '?', '<cmd>WhichKey', 'Activate which-key')
 
 Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
 
+Map("n", "<leader>D", dapui.toggle, "DAP UI Toggle")
+
 Map("n", "<leader>i", "<cmd>Inspect<cr>", "Inspect")
 
 
