@@ -427,7 +427,11 @@ function M.redraw(bufnr)
                                 virt_text_pos = "overlay",
                                 hl_group = hl,
                             })
-                            add_hl(orig_s, content_s, "MarkdownHide")
+                            if link.text_s and link.text_e and link.url_s and link.url_e then
+                                add_hl(link.start, link.text_s, "MarkdownHide")
+                                add_hl(link.text_e + 1, link.url_s, "MarkdownHide")
+                                add_hl(link.url_e + 1, link.finish + 1, "MarkdownHide")
+                            end
                         end
                         return {}
                     end,
