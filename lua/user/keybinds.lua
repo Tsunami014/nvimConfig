@@ -113,6 +113,7 @@ Register("r", "Find & replace", "󰗧", {
 
 
 Register("x", "Todos & Troubles", "", {
+    a = { "<cmd>lua vim.lsp.buf.code_action()<cr>", "Apply LSP actions", icon = "󰌑" },
     x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
     X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
     l = { "<cmd>Trouble loclist toggle<cr>", "Location List (Trouble)", icon = "" },
