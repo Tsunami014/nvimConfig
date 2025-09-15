@@ -12,11 +12,11 @@ dap.adapters.codelldb = {
   },
 }
 
-M.build_args = "."
+M.build_args = ""
 
 local function reset_build_args()
-  M.build_args = "."
-  vim.notify("Build args reset to '.'", vim.log.levels.INFO)
+  M.build_args = ""
+  vim.notify("Build args reset to ''", vim.log.levels.INFO)
 end
 
 -- reset when dir changes
