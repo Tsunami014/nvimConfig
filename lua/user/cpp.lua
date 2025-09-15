@@ -1,5 +1,4 @@
 -- C++ configuration
--- lua/codelldb_dap.lua  (or paste into init.lua)
 local M = {}
 
 dap = require("dap")
@@ -142,20 +141,9 @@ M.config = {
         return nil
       end
       local default_prog = "./a.out"
-      local result
-      -- synchronous prompt (ui.input)
-      local done = false
-      vim.ui.input({ prompt = "Path to executable to debug:", default = default_prog }, function(input)
-        result = input
-        done = true
-      end)
-      -- ui.input is async; wait until done (tiny busy-wait loop)
-      -- This is safe: user will respond quickly. If you hate busy-waiting, replace with a more async flow.
-      local wait_count = 0
-      while not done and wait_count < 10000 do
-        vim.wait(10)
-        wait_count = wait_count + 1
-      end
+      -- synchronous prompt: use vim.fn.input here instead of async vim.ui.input + busy-wait.
+      -- vim.fn.input blocks for user input but does not require a busy-wait and won't freeze the UI.
+      local result = vim.fn.input("Path to executable to debug: ", default_prog)
       if not result or result == "" then
         vim.notify("No program provided. Aborting debug.", vim.log.levels.WARN)
         return nil
@@ -173,4 +161,3 @@ dap.configurations.c = M.config
 dap.configurations.cpp = M.config
 
 return M
-
