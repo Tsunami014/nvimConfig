@@ -35,37 +35,66 @@ M.set_new_build_args = function()
   end)
 end
 
--- small helper to check file existence (case-sensitive)
 local function exists(fname)
   return vim.fn.filereadable(fname) == 1
 end
 
--- helper to choose compiler based on extension
 local function compile_current_file_to_tmp()
-  local fullpath = vim.fn.expand("%:p")
-  if fullpath == "" then
-    vim.notify("No file to compile.", vim.log.levels.ERROR)
-    return nil
-  end
-  local ext = vim.fn.expand("%:e")
-  local base = vim.fn.expand("%:t:r")
-  local out = "/tmp/" .. base
-  local cmd
-  if ext == "c" then
-    cmd = string.format('gcc -g -O0 -o %s %s', out, fullpath)
-  else
-    -- default to g++ for cpp and others
-    cmd = string.format('g++ -g -O0 -std=gnu++17 -o %s %s', out, fullpath)
+  local full = vim.fn.expand("%:p")
+  if full == "" then return nil end
+  local out = "/tmp/" .. vim.fn.expand("%:t:r") .. "_test"
+  local cwd = vim.fn.getcwd()
+  local bufdir = vim.fn.fnamemodify(full, ":h")
+
+  local exts = { "cpp", "cc", "cxx", "c" }
+  local found, seen = { full }, {}
+
+  local function impls(base)
+    local name = base:match("(.+)%..+$") or base
+    local list = {}
+    for _, e in ipairs(exts) do
+      for _, dir in ipairs({ bufdir, cwd }) do
+        local f = dir .. "/" .. name .. "." .. e
+        if vim.fn.filereadable(f) == 1 then table.insert(list, f) end
+      end
+      local g = vim.fn.globpath(cwd, "**/" .. name .. "." .. e, 0, 1)
+      vim.list_extend(list, g)
+    end
+    return list
   end
 
-  vim.notify("Compiling: " .. cmd)
+  local function scan(path)
+    if seen[path] then return end
+    seen[path] = true
+    for _, l in ipairs(vim.fn.readfile(path)) do
+      local inc = l:match('^%s*#%s*include%s*"(.-)"')
+      if inc then
+        for _, f in ipairs(impls(inc)) do
+          if not seen[f] then table.insert(found, f); scan(f) end
+        end
+        local h = bufdir .. "/" .. inc
+        if vim.fn.filereadable(h) == 1 then scan(h) end
+      end
+    end
+  end
+
+  scan(full)
+  local ext = vim.fn.expand("%:e")
+  local compiler = ''
+  if ext == "c" then
+    compiler = 'gcc'
+  else
+    compiler = 'g++'
+  end
+
+  local cmd = string.format(compiler .. ' -g -O0 -std=gnu++17 -o %s %s',
+                            out, table.concat(found, " "))
+  vim.notify("Compiling...")
   local res = vim.fn.system(cmd)
-  local code = vim.v.shell_error
-  if code ~= 0 then
-    vim.notify("Compile failed:\n" .. (res or "<no output>"), vim.log.levels.ERROR)
+  if vim.v.shell_error ~= 0 then
+    vim.notify("Compile failed:\n" .. res, vim.log.levels.ERROR)
     return nil
   end
-  vim.notify("Compiled to: " .. out)
   return out
 end
 
