@@ -13,9 +13,11 @@ dap.adapters.codelldb = {
 }
 
 M.build_args = ""
+M.last_executable = "./a.out"
 
 local function reset_build_args()
   M.build_args = ""
+  M.last_executable = "./a.out"
   vim.notify("Build args reset to ''", vim.log.levels.INFO)
 end
 
@@ -161,7 +163,7 @@ M.config = {
   },
 
   {
-    name = "Build (make/cmake) then debug (will prompt for program)",
+    name = "Build (make/cmake) then run",
     type = "codelldb",
     request = "launch",
     program = function()
@@ -169,14 +171,12 @@ M.config = {
       if not ok then
         return nil
       end
-      local default_prog = "./a.out"
-      -- synchronous prompt: use vim.fn.input here instead of async vim.ui.input + busy-wait.
-      -- vim.fn.input blocks for user input but does not require a busy-wait and won't freeze the UI.
-      local result = vim.fn.input("Path to executable to debug: ", default_prog)
+      local result = vim.fn.input("Path to executable to debug: ", M.last_executable)
       if not result or result == "" then
         vim.notify("No program provided. Aborting debug.", vim.log.levels.WARN)
         return nil
       end
+      M.last_executable = result
       return result
     end,
     cwd = "${workspaceFolder}",
