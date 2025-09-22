@@ -218,6 +218,11 @@ Register("P", "Packages", "", {
     m = { "<cmd>Mason<cr>", "Open Mason" }
 })
 
+Register("c", "Symbols", "󱔁", {
+    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)" },
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)" }
+})
+
 Register("]", "Next", "󰒭", {
     t = { function() require("todo-comments").jump_next() end, "Next Todo Comment", icon = "" },
     h = { function() gs.nav_hunk("next") end, "Next Hunk", icon = "󰊢" },
@@ -233,14 +238,7 @@ Register("[", "Previous", "󰒮", {
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
 Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 
-Map({ 'n', 'v' }, '?', '<cmd>WhichKey', 'Activate which-key')
-
-Map("n", "<leader>n", "<cmd>tabnew<cr>", "New buffer")
-
-Map("n", "<leader>D", dapui.toggle, "DAP UI Toggle")
-
-Map("n", "<leader>i", "<cmd>Inspect<cr>", "Inspect")
-
+Map({ 'n', 'v' }, '?', '<cmd>WhichKey<CR>', 'Activate which-key')
 
 Map({ "n", "v" }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
@@ -248,11 +246,19 @@ Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
 
+Map("i", "<C-.>", "<C-t>", "Indent line")
+Map("i", "<C-,>", "<C-d>", "De-indent line")
 
 comms = require("user.commenter")
+-- Commands following <leader>
 wk.add({
-    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree"),
+    -- Commands
+    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
+
+    ToMap("i", "<cmd>Inspect<cr>", "Inspect", "󰍉"),
+
+    ToMap("n", "<cmd>tabnew<cr>", "New buffer", "󰓩"),
 
     ToMap("L", function()
         local cwd = vim.fn.getcwd()
@@ -268,7 +274,7 @@ wk.add({
         else
             print("No .nvim.lua or .nvimrc found in current directory.")
         end
-    end, "Load cwd/.nvimrc", ""),
+    end, "Load cwd/.nvimrc", ""),
 
     ToMap("C", function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
@@ -278,7 +284,7 @@ wk.add({
         require("notify").dismiss()
     end, "Dismiss notification", "󱠡"),
 
-    ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", ""), -- <cmd>DogeGenerate<cr>
+    ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", "󰏫"), -- <cmd>DogeGenerate<cr>
 
     ToMap("/", function()
         local line = vim.api.nvim_win_get_cursor(0)[1] - 1
@@ -298,8 +304,9 @@ wk.add({
         end)
     end, "Toggle comments", "/", nil, "v"),
 
-    ToMap("<C-.>", "<C-t>", "Indent line", ">", "", "i"),
-    ToMap("<C-,>", "<C-d>", "De-indent line", "<", "", "i"),
+    -- Shortcuts to other more nested commands
+    ToMap("D", dapui.toggle, "DAP UI Toggle", ""),
+    ToMap("X", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics panel", "")
 })
 
 local cmp = require("cmp")
@@ -321,7 +328,3 @@ end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
-
-
-Map("n", "<leader>cs", "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)")
-Map("n", "<leader>cS", "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)")
