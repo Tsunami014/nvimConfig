@@ -57,6 +57,8 @@ vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboa
 Map({ 'n', 'v', 'x' }, '_', '"_', 'Black hole')
 Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
 Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
+Map('n', ';;', ':let @+ = @"<CR>', 'Transfer vim clipboard to system')
+Map('n', ";'", ':let @" = @+<CR>', 'Transfer system clipboard to vim')
 -- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
 -- Move = keybinds to \
