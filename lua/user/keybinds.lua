@@ -306,6 +306,7 @@ wk.add({
 
     -- Shortcuts to other more nested commands
     ToMap("D", dapui.toggle, "DAP UI Toggle", ""),
+    ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle Terminal", ""),
     ToMap("X", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics panel", "")
 })
 
