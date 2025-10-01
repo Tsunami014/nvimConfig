@@ -68,7 +68,7 @@ Map({ 'n', 'v', 'x' }, '\\\\', '==', 'Correct indent of current line')
 Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
 Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
 -- Now add the delete to black hole!
-Map({ 'n', 'v', 'x' }, '-', '"_d', 'Delete to black hole')
+Map({ 'n', 'v', 'x' }, '-', '"_dh', 'Delete to black hole')
 
 
 local proj = require("project")

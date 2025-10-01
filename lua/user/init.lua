@@ -147,16 +147,17 @@ function pyadapter(callback, config)
     callback({
         type = "executable",
         command = venv,
-        args = { '-m', 'debugpy.adapter' };
+        args = { '-m', 'debugpy.adapter' },
         options = {
-          source_filetype = 'python',
+            source_filetype = 'python',
         }
     })
 end
+
 dap.adapters.python  = pyadapter
 dap.adapters.debugpy = pyadapter
 
-cppconfig = require("user.cpp").config
+cppconfig            = require("user.cpp").config
 
 require("dap.ext.vscode").load_launchjs(nil, {
     python  = pyconfig,
@@ -166,9 +167,7 @@ require("dap.ext.vscode").load_launchjs(nil, {
 })
 
 -- Some language server options
-lspconfig = require('lspconfig')
-
-lspconfig.pyright.setup {
+vim.lsp.config("pyright", {
     settings = {
         python = {
             analysis = {
@@ -181,17 +180,19 @@ lspconfig.pyright.setup {
             }
         }
     }
-}
-lspconfig.ruff.setup {
+})
+vim.lsp.config("ruff", {
     settings = {
         ruff_lsp = {
             ignore = { "F405", "F841" },
         }
     }
-}
-lspconfig.clangd.setup {
+})
+vim.lsp.config("clangd", {
     capabilities = require("cmp_nvim_lsp").default_capabilities(),
-}
+})
+
+vim.lsp.enable({ "pyright", "ruff", "clangd" })
 
 -- Disable auto formatting
 vim.api.nvim_create_autocmd("LspAttach", {
