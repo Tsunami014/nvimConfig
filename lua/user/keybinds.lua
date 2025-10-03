@@ -1,5 +1,21 @@
 local wk = require("which-key")
 
+function Shortcut(key, parent, rhs, desc, icon, mode)
+    return {
+        __shortcut = true,
+        key = key,
+        parent = parent,
+        rhs = rhs,
+        desc = desc,
+        icon = icon,
+        mode = mode,
+    }
+end
+
+local shortcuts = {
+    { "<leader><leader>", group = "Shortcuts", icon = "" }
+}
+
 function Register(prefix, group, icon, mappings, leader)
     if leader == nil then
         leader = "<leader>"
@@ -9,18 +25,37 @@ function Register(prefix, group, icon, mappings, leader)
     }
 
     for k, v in pairs(mappings) do
-        local key = leader .. prefix .. k
-        local rhs = v[1]
-        local desc = v[2]
-        local ico = icon
-        if v.icon ~= nil then
-            ico = v.icon
+        if type(v) == "table" and v.__shortcut then
+            local longKey = leader .. prefix .. v.key
+            local altKey = leader .. leader .. v.parent
+            table.insert(result, {
+                longKey,
+                v.rhs,
+                desc = v.desc,
+                icon = v.icon or icon,
+                mode = v.mode or "n",
+            })
+            table.insert(shortcuts, {
+                altKey,
+                v.rhs,
+                desc = v.desc,
+                icon = v.icon or icon,
+                mode = v.mode or "n",
+            })
+        else
+            local key = leader .. prefix .. k
+            local rhs = v[1]
+            local desc = v[2]
+            local ico = icon
+            if v.icon ~= nil then
+                ico = v.icon
+            end
+            local mode = "n"
+            if v.mode ~= nil then
+                mode = v.mode
+            end
+            table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
         end
-        local mode = "n"
-        if v.mode ~= nil then
-            mode = v.mode
-        end
-        table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
     end
 
     wk.add({ mode = 'n', result })
@@ -86,9 +121,9 @@ Register("|", "Profiles", "", {
 
 
 Register("f", "Find", "󰍉", {
-    n = { "<cmd>Telescope notify<cr>", "Find notifications" },
+    Shortcut("g", "f", "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs", "󰍉"),
+    Shortcut("n", "n", "<cmd>Telescope notify<cr>", "Find notifications", "󰍉"),
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
-    g = { "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
     h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
     H = { "<cmd>DumpHighlights<cr>", "Find highlights" },
@@ -106,7 +141,7 @@ Register("f", "Find", "󰍉", {
 })
 
 Register("r", "Find & replace", "󰗧", {
-    r = { "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer" },
+    Shortcut("r", "r", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
     R = { "<cmd>SearchReplaceMultiBufferOpen<cr>", "Replace in all buffers" },
     w = { "<cmd>SearchReplaceSingleBufferCWord<cr>", "Replace current word" },
     W = { "<cmd>SearchReplaceSingleBufferCWORD<cr>", "Replace current word (greedy)" },
@@ -115,8 +150,8 @@ Register("r", "Find & replace", "󰗧", {
 
 
 Register("x", "Todos & Troubles", "", {
-    a = { "<cmd>lua vim.lsp.buf.code_action()<cr>", "Apply LSP actions", icon = "󰌑" },
-    x = { "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", icon = "" },
+    Shortcut("a", "a", "<cmd>lua vim.lsp.buf.code_action()<cr>", "Apply LSP actions", "󰌑"),
+    Shortcut("x", "x", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", ""),
     X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
     l = { "<cmd>Trouble loclist toggle<cr>", "Location List (Trouble)", icon = "" },
     q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List (Trouble)", icon = "" },
@@ -133,7 +168,7 @@ Register("s", "Session", "", {
 
 local gs = require("gitsigns")
 Register("g", "Git", "󰊢", {
-    g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
+    Shortcut("g", "g", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
 
     s = { gs.stage_buffer, "Stage Buffer" },
     R = { gs.reset_buffer, "Reset Buffer" },
@@ -159,16 +194,16 @@ Register("d", "Debug", "", {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     c = { function() require("user.cpp").set_new_build_args() end, "Set build args c/c++" },
 
-    b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
+    Shortcut("b", "b", dap.toggle_breakpoint, "Toggle Breakpoint", ""),
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
     r = { dap.repl.open, "Open REPL" },
     l = { dap.run_last, "Run Last DAP" },
-    u = { dapui.toggle, "DAP UI Toggle" },
+    Shortcut("u", "d", dapui.toggle, "DAP UI Toggle", ""),
     e = { dapui.eval, "DAP Eval" }
 })
 
 Register("t", "Terminal", "", {
-    t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
+    Shortcut("t", "t", "<cmd>ToggleTerm<cr>", "Toggle Terminal", ""),
     h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
     v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
     f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
@@ -205,15 +240,12 @@ Register("u", "UI", "", {
     },
 
     ["."] = { proj.loadUI, "Initialise the UI", },
-    w = {
-        function()
-            vim.cmd("set wrap!")
-            local wrap_status = vim.wo.wrap and "enabled" or "disabled"
-            vim.notify("Wrap " .. wrap_status, vim.log.levels.INFO, { title = "Wrap Toggle" })
-        end,
-        "Toggle wrap",
-        icon = "󰖶"
-    },
+    Shortcut("w", "w", function()
+        vim.cmd("set wrap!")
+        local wrap_status = vim.wo.wrap and "enabled" or "disabled"
+        vim.notify("Wrap " .. wrap_status, vim.log.levels.INFO, { title = "Wrap Toggle" })
+    end,
+    "Toggle wrap", "󰖶"),
 })
 
 Register("P", "Packages", "", {
@@ -221,7 +253,7 @@ Register("P", "Packages", "", {
 })
 
 Register("c", "Symbols", "󱔁", {
-    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)" },
+    Shortcut("c", "c", "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)", "󱔁"),
     C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)" }
 })
 
@@ -305,11 +337,6 @@ wk.add({
             comms.toggle_comment_lines(start_line - 1, end_line - 1)
         end)
     end, "Toggle comments", "/", nil, "v"),
-
-    -- Shortcuts to other more nested commands
-    ToMap("D", dapui.toggle, "DAP UI Toggle", ""),
-    ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle Terminal", ""),
-    ToMap("X", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics panel", "")
 })
 
 local cmp = require("cmp")
@@ -330,4 +357,6 @@ Map({ 'i', 's' }, '<S-Tab>', function()
 end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
+
+wk.add({ mode = 'n', shortcuts })
 
