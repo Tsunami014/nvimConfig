@@ -12,8 +12,9 @@ function Shortcut(key, parent, rhs, desc, icon, mode)
     }
 end
 
+shortcut_leader = ","  -- <leader><leader> also works
 local shortcuts = {
-    { "<leader><leader>", group = "Shortcuts", icon = "" }
+    { shortcut_leader, group = "Shortcuts", icon = "" }
 }
 
 function Register(prefix, group, icon, mappings, leader)
@@ -27,7 +28,7 @@ function Register(prefix, group, icon, mappings, leader)
     for k, v in pairs(mappings) do
         if type(v) == "table" and v.__shortcut then
             local longKey = leader .. prefix .. v.key
-            local altKey = leader .. leader .. v.parent
+            local altKey = shortcut_leader .. v.parent
             table.insert(result, {
                 longKey,
                 v.rhs,
