@@ -211,13 +211,30 @@ Register("t", "Terminal", "", {
 
 Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
 Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
+Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
 Register("b", "Buffer", "󰓩", {
     n = { "<cmd>tabnew<cr>", "New Buffer" },
-    p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
+    Shortcut("p", "p", "<cmd>BufferPick<cr>", "Pick Buffer", "󰓩"),
     c = { "<cmd>BufferClose<cr>", "Close Buffer" },
     o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
     r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
-    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" }
+    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" },
+
+    ["1"] = { "<cmd>BufferGoto 1<cr>", "First buffer" },
+    ["0"] = { "<cmd>BufferLast<cr>", "Last Buffer" },
+
+    l = { "<cmd>BufferMoveNext<cr>", "Move Buffer Right" },
+    h = { "<cmd>BufferMovePrevious<cr>", "Move Buffer Left" },
+
+    x = { "<cmd>BufferPin<cr>", "Pin/Unpin Buffer" },
+    X = { "<cmd>BufferCloseAllButPinned<cr>", "Close Unpinned Buffers" },
+
+    s = { "<cmd>BufferOrderByDirectory<cr>", "Sort by Directory" },
+    S = { "<cmd>BufferOrderByLanguage<cr>", "Sort by Language" },
+    L = { "<cmd>BufferOrderByWindowNumber<cr>", "Sort by Window" },
+
+    W = { "<cmd>BufferWipeout<cr>", "Wipeout Buffer" },
 })
 
 local quotes = {
