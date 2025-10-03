@@ -67,8 +67,8 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufDelete" }, {
 
 
 require('nvim-treesitter.configs').setup {
-    ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", "bash", "yaml",
-        "css", "html", "javascript", "latex", "norg", "scss", "svelte", "tsx", "typst", "vue" },
+    ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", 
+        "bash", "yaml", "css", "html", "javascript", "latex", "tsx", "typst", "c", "cpp" },
 }
 
 vim.api.nvim_create_autocmd("LspAttach", {
