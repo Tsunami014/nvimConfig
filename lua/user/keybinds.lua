@@ -133,9 +133,6 @@ Register("f", "Find", "󰍉", {
     k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
     s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
     d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics" },
-
-    r = { "<cmd>GrugFar<cr>", "Find & replace in all files", icon = "󰗧" },
-
     t = { "<cmd>TodoTelescope<cr>", "Find Todos", icon = "" },
     T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
 })
@@ -151,12 +148,12 @@ Register("r", "Find & replace", "󰗧", {
 
 Register("x", "Todos & Troubles", "", {
     Shortcut("a", "a", "<cmd>lua vim.lsp.buf.code_action()<cr>", "Apply LSP actions", "󰌑"),
-    Shortcut("x", "x", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics (Trouble)", ""),
-    X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics (Trouble)", icon = "" },
-    l = { "<cmd>Trouble loclist toggle<cr>", "Location List (Trouble)", icon = "" },
-    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List (Trouble)", icon = "" },
-    t = { "<cmd>Trouble todo toggle<cr>", "Todo (Trouble)" },
-    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme (Trouble)" }
+    Shortcut("x", "x", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics", ""),
+    X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
+    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", icon = "" },
+    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", icon = "" },
+    t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
+    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" }
 })
 
 Register("s", "Session", "", {
@@ -270,8 +267,8 @@ Register("P", "Packages", "", {
 })
 
 Register("c", "Symbols", "󱔁", {
-    Shortcut("c", "c", "<cmd>Trouble symbols toggle<cr>", "Symbols (Trouble)", "󱔁"),
-    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/... (Trouble)" }
+    Shortcut("c", "c", "<cmd>Trouble symbols toggle<cr>", "Symbols", "󱔁"),
+    Shortcut("C", "C", "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/...", "󱔁"),
 })
 
 Register("]", "Next", "󰒭", {
