@@ -437,4 +437,11 @@ M.config = {
 dap.configurations.c = M.config
 dap.configurations.cpp = M.config
 
+-- Do not include the 'build this file' in cmake config
+local slice = {}
+for i = 2, #M.config do
+    slice[#slice + 1] = M.config[i]
+end
+dap.configurations.cmake = slice
+
 return M
