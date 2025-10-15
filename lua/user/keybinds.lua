@@ -122,7 +122,7 @@ Register("|", "Profiles", "", {
 
 
 Register("f", "Find", "󰍉", {
-    Shortcut("g", "f", "<cmd>Telescope live_grep<cr>", "Find Grep (Live) in all dirs", "󰍉"),
+    Shortcut("g", "f", "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs", "󰍉"),
     Shortcut("n", "n", "<cmd>Telescope notify<cr>", "Find notifications", "󰍉"),
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
@@ -205,6 +205,12 @@ Register("t", "Terminal", "", {
     h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
     v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
     f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
+})
+
+Register("k", "Preview (knap)", "", {
+    Shortcut("k", "k", function() require("knap").process_once() end, "Process preview once"),
+    c = { function() require("knap").close_viewer() end, "Close preview" },
+    a = { function() require("knap").toggle_autopreviewing() end, "Toggle auto preview" },
 })
 
 Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
@@ -333,7 +339,7 @@ wk.add({
         require("notify").dismiss()
     end, "Dismiss notification", "󱠡"),
 
-    ToMap('"', "<Plug>(doge-generate)", "Generate Docs (vim-doge)", "󰏫"), -- <cmd>DogeGenerate<cr>
+    ToMap('"', "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
 
     ToMap("/", function()
         local line = vim.api.nvim_win_get_cursor(0)[1] - 1

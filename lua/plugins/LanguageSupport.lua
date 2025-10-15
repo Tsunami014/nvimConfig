@@ -118,4 +118,33 @@ return {
       dap.configurations.rust = dap.configurations.cpp
     end,
   },
+
+  -- Live preview for many languages
+  {
+    "frabjous/knap",
+    config = function()
+      local runFalkon = "falkon --new-window file:///tmp/%outputfile%"
+      local gknap = {
+        -- HTML - copy file
+        htmloutputext = "html",
+        htmltohtml = "cp %docroot% /tmp/%outputfile%",
+        htmltohtmlviewerlaunch = runFalkon,
+        mdtohtmlviewerrefresh = "none",
+
+        -- Markdown - run to temp file
+        mdoutputext = "html",
+        mdtohtml = "pandoc --standalone %docroot% -o /tmp/%outputfile%",
+        mdtohtmlviewerlaunch = runFalkon,
+        mdtohtmlviewerrefresh = "none",
+
+        -- Latex - run to temp file
+        texoutputext = "html",
+        textohtml = "pandoc --standalone %docroot% -o %outputfile% --from=latex --mathjax",
+        textohtmlviewerlaunch = runFalkon,
+        textohtmlviewerrefresh = "none",
+      }
+
+      vim.g.knap_settings = gknap
+    end
+  },
 }
