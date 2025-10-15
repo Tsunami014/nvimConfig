@@ -124,6 +124,7 @@ Register("|", "Profiles", "", {
 Register("f", "Find", "󰍉", {
     Shortcut("g", "f", "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs", "󰍉"),
     Shortcut("n", "n", "<cmd>Telescope notify<cr>", "Find notifications", "󰍉"),
+    Shortcut("m", "m", "<cmd>messages<cr>", "Find messages", "󰍉"),
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
     h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
@@ -208,7 +209,7 @@ Register("t", "Terminal", "", {
 })
 
 Register("k", "Preview (knap)", "", {
-    Shortcut("k", "k", function() require("knap").process_once() end, "Process preview once"),
+    Shortcut("k", "k", function() require("knap").process_once() end, "Process preview once", ""),
     c = { function() require("knap").close_viewer() end, "Close preview" },
     a = { function() require("knap").toggle_autopreviewing() end, "Toggle auto preview" },
 })

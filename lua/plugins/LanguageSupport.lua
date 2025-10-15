@@ -138,10 +138,10 @@ return {
         mdtohtmlviewerrefresh = "none",
 
         -- Latex - run to temp file
-        texoutputext = "html",
-        textohtml = "pandoc --standalone %docroot% -o %outputfile% --from=latex --mathjax",
-        textohtmlviewerlaunch = runFalkon,
-        textohtmlviewerrefresh = "none",
+        texoutputext = "pdf",
+        textopdf = "pdflatex -halt-on-error -interaction=batchmode %docroot% -output-directory=/tmp",
+        textopdfviewerlaunch = 
+          [[sioyek /tmp/%outputfile%"]],
       }
 
       vim.g.knap_settings = gknap
