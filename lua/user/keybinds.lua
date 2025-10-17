@@ -149,13 +149,16 @@ Register("r", "Find & replace", "󰗧", {
 
 
 Register("x", "Todos & Troubles", "", {
-    Shortcut("a", "a", "<cmd>lua vim.lsp.buf.code_action()<cr>", "Apply LSP actions", "󰌑"),
+    Shortcut("a", "a", vim.lsp.buf.code_action, "Apply LSP actions", "󰌑"),
     Shortcut("x", "x", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics", ""),
     X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
     l = { "<cmd>Trouble loclist toggle<cr>", "Location List", icon = "" },
     q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", icon = "" },
     t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
-    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" }
+    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
+    o = { "<C-q>", "Telescope->quickfix (<C-q>)", icon = "󰌑" },
+    Shortcut("]", "]", "<cmd>cnext<cr>", "Next quick fix", ""),
+    Shortcut("[", "[", "<cmd>cprev<cr>", "Previous quick fix", ""),
 })
 
 Register("s", "Session", "", {
