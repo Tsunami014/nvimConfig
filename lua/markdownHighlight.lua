@@ -14,19 +14,15 @@ local heading_hl = {
 
 local function make_bar(percent, level)
     local parts = {}
-    if level == 1 then
-        parts[1] = percent >= 50 and "" or ""
-    else
-        for i = 1, level do
-            local threshold = (i / level) * 100
-            local is_full = percent >= threshold
-            if i == 1 then
-                parts[#parts + 1] = is_full and "" or ""
-            elseif i == level then
-                parts[#parts + 1] = is_full and "" or ""
-            else
-                parts[#parts + 1] = is_full and "" or ""
-            end
+    for i = 1, level do
+        local threshold = (i / (level+1)) * 100
+        local is_full = percent >= threshold
+        if i == level then
+            parts[#parts + 1] = is_full and "" or ""
+        elseif i == 1 then
+            parts[#parts + 1] = is_full and "" or ""
+        else
+            parts[#parts + 1] = is_full and "" or ""
         end
     end
     return table.concat(parts)
