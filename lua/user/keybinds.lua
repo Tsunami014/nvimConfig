@@ -383,5 +383,6 @@ end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
+-- Shortcuts
 wk.add({ mode = 'n', shortcuts })
 

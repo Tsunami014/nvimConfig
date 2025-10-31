@@ -190,6 +190,19 @@ vim.lsp.config("ruff", {
 })
 vim.lsp.config("clangd", {
     capabilities = require("cmp_nvim_lsp").default_capabilities(),
+
+    cmd = {
+    "clangd",
+    "-j=4",  -- limit worker threads; tune to your machine (2-4)
+    "--background-index",
+    "--clang-tidy=false",
+    "--pch-storage=memory",
+  },
+
+  root_dir = function(fname)
+    return vim.fs.root(fname, { "compile_commands.json", ".clangd", ".git" })
+  end,
+  single_file_support = false,
 })
 
 vim.lsp.enable({ "pyright", "ruff", "clangd" })
