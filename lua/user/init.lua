@@ -167,43 +167,46 @@ require("dap.ext.vscode").load_launchjs(nil, {
 })
 
 -- Some language server options
-vim.lsp.config("pyright", {
-    settings = {
-        python = {
-            analysis = {
-                typeCheckingMode = "off",
-                diagnosticSeverityOverrides = {
-                    reportArgumentType = "none",
-                    reportTypeCommentUsage = "information",
-                    reportWildcardImportFromLibrary = "none",
-                }
-            }
-        }
-    }
-})
-vim.lsp.config("ruff", {
-    settings = {
-        ruff_lsp = {
-            ignore = { "F405", "F841" },
-        }
-    }
-})
-vim.lsp.config("clangd", {
-    capabilities = require("cmp_nvim_lsp").default_capabilities(),
+local lspconfig = require("lspconfig")
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-    cmd = {
+lspconfig.pyright.setup {
+  settings = {
+    python = {
+      analysis = {
+        typeCheckingMode = "off",
+        diagnosticSeverityOverrides = {
+          reportArgumentType = "none",
+          reportTypeCommentUsage = "information",
+          reportWildcardImportFromLibrary = "none",
+        }
+      }
+    }
+  }
+}
+
+lspconfig.ruff.setup {
+  settings = {
+    ruff_lsp = {
+      ignore = { "F405", "F841" },
+    }
+  }
+}
+
+lspconfig.clangd.setup {
+  capabilities = capabilities,
+  cmd = {
     "clangd",
-    "-j=4",  -- limit worker threads; tune to your machine (2-4)
+    "-j=4",
     "--background-index",
     "--clang-tidy=false",
     "--pch-storage=memory",
   },
-
   root_dir = function(fname)
     return vim.fs.root(fname, { "compile_commands.json", ".clangd", ".git" })
   end,
   single_file_support = false,
-})
+}
 
 vim.lsp.enable({ "pyright", "ruff", "clangd" })
 
