@@ -167,10 +167,9 @@ require("dap.ext.vscode").load_launchjs(nil, {
 })
 
 -- Some language server options
-local lspconfig = require("lspconfig")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-lspconfig.pyright.setup {
+vim.lsp.config('pyright', {
   settings = {
     python = {
       analysis = {
@@ -183,17 +182,17 @@ lspconfig.pyright.setup {
       }
     }
   }
-}
+})
 
-lspconfig.ruff.setup {
+vim.lsp.config('ruff', {
   settings = {
     ruff_lsp = {
       ignore = { "F405", "F841" },
     }
   }
-}
+})
 
-lspconfig.clangd.setup {
+vim.lsp.config('clangd', {
   capabilities = capabilities,
   cmd = {
     "clangd",
@@ -202,11 +201,11 @@ lspconfig.clangd.setup {
     "--clang-tidy=false",
     "--pch-storage=memory",
   },
-  root_dir = function(fname)
-    return vim.fs.root(fname, { "compile_commands.json", ".clangd", ".git" })
-  end,
-  single_file_support = false,
-}
+  flags = {
+    debounce_text_changes = 200, -- prevents spamming; milliseconds, tune 150-500
+  },
+  root_markers = { '.clangd', 'compile_commands.json' },
+})
 
 vim.lsp.enable({ "pyright", "ruff", "clangd" })
 
