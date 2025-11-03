@@ -1,17 +1,14 @@
 # Tsunami014's Neovim configuration
+This is just for my own use, use as you please.
+
+This contains some extra stuff I made:
+- A markdown highlighter which actually works
+- Slight modifications to the keybinds
+- Other stuff I can't think of off the top of my head
 
 ## 🛠️ Installation
 
-To use the AI you will need to add a file in `lua/user/secrets.lua` which contains:
-```lua
-return {
-  OPENAI_API_KEY = "sk-xxxxxxx",
-  GEMINI_API_KEY = "your-gemini-key",
-  DEEPSEEK_API_KEY = "your-deepseek-key",
-}
-```
-
-### Make a backup of your current nvim and shared folder
+### Make a backup of your current nvim and shared folder if you care about your current config (if not or if you don't have one don't worry)
 ```shell
 mv ~/.config/nvim ~/.config/nvim.bak
 mv ~/.local/share/nvim ~/.local/share/nvim.bak
