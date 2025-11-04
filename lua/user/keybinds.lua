@@ -384,5 +384,8 @@ end, 'Previous completion')
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
 -- Shortcuts
+wk.add({
+    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", "", ",")
+})
 wk.add({ mode = 'n', shortcuts })
 
