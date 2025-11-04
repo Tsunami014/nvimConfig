@@ -1,5 +1,3 @@
-local profile = require("profile").current
-
 return {
   -- Theme
   {

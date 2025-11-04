@@ -1,5 +1,3 @@
-local profile = require("profile").current
-
 local confDir
 if vim.fn.has("win32") == 1 then
     confDir = "$APPDATA"
@@ -110,7 +108,7 @@ return {
             {
               {
                 section = "terminal",
-                cmd = vim.fn.stdpath('config') .. "/pipes.sh",
+                cmd = "sh " .. vim.fn.stdpath('config') .. "/pipes.sh",
                 height = 15,
                 padding = 1,
               },

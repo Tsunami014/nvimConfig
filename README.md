@@ -2,7 +2,7 @@
 This is just for my own use, use as you please.
 
 This contains some extra stuff I made:
-- A markdown highlighter which actually works
+- A markdown highlighter which actually works and is pretty cool
 - Slight modifications to the keybinds
 - Other stuff I can't think of off the top of my head
 
@@ -17,10 +17,20 @@ mv ~/.cache/nvim ~/.cache/nvim.bak
 ```
 
 ### Clone the repository
+#### Linux
 ```shell
 git clone https://github.com/Tsunami014/nvimConfig ~/.config/nvim
 ```
-(or to `%userprofile%\AppData\Local\nvim` on Windows)
+
+#### Windows
+##### On Powershell
+```shell
+git clone https://github.com/Tsunami014/nvimConfig $HOME\AppData\Local\nvim
+```
+##### On `cmd.exe`
+```shell
+git clone https://github.com/Tsunami014/nvimConfig %USERPROFILE%\AppData\Local\nvim
+```
 
 ### Start Neovim
 ```shell

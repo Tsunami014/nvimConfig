@@ -1,6 +1,12 @@
+local p = require("profile")
+
 return {
   -- Wakatime - for keeping track of time spent coding
-  { 'wakatime/vim-wakatime', lazy = false },
+  {
+    'wakatime/vim-wakatime',
+    lazy = false,
+    enabled = (p.current == p.OPTS.Full)
+  },
 
   {
     'nvim-telescope/telescope.nvim',

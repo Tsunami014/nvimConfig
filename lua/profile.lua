@@ -1,52 +1,71 @@
 local M = {}
 
-M.OPTS = { "default", "Linux", "Windows" }
-M.DEFAULT = 0
+M.OptNams = { "Minimal", "Full" }
+M.OPTS = {
+  Minimal = 1,
+  Full = 2
+}
+M.DEFAULT = 1
 
-local profile_file = vim.fn.stdpath("config") .. "/profile.json"
+local profile_file = vim.fn.stdpath("config") .. "/profile.txt"
 
 local function load_profile()
   local f = io.open(profile_file, "r")
   if f then
     local content = f:read("*a")
     f:close()
-    local ok, data = pcall(vim.fn.json_decode, content)
-    if ok and data.profile then
-      return data.profile
+    
+    local index = tonumber(content)
+    
+    if index and index >= 1 and index <= #M.OptNams then
+      return index
     end
+    return M.DEFAULT
   end
-  return M.OPTS[M.DEFAULT]
+  
+  return M.DEFAULT
 end
 
-local function save_profile(profile)
+local function save_profile(index)
   local f = io.open(profile_file, "w")
   if f then
-    local data = { profile = profile }
-    f:write(vim.fn.json_encode(data))
+    f:write(tostring(index))
     f:close()
   else
-    vim.notify("Error saving profile!", vim.log.levels.ERROR)
+    vim.notify("Error saving profile index!", vim.log.levels.ERROR)
   end
+end
+
+local function get_profile_name(index)
+    return M.OptNams[index]
 end
 
 M.current = load_profile()
+function M.current_name()
+  return M.OptNams[M.current]
+end
 
-function M.set_profile(profile)
-  M.current = profile
-  save_profile(profile)
-  vim.notify("Profile set to " .. profile)
+function M.set_profile(profile_name)
+    local index = 0
+    for i, name in ipairs(M.OptNams) do
+        if name == profile_name then
+            index = i
+            break
+        end
+    end
 
-  require("project").save_project()
+    if index == 0 then
+        -- This should not happen if called from choose_profile
+        vim.notify("Error: Profile name not found!", vim.log.levels.ERROR)
+        return
+    end
 
-  local cwd = vim.fn.getcwd()
-  local cmd = vim.v.progpath .. [[ -c 'lua require("project").loadProject("]] .. cwd .. '")\''
-  vim.fn.jobstart("kitty " .. cmd, { detach = true })
-
-  vim.cmd("qa!")
+    save_profile(index)
+    vim.notify("Profile will be " .. profile_name .. " on next open of nvim!")
 end
 
 function M.choose_profile()
-  vim.ui.select(M.OPTS, { prompt = "Select profile:" }, function(choice)
+  vim.ui.select(M.OptNams, { prompt = "Select profile:" }, function(choice)
     if choice then
       M.set_profile(choice)
     end
@@ -54,4 +73,3 @@ function M.choose_profile()
 end
 
 return M
-

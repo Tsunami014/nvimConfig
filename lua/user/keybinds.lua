@@ -114,11 +114,11 @@ Register("p", "Projects", "󰉓", {
 })
 
 Register("|", "Profiles", "", {
-    c = { function()
-        vim.notify('The currently active profile is: "' .. require("profile").current .. '"')
+    ["|"] = { function()
+        vim.notify('The currently active profile is: "' .. require("profile").current_name() .. '"')
     end, "Show Current Profile" },
-    s = { function() require('profile').choose_profile() end, "Switch Profile" }
-})
+    S = { function() require('profile').choose_profile() end, "Switch Profile" }
+}, "")
 
 
 Register("f", "Find", "󰍉", {
