@@ -339,10 +339,6 @@ wk.add({
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
     end, "Chdir to parent dir", "󰌑"),
 
-    ToMap(".", function()
-        require("notify").dismiss()
-    end, "Dismiss notification", "󱠡"),
-
     ToMap('"', "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
 
     ToMap("/", function()
@@ -385,7 +381,10 @@ Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions'
 
 -- Shortcuts
 wk.add({
-    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", "", ",")
+    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", "", ","),
+    ToMap(".", function()
+        require("notify").dismiss()
+    end, "Dismiss notifications", "󱠡", ","),
 })
 wk.add({ mode = 'n', shortcuts })
 
