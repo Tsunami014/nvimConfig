@@ -14,11 +14,32 @@ dap.adapters.codelldb = {
 }
 
 M.build_args = ""
-M.last_executable = "./a.out"
+M.last_executable = ""
+
+local function exists(fname)
+    return vim.fn.filereadable(fname) == 1
+end
+
+local function guessLastExecutable()
+    M.last_executable = ""
+    if exists("CMakeLists.txt") then
+        local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+        local candidate = vim.fn.getcwd() .. "/build/" .. project_name
+        if vim.fn.executable(candidate) == 1 or vim.fn.filereadable(candidate) == 1 then
+            M.last_executable = candidate
+        else
+            local c2 = vim.fn.getcwd() .. "/build/Debug/" .. project_name
+            if vim.fn.executable(c2) == 1 or vim.fn.filereadable(c2) == 1 then M.last_executable = c2 end
+        end
+    end
+    if M.last_executable == "" then
+        M.last_executable = "./a.out"
+    end
+end
 
 local function reset_build_args()
     M.build_args = ""
-    M.last_executable = "./a.out"
+    M.last_executable = ""
     vim.notify("Build args reset to ''", vim.log.levels.INFO)
 end
 
@@ -36,10 +57,6 @@ M.set_new_build_args = function()
                 vim.notify("Build args unchanged.", vim.log.levels.INFO)
             end
         end)
-end
-
-local function exists(fname)
-    return vim.fn.filereadable(fname) == 1
 end
 
 local function compile_current_file_to_tmp()
@@ -378,7 +395,9 @@ M.config = {
         program = function()
             run_project_build_async("Release", { title = "Build (Release)", max_lines = 2000 }, function(success, _out)
                 if success then
-                    -- optional: update last_executable guessing, etc.
+                    if M.last_executable == "" then
+                        guessLastExecutable()
+                    end
                 end
             end)
             return nil
@@ -400,20 +419,11 @@ M.config = {
                     return
                 end
 
-                -- try to guess executable path if using a top-level CMake target named after the folder
-                local guess = M.last_executable
-                if exists("CMakeLists.txt") then
-                    local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
-                    local candidate = vim.fn.getcwd() .. "/build/" .. project_name
-                    if vim.fn.executable(candidate) == 1 or vim.fn.filereadable(candidate) == 1 then
-                        guess = candidate
-                    else
-                        local c2 = vim.fn.getcwd() .. "/build/Debug/" .. project_name
-                        if vim.fn.executable(c2) == 1 or vim.fn.filereadable(c2) == 1 then guess = c2 end
-                    end
+                if M.last_executable == "" then
+                    guessLastExecutable()
                 end
 
-                local result = vim.fn.input("Path to executable to debug: ", guess or M.last_executable)
+                local result = vim.fn.input("Path to executable to debug: ", M.last_executable)
                 if not result or result == "" then
                     vim.notify("No program provided. Aborting debug launch.", vim.log.levels.WARN)
                     return
@@ -432,6 +442,29 @@ M.config = {
                 })
             end)
             return nil
+        end,
+        cwd = "${workspaceFolder}",
+        stopOnEntry = false,
+        args = {},
+        runInTerminal = false,
+    },
+    {
+        name = "Run executable",
+        type = "codelldb",
+        request = "launch",
+        program = function()
+            if M.last_executable == "" then
+                guessLastExecutable()
+            end
+
+            local result = vim.fn.input("Path to executable to debug: ", M.last_executable)
+            if not result or result == "" then
+                vim.notify("No program provided. Aborting debug launch.", vim.log.levels.WARN)
+                return
+            end
+            M.last_executable = result
+
+            return result
         end,
         cwd = "${workspaceFolder}",
         stopOnEntry = false,
