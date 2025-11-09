@@ -373,7 +373,31 @@ end
 -- DAP configurations
 M.config = {
     {
-        name = "Compile current file and debug (/tmp)",
+        name = "Run executable",
+        type = "codelldb",
+        request = "launch",
+        program = function()
+            if M.last_executable == "" then
+                guessLastExecutable()
+            end
+
+            local result = vim.fn.input("Path to executable to debug: ", M.last_executable)
+            if not result or result == "" then
+                vim.notify("No program provided. Aborting debug launch.", vim.log.levels.WARN)
+                return
+            end
+            M.last_executable = result
+
+            return result
+        end,
+        cwd = "${workspaceFolder}",
+        stopOnEntry = false,
+        args = {},
+        runInTerminal = false,
+    },
+
+    {
+        name = "Compile current file to /tmp and debug",
         type = "codelldb",
         request = "launch",
         program = function()
@@ -389,7 +413,7 @@ M.config = {
 
     -- Async Release build (starts background build and returns immediately)
     {
-        name = "Build (make/cmake)",
+        name = "Build (make/cmake) for release",
         type = "codelldb",
         request = "launch",
         program = function()
@@ -448,29 +472,6 @@ M.config = {
         args = {},
         runInTerminal = false,
     },
-    {
-        name = "Run executable",
-        type = "codelldb",
-        request = "launch",
-        program = function()
-            if M.last_executable == "" then
-                guessLastExecutable()
-            end
-
-            local result = vim.fn.input("Path to executable to debug: ", M.last_executable)
-            if not result or result == "" then
-                vim.notify("No program provided. Aborting debug launch.", vim.log.levels.WARN)
-                return
-            end
-            M.last_executable = result
-
-            return result
-        end,
-        cwd = "${workspaceFolder}",
-        stopOnEntry = false,
-        args = {},
-        runInTerminal = false,
-    },
 }
 
 dap.configurations.c = M.config
@@ -478,8 +479,10 @@ dap.configurations.cpp = M.config
 
 -- Do not include the 'build this file' in cmake config
 local slice = {}
-for i = 2, #M.config do
-    slice[#slice + 1] = M.config[i]
+for i = 1, #M.config do
+    if i ~= 2 then
+        slice[#slice + 1] = M.config[i]
+    end
 end
 dap.configurations.cmake = slice
 
