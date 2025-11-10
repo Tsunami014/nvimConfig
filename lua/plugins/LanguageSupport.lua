@@ -127,7 +127,7 @@ return {
     "frabjous/knap",
     config = function()
       local runFalkon = "falkon --new-window file:///tmp/%outputfile%"
-      local gknap = {
+      vim.g.knap_settings = {
         -- HTML - copy file
         htmloutputext = "html",
         htmltohtml = "cp %docroot% /tmp/%outputfile%",
@@ -142,12 +142,16 @@ return {
 
         -- Latex - run to temp file
         texoutputext = "pdf",
-        textopdf = "pdflatex -halt-on-error -interaction=batchmode %docroot% -output-directory=/tmp",
-        textopdfviewerlaunch = 
-          [[sioyek /tmp/%outputfile%"]],
+        textopdf = [[
+          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp %docroot%
+          rc=$?
+          fname=%outputfile%
+          [ $rc -ne 0 ] && kitty vim "/tmp/${fname%.*}.log" && exit $rc
+          exit 0
+        ]],
+        textopdfviewerlaunch = "sioyek /tmp/%outputfile%",
+        mdtohtmlviewerrefresh = "none",
       }
-
-      vim.g.knap_settings = gknap
     end
   },
 }

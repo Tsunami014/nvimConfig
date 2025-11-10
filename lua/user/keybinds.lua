@@ -211,10 +211,11 @@ Register("t", "Terminal", "", {
     f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
 })
 
+local knap = require("knap")
 Register("k", "Preview (knap)", "", {
-    Shortcut("k", "k", function() require("knap").process_once() end, "Process preview once", ""),
-    c = { function() require("knap").close_viewer() end, "Close preview" },
-    a = { function() require("knap").toggle_autopreviewing() end, "Toggle auto preview" },
+    Shortcut("k", "k", knap.process_once, "Process preview once", ""),
+    c = { knap.close_viewer, "Close preview" },
+    a = { knap.toggle_autopreviewing, "Toggle auto preview"},
 })
 
 Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
