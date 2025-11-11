@@ -300,7 +300,8 @@ Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 
 Map({ 'n', 'v' }, '?', '<cmd>WhichKey<CR>', 'Activate which-key')
 
-Map({ "n", "v" }, "Q", "<cmd>q<CR>", "Quit")
+Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
+Map({ 'n', 'v' }, "<A-BS>", "<cmd>BufferClose<cr>", "Close buffer")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 Map("v", ">", ">gv", "Indent selection")
