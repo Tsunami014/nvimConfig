@@ -196,7 +196,7 @@ vim.lsp.config('clangd', {
   capabilities = capabilities,
   cmd = {
     "clangd",
-    "-j=4",
+    "-j=8",
     "--background-index",
     "--clang-tidy=false",
     "--pch-storage=memory",

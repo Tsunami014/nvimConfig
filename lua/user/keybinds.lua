@@ -1,22 +1,5 @@
 local wk = require("which-key")
 
-function Shortcut(key, parent, rhs, desc, icon, mode)
-    return {
-        __shortcut = true,
-        key = key,
-        parent = parent,
-        rhs = rhs,
-        desc = desc,
-        icon = icon,
-        mode = mode,
-    }
-end
-
-shortcut_leader = ","  -- <leader><leader> also works
-local shortcuts = {
-    { shortcut_leader, group = "Shortcuts", icon = "" }
-}
-
 function Register(prefix, group, icon, mappings, leader)
     if leader == nil then
         leader = "<leader>"
@@ -31,13 +14,6 @@ function Register(prefix, group, icon, mappings, leader)
             local altKey = shortcut_leader .. v.parent
             table.insert(result, {
                 longKey,
-                v.rhs,
-                desc = v.desc,
-                icon = v.icon or icon,
-                mode = v.mode or "n",
-            })
-            table.insert(shortcuts, {
-                altKey,
                 v.rhs,
                 desc = v.desc,
                 icon = v.icon or icon,
@@ -122,9 +98,9 @@ Register("|", "Profiles", "", {
 
 
 Register("f", "Find", "󰍉", {
-    Shortcut("g", "f", "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs", "󰍉"),
-    Shortcut("n", "n", "<cmd>Telescope notify<cr>", "Find notifications", "󰍉"),
-    Shortcut("m", "m", "<cmd>messages<cr>", "Find messages", "󰍉"),
+    g = { "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs" },
+    n = { "<cmd>Telescope notify<cr>", "Find notifications" },
+    m = { "<cmd>messages<cr>", "Find messages" },
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
     h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
@@ -140,7 +116,7 @@ Register("f", "Find", "󰍉", {
 })
 
 Register("r", "Find & replace", "󰗧", {
-    Shortcut("r", "r", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
+    r = { "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer" },
     R = { "<cmd>SearchReplaceMultiBufferOpen<cr>", "Replace in all buffers" },
     w = { "<cmd>SearchReplaceSingleBufferCWord<cr>", "Replace current word" },
     W = { "<cmd>SearchReplaceSingleBufferCWORD<cr>", "Replace current word (greedy)" },
@@ -149,16 +125,16 @@ Register("r", "Find & replace", "󰗧", {
 
 
 Register("x", "Todos & Troubles", "", {
-    Shortcut("a", "a", vim.lsp.buf.code_action, "Apply LSP actions", "󰌑"),
-    Shortcut("x", "x", "<cmd>Trouble diagnostics toggle<cr>", "Diagnostics", ""),
+    a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
+    x = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
     X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
     l = { "<cmd>Trouble loclist toggle<cr>", "Location List", icon = "" },
     q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", icon = "" },
     t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
     T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
     o = { "<C-q>", "Telescope->quickfix (<C-q>)", icon = "󰌑" },
-    Shortcut("]", "]", "<cmd>cnext<cr>", "Next quick fix", ""),
-    Shortcut("[", "[", "<cmd>cprev<cr>", "Previous quick fix", ""),
+    ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
+    ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
 })
 
 Register("s", "Session", "", {
@@ -170,7 +146,7 @@ Register("s", "Session", "", {
 
 local gs = require("gitsigns")
 Register("g", "Git", "󰊢", {
-    Shortcut("g", "g", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
+    g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
 
     s = { gs.stage_buffer, "Stage Buffer" },
     R = { gs.reset_buffer, "Reset Buffer" },
@@ -196,16 +172,16 @@ Register("d", "Debug", "", {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     c = { function() require("user.cpp").set_new_build_args() end, "Set build args c/c++" },
 
-    Shortcut("b", "b", dap.toggle_breakpoint, "Toggle Breakpoint", ""),
+    b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
     r = { dap.repl.open, "Open REPL" },
     l = { dap.run_last, "Run Last DAP" },
-    Shortcut("u", "d", dapui.toggle, "DAP UI Toggle", ""),
+    u = { dapui.toggle, "DAP UI Toggle" },
     e = { dapui.eval, "DAP Eval" }
 })
 
 Register("t", "Terminal", "", {
-    Shortcut("t", "t", "<cmd>ToggleTerm<cr>", "Toggle Terminal", ""),
+    t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
     h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
     v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
     f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
@@ -213,7 +189,7 @@ Register("t", "Terminal", "", {
 
 local knap = require("knap")
 Register("k", "Preview (knap)", "", {
-    Shortcut("k", "k", knap.process_once, "Process preview once", ""),
+    k = { knap.process_once, "Process preview once" },
     c = { knap.close_viewer, "Close preview" },
     a = { knap.toggle_autopreviewing, "Toggle auto preview"},
 })
@@ -224,7 +200,7 @@ Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
 Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
 Register("b", "Buffer", "󰓩", {
     n = { "<cmd>tabnew<cr>", "New Buffer" },
-    Shortcut("p", "p", "<cmd>BufferPick<cr>", "Pick Buffer", "󰓩"),
+    p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
     c = { "<cmd>BufferClose<cr>", "Close Buffer" },
     o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
     r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
@@ -255,23 +231,17 @@ local quotes = {
     "BUGS ARE INEVITABLE DURING PRODUCTION."
 }
 Register("u", "UI", "", {
-    m = { ":MarkdownPreview<CR>", "Markdown preview", icon = "󰈈" },
-    M = {
-        function()
+    m = { ":MarkdownPreview<CR>", "Markdown preview", "󰈈" },
+    M = { function()
             local quote = quotes[math.random(#quotes)]
             vim.notify(quote, vim.log.levels.INFO, { title = "Motivation Boost" })
-        end,
-        "Motivation",
-        icon = ""
+        end, "Motivation", ""
     },
 
-    ["."] = { proj.loadUI, "Initialise the UI", },
-    Shortcut("w", "w", function()
+    ["."] = { proj.loadUI, "Initialise the UI" },
+    w = { function()
         vim.cmd("set wrap!")
-        local wrap_status = vim.wo.wrap and "enabled" or "disabled"
-        vim.notify("Wrap " .. wrap_status, vim.log.levels.INFO, { title = "Wrap Toggle" })
-    end,
-    "Toggle wrap", "󰖶"),
+    end, "Toggle wrap", "󰖶" },
 })
 
 Register("P", "Packages", "", {
@@ -279,8 +249,8 @@ Register("P", "Packages", "", {
 })
 
 Register("c", "Symbols", "󱔁", {
-    Shortcut("c", "c", "<cmd>Trouble symbols toggle<cr>", "Symbols", "󱔁"),
-    Shortcut("C", "C", "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/...", "󱔁"),
+    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." }
 })
 
 Register("]", "Next", "󰒭", {
@@ -316,6 +286,10 @@ wk.add({
     -- Commands
     ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
+
+    ToMap(".", function()
+        require("notify").dismiss()
+    end, "Dismiss notifications", "󱠡"),
 
     ToMap("i", "<cmd>Inspect<cr>", "Inspect", "󰍉"),
 
@@ -381,12 +355,5 @@ end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
--- Shortcuts
-wk.add({
-    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", "", ","),
-    ToMap(".", function()
-        require("notify").dismiss()
-    end, "Dismiss notifications", "󱠡", ","),
-})
-wk.add({ mode = 'n', shortcuts })
+Map('n', ',', require("user.shortcuts").start_hydra, 'Shortcut')
 
