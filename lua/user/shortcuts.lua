@@ -37,6 +37,23 @@ function create_hint()
   for k, v in pairs(M.commands) do
     table.insert(lines, string.format("%s → %s%s", k, v.exit and "(exit) " or "", v[2]))
   end
+  table.sort(lines, function(a, b)
+    local a1 = string.sub(a, 1, 1)
+    local b1 = string.sub(b, 1, 1)
+    local function score(k)
+      -- lower = first
+      if k:match("%l") then return 3 end  -- Lowercase
+      if k:match("%u") then return 2 end  -- Uppercase
+      return 1  -- Symbols
+    end
+
+    local sa, sb = score(a1), score(b1)
+    if sa == sb then
+      return a1 < b1
+    else
+      return sa < sb
+    end
+  end)
   table.insert(lines, "<Esc> → Exit")
 
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
@@ -57,23 +74,26 @@ function create_hint()
   end
 end
 
-function M.close_hint()
+function M.close_hydra()
   if M.win and vim.api.nvim_win_is_valid(M.win) then
     vim.api.nvim_win_close(M.win, true)
   end
   M.win = nil
   M.buf = nil
+  M.active = false
 end
 
 -- Start the hydra
 function M.start_hydra()
   if M.active then
-    print("Hydra already active!")
-    return
+    M.close_hydra()
+    create_hint()
+    print("Hydra restarted! Press keys, <Esc> to exit.")
+  else
+    M.active = true
+    create_hint()
+    print("Hydra active! Press keys, <Esc> to exit.")
   end
-  M.active = true
-  create_hint()
-  print("Hydra active! Press keys, <Esc> to exit.")
 
   vim.schedule(function()
     while M.active do
@@ -94,14 +114,10 @@ function M.start_hydra()
 
       local cmd = M.commands[key]
       if cmd then
-        -- show feedback before and/or after running the command
-        print(string.format("Running %s → %s", tostring(key), tostring(cmd[2] or "")))
         -- safely call the function
         local ok_cmd, err = pcall(cmd[1])
         if not ok_cmd then
           print("Error: " .. tostring(err))
-        else
-          print(string.format("Ran %s → %s", tostring(key), tostring(cmd[2] or "")))
         end
 
         vim.cmd("redraw")
@@ -115,7 +131,7 @@ function M.start_hydra()
       end
     end
 
-    M.close_hint()
+    M.close_hydra()
     print("Hydra exited!")
   end)
 end
