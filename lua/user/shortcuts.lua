@@ -10,7 +10,6 @@ M.commands = {
   r = { function() vim.cmd("SearchReplaceSingleBufferOpen") end, "Replace in current buffer", exit = true },
   f = { function() vim.cmd("Telescope live_grep") end, "Find grep in all dirs", exit = true },
   n = { function() vim.cmd("Telescope notify") end, "Show notifications", exit = true },
-  m = { function() vim.cmd("messages") end, "Show messages" },
   ["]"] = { function() vim.cmd("cnext") end, "Next quickfix" },
   ["["] = { function() vim.cmd("cprev") end, "Previous quickfix" },
   g = { function() vim.cmd("LazyGit") end, "Open LazyGit", exit = true },

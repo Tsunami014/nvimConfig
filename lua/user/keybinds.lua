@@ -288,6 +288,8 @@ wk.add({
     ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
+    ToMap("m", "<cmd>messages<cr>", "Message history", ""),
+
     ToMap(".", function()
         require("notify").dismiss()
     end, "Dismiss notifications", "󱠡"),
