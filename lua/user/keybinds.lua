@@ -93,7 +93,8 @@ Register("|", "Profiles", "", {
     ["|"] = { function()
         vim.notify('The currently active profile is: "' .. require("profile").current_name() .. '"')
     end, "Show Current Profile" },
-    S = { function() require('profile').choose_profile() end, "Switch Profile" }
+    S = { function() require('profile').choose_profile() end, "Switch Profile" },
+    g = { string.format(":!cd %s && git pull<CR>", vim.fn.stdpath("config")), "Git sync config" }
 }, "")
 
 
