@@ -136,29 +136,6 @@ local lang_icons = {
     sql = "",
 }
 
-local function utf8_offset(s, n)
-  if n == 0 then return 1 end
-  local i, count = 1, 0
-  local len = #s
-  while i <= len do
-    local c = s:byte(i)
-    local char_len
-    if c < 0x80 then
-      char_len = 1
-    elseif c < 0xE0 then
-      char_len = 2
-    elseif c < 0xF0 then
-      char_len = 3
-    else
-      char_len = 4
-    end
-    count = count + 1
-    if count == n then return i end
-    i = i + char_len
-  end
-  return i
-end
-
 -- Redraw overlays only for visible lines (w0..w$). Still scan the whole buffer to find fenced-code blocks
 function M.redraw(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -284,7 +261,7 @@ function M.redraw(bufnr)
                     if all_sep_chars and pipe_count >= 2 then
                       local chars = {}
                       local L = #trimmed
-                      for j = 1, L do
+                      for j = math.max(x_scroll-(#lead_ws)+1, 0), L do
                         local c = trimmed:sub(j, j)
                         if c == "|" then
                           if j == 1 then
@@ -302,26 +279,62 @@ function M.redraw(bufnr)
                           table.insert(chars, c)
                         end
                       end
-                      local new_line = lead_ws .. table.concat(chars)
 
-                      local offs = utf8_offset(new_line, x_scroll+1)
                       vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { new_line:sub(offs), "Normal" } },
+                        virt_text = { { table.concat(chars), "Normal" } },
                         virt_text_pos = "overlay",
                       })
 
                       return {}
                     end
 
-                    -- CASE 1 (content row): starts with a pipe and contains other content
-                    if trimmed:match("^|[^|]*|") then
-                      local new_line = lead_ws .. trimmed:gsub("|", "│")
-                      local offs = utf8_offset(new_line, x_scroll+1)
-                      vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { new_line:sub(offs), "Normal" } },
-                        virt_text_pos = "overlay",
-                      })
+                    -- CASE 1 (content row): is not all separators
+                    local new_line = lead_ws .. trimmed:gsub("|", "│")
+                    local byte_idx, pad = 1, 0
+
+                    if x_scroll > 0 then
+                      local i, disp, len = 1, 0, #new_line
+
+                      while i <= len do
+                        local b = string.byte(new_line, i)
+                        if not b then break end
+
+                        local clen = (b < 0x80) and 1 or (b < 0xE0) and 2 or (b < 0xF0) and 3 or 4
+                        if i + clen - 1 > len then
+                          clen = len - i + 1
+                        end
+
+                        local ch = new_line:sub(i, i + clen - 1)
+                        local w = vim.fn.strdisplaywidth(ch)
+
+                        if disp + w == x_scroll then
+                          byte_idx = i + clen
+                          break
+                        end
+
+                        if disp < x_scroll and disp + w > x_scroll then
+                          local cut = x_scroll - disp  -- how much of the character was “passed”
+                          pad = w - cut                -- how many spaces needed
+                          byte_idx = i + clen          -- skip whole character
+                          break
+                        end
+
+                        disp = disp + w
+                        i = i + clen
+                      end
+
+                      if byte_idx == 1 and disp < x_scroll then
+                        byte_idx = len + 1
+                      end
                     end
+
+                    local prefix = pad > 0 and string.rep(" ", pad) or ""
+                    local visible = prefix .. new_line:sub(byte_idx)
+
+                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                      virt_text = { { visible, "Normal" } },
+                      virt_text_pos = "overlay",
+                    })
                     return {}
                   end
                 },
