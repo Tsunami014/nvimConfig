@@ -233,7 +233,7 @@ function M.redraw(bufnr)
                 {
                   handler = function(ln)
                     -- capture leading and trailing whitespace
-                    local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(.*%S)(%s*)$") 
+                    local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(|.*|)(%s*)$") 
                     if not trimmed then
                       -- line is empty or all whitespace
                       return {}
