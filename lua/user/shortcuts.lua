@@ -5,17 +5,16 @@ M.buf = nil
 M.win = nil
 
 M.commands = {
-  a = { function() vim.lsp.buf.code_action() end, "Apply code action" },
+  a = { function() vim.lsp.buf.code_action() end, "Apply code action", exit = true },
   x = { function() vim.cmd("Trouble diagnostics toggle") end, "Toggle diagnostics" },
   r = { function() vim.cmd("SearchReplaceSingleBufferOpen") end, "Replace in current buffer", exit = true },
   f = { function() vim.cmd("Telescope live_grep") end, "Find grep in all dirs", exit = true },
   n = { function() vim.cmd("Telescope notify") end, "Show notifications", exit = true },
-  ["]"] = { function() vim.cmd("cnext") end, "Next quickfix" },
-  ["["] = { function() vim.cmd("cprev") end, "Previous quickfix" },
+  ["]"] = { function() vim.cmd("cnext") end, "Next quickfix", exit = true },
+  ["["] = { function() vim.cmd("cprev") end, "Previous quickfix", exit = true },
   g = { function() vim.cmd("LazyGit") end, "Open LazyGit", exit = true },
   b = { function() require("dap").toggle_breakpoint() end, "Toggle breakpoint" },
   t = { function() vim.cmd("ToggleTerm") end, "Toggle terminal" },
-  k = { function() require("knap").process_once() end, "Process preview once" },
   p = { function() vim.cmd("BufferPick") end, "Pick buffer", exit = true },
   c = { function() vim.cmd("Trouble symbols toggle") end, "Toggle symbols" },
   C = { function() vim.cmd("Trouble lsp toggle") end, "Toggle LSP references/definitions" },

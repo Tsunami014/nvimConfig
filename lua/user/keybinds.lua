@@ -127,8 +127,8 @@ Register("r", "Find & replace", "󰗧", {
 
 Register("x", "Todos & Troubles", "", {
     a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
-    x = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
-    X = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
+    X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
+    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
     l = { "<cmd>Trouble loclist toggle<cr>", "Location List", icon = "" },
     q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", icon = "" },
     t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
