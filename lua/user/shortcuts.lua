@@ -12,7 +12,7 @@ M.commands = {
   n = { function() vim.cmd("Telescope notify") end, "Show notifications", exit = true },
   ["]"] = { function() vim.cmd("cnext") end, "Next quickfix", exit = true },
   ["["] = { function() vim.cmd("cprev") end, "Previous quickfix", exit = true },
-  g = { function() vim.cmd("LazyGit") end, "Open LazyGit", exit = true },
+  g = { function() vim.cmd("LazyGit");vim.api.nvim_feedkeys("i", "n", true) end, "Open LazyGit", exit = true },
   b = { function() require("dap").toggle_breakpoint() end, "Toggle breakpoint" },
   t = { function() vim.cmd("ToggleTerm") end, "Toggle terminal" },
   p = { function() vim.cmd("BufferPick") end, "Pick buffer", exit = true },
