@@ -14,9 +14,11 @@ M.commands = {
   ["["] = { function() vim.cmd("cprev") end, "Previous quickfix", exit = true },
   g = { function()
       vim.cmd("LazyGit")
-      if vim.api.nvim_get_mode().mode == "n" then
-        vim.api.nvim_feedkeys("i", "n", true)
-      end
+      vim.defer_fn(function()
+        if vim.api.nvim_get_mode().mode == "n" then
+          vim.api.nvim_feedkeys("i", "n", true)
+        end
+      end, 100)
     end, "Open LazyGit", exit = true },
   b = { function() require("dap").toggle_breakpoint() end, "Toggle breakpoint" },
   t = { function() vim.cmd("ToggleTerm") end, "Toggle terminal" },
@@ -57,7 +59,7 @@ function create_hint()
       return sa < sb
     end
   end)
-  table.insert(lines, "<Esc> → Exit")
+  table.insert(lines, "<Esc> or , → Exit")
 
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
 
@@ -110,7 +112,7 @@ function M.start_hydra()
         key = char
       end
 
-      if key == "\27" then
+      if key == "\27" or key == "," then
         M.active = false
         break
       end
