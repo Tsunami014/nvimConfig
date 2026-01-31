@@ -45,7 +45,10 @@ loadProjects()
 
 function M.loadUI()
   local cwd = vim.fn.getcwd()
-  require("resession").load(cwd, { dir = "dirsession" })
+  if not pcall(function() require("resession").load(cwd, { dir = "dirsession" }) end) then
+    vim.api.nvim_feedkeys("<CMD>tabnew<Cr>", "m", false)
+    vim.notify("No session found!", vim.log.levels.WARN)
+  end
   vim.api.nvim_feedkeys("<CMD>Neotree<Cr>", "m", false)
 end
 

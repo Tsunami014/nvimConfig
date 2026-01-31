@@ -146,7 +146,9 @@ return {
           pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp %docroot%
           rc=$?
           fname=%outputfile%
-          [ $rc -ne 0 ] && kitty vim "/tmp/${fname%.*}.log" && exit $rc
+          echo vim "/tmp/${fname%.*}.log" > /tmp/run.sh
+          chmod +x run.sh
+          [ $rc -ne 0 ] && xdg-terminal /tmp/run.sh
           exit 0
         ]],
         textopdfviewerlaunch = "sioyek /tmp/%outputfile%",
