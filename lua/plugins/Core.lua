@@ -8,6 +8,20 @@ return {
     enabled = (p.current == p.OPTS.Full)
   },
 
+  -- Direnv - for having direnv stuff work
+  {
+    "NotAShelf/direnv.nvim",
+    config = function()
+      require("direnv").setup({
+        autoload_direnv = true,
+        statusline = {
+          enabled = true,
+          icon = "",
+        },
+      })
+    end,
+  },
+
   {
     'nvim-telescope/telescope.nvim',
     tag = '0.1.8',

@@ -46,17 +46,18 @@ return {
       signs = {
         add = { text = "▎" },
         change = { text = "▎" },
-        delete = { text = "" },
-        topdelete = { text = "" },
-        changedelete = { text = "▎" },
-        untracked = { text = "▎" },
+        delete = { text = "▁" },
+        topdelete = { text = "▔" },
+        changedelete = { text = "~" },
+        untracked = { text = "┆" },
       },
       signs_staged = {
         add = { text = "▎" },
         change = { text = "▎" },
-        delete = { text = "" },
-        topdelete = { text = "" },
-        changedelete = { text = "▎" },
+        delete = { text = "▁" },
+        topdelete = { text = "▔" },
+        changedelete = { text = "~" },
+        untracked = { text = "┆" },
       },
     },
   },
@@ -102,6 +103,9 @@ return {
     },
     lazy = false,
     opts = {
+      search = {
+        global = { command = "bash -lc 'which python3'" }
+      }
     },
   },
 
