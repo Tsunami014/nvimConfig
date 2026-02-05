@@ -180,6 +180,13 @@ Register("d", "Debug", "", {
     u = { dapui.toggle, "DAP UI Toggle" },
     e = { dapui.eval, "DAP Eval" }
 })
+local direnv = require("direnv")
+Register("D", "Direnv", "", {
+    a = { direnv.allow_direnv, "Allow envrc" },
+    d = { direnv.deny_direnv, "Deny envrc" },
+    r = { direnv.check_direnv, "Reload envrc" },
+    e = { direnv.edit_envrc, "Edit the direnv file" },
+})
 
 Register("t", "Terminal", "", {
     t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },

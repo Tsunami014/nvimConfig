@@ -18,6 +18,11 @@ return {
           enabled = true,
           icon = "",
         },
+        keybindings = {},
+        notifications = {
+          level = vim.log.levels.INFO,
+          silent_autoload = true,
+        },
       })
     end,
   },
