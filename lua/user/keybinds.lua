@@ -124,6 +124,13 @@ Register("r", "Find & replace", "󰗧", {
     e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
 })
 
+Register("l", "LSP", "", {
+    L = { "<cmd>LspLog<cr>", "Lsp logs" },
+    l = { "<cmd>LspInfo<cr>", "Lsp info" },
+    s = { "<cmd>LspStart<cr>", "Start lsp" },
+    S = { "<cmd>LspStop<cr>", "Stop lsp" },
+    r = { "<cmd>LspRestart<cr>", "Restart lsp" }
+})
 
 Register("x", "Todos & Troubles", "", {
     a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
