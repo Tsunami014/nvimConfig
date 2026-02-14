@@ -332,7 +332,7 @@ wk.add({
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
     end, "Chdir to parent dir", "󰌑"),
 
-    ToMap('"', "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
+    ToMap("'", "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
 
     ToMap("/", function()
         local line = vim.api.nvim_win_get_cursor(0)[1] - 1
