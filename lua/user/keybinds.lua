@@ -205,6 +205,7 @@ Register("t", "Terminal", "", {
 local knap = require("knap")
 Register("k", "Preview (knap)", "", {
     k = { knap.process_once, "Process preview once" },
+    r = { function() knap.close_viewer();knap.process_once() end, "Refresh preview" },
     c = { knap.close_viewer, "Close preview" },
     a = { knap.toggle_autopreviewing, "Toggle auto preview"},
 })
