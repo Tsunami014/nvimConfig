@@ -223,12 +223,13 @@ function M.redraw(bufnr)
             end
 
             local specs = {
-                { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
-                { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
-                { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
                 { pat = "(`)([^`][^`]-)(`)",           hl = "InlineQuote" },
                 { pat = "(~~)(..-)(~~)",               hl = "@markup.strikethrough" },
                 { pat = "(==)(.-)(==)",                hl = "Todo" },
+
+                { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
+                { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
+                { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
 
                 {
                   handler = function(ln)
