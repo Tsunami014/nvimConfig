@@ -1,8 +1,11 @@
 local M = {}
 
 M.active = false
+M.nextclose = false
 M.buf = nil
 M.win = nil
+
+local exitPrefix = "󰈆 "
 
 M.commands = {
   a = { function() vim.lsp.buf.code_action() end, "Apply code action", exit = true },
@@ -40,7 +43,7 @@ function create_hint()
 
   local lines = {}
   for k, v in pairs(M.commands) do
-    table.insert(lines, string.format("%s → %s%s", k, v.exit and "(exit) " or "", v[2]))
+    table.insert(lines, string.format("%s → %s%s", k, (M.nextclose or v.exit) and exitPrefix or "", v[2]))
   end
   table.sort(lines, function(a, b)
     local a1 = string.sub(a, 1, 1)
@@ -59,7 +62,13 @@ function create_hint()
       return sa < sb
     end
   end)
-  table.insert(lines, "<Esc> or , → Exit")
+  if M.nextclose then
+    table.insert(lines, "")
+    table.insert(lines, "<Esc> or , → " .. exitPrefix .. "Exit")
+  else
+    table.insert(lines, ", → Final command")
+    table.insert(lines, "<Esc> or ,, → " .. exitPrefix .. "Exit")
+  end
 
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
 
@@ -99,6 +108,7 @@ function M.start_hydra()
     create_hint()
     print("Hydra active! Press keys, <Esc> to exit.")
   end
+  M.nextclose = false
 
   vim.schedule(function()
     while M.active do
@@ -112,27 +122,36 @@ function M.start_hydra()
         key = char
       end
 
-      if key == "\27" or key == "," then
+      if key == "\27" then
         M.active = false
         break
-      end
-
-      local cmd = M.commands[key]
-      if cmd then
-        -- safely call the function
-        local ok_cmd, err = pcall(cmd[1])
-        if not ok_cmd then
-          print("Error: " .. tostring(err))
-        end
-
-        vim.cmd("redraw")
-
-        if cmd.exit then
+      elseif key == "," then
+        if nextclose then
           M.active = false
           break
+        else
+          M.nextclose = true
+          create_hint()
+          print("Next command will exit, or press , again to quit")
         end
       else
-        print("No command for key: " .. tostring(key))
+        local cmd = M.commands[key]
+        if cmd then
+          -- safely call the function
+          local ok_cmd, err = pcall(cmd[1])
+          if not ok_cmd then
+            print("Error: " .. tostring(err))
+          end
+
+          vim.cmd("redraw")
+
+          if cmd.exit or M.nextclose then
+            M.active = false
+            break
+          end
+        else
+          print("No command for key: " .. tostring(key))
+        end
       end
     end
 
