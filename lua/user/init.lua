@@ -104,14 +104,19 @@ vim.opt.swapfile = false
 -- Show the effects of a search / replace in a live preview window
 vim.o.inccommand = "split"
 
+local wrapIn = {"markdown", "tex"}
+local function doWrap(filetype)
+    for index, value in pairs(wrapIn) do
+        if filetype == value then
+            return true
+        end
+    end
+    return false
+end
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
   pattern = "*",
   callback = function()
-    if vim.bo.filetype ~= "markdown" then
-      vim.opt_local.wrap = false
-    else
-      vim.opt_local.wrap = true
-    end
+    vim.opt_local.wrap = doWrap(vim.bo.filetype)
   end
 })
 
@@ -158,13 +163,6 @@ dap.adapters.python  = pyadapter
 dap.adapters.debugpy = pyadapter
 
 cppconfig            = require("user.cpp").config
-
-require("dap.ext.vscode").load_launchjs(nil, {
-    python  = pyconfig,
-    debugpy = pyconfig,
-    cpp     = cppconfig,
-    c       = cppconfig
-})
 
 -- Some language server options
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
