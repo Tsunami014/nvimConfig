@@ -14,10 +14,58 @@ dap.adapters.codelldb = {
 }
 
 M.build_args = ""
+M.debug_build_args = "-O0 -g"
+M.release_build_args = ""
 M.last_executable = ""
 
 local function exists(fname)
     return vim.fn.filereadable(fname) == 1
+end
+
+local function getcmd(build_type)
+    local has_make = exists("Makefile") or exists("makefile")
+    local has_cmake = exists("CMakeLists.txt")
+
+    if has_make and has_cmake then
+        vim.notify("Both Makefile and CMakeLists.txt exist — ambiguous. Aborting build.", vim.log.levels.WARN)
+        return false, "ambiguous"
+    end
+    if not has_make and not has_cmake then
+        vim.notify("No Makefile or CMakeLists.txt found in cwd.", vim.log.levels.WARN)
+        return false, "no_build_files"
+    end
+
+    local cmd
+    if has_make then
+        if build_type == "Debug" then
+            if vim.fn.filereadable("Makefile") == 1 then
+                vim.fn.system('grep -E "^debug:|^debug[ \t]*:" Makefile >/dev/null 2>&1')
+                if vim.v.shell_error == 0 then
+                    cmd = "make debug "
+                else
+                    vim.notify("No 'debug' target found in Makefile; running plain 'make'.", vim.log.levels.WARN)
+                    cmd = "make "
+                end
+            else
+                cmd = "make "
+            end
+            cmd = cmd .. M.build_args .. " " .. M.debug_build_args
+        else
+            cmd = "make " .. M.build_args .. " " .. M.release_build_args
+        end
+    else
+        local args
+        if build_type == "Debug" then
+            args = M.debug_build_args
+        else
+            args = M.release_build_args
+        end
+        cmd = string.format(
+            'cmake -B build -S . -DCMAKE_BUILD_TYPE=%s && cmake --build build --parallel --config %s',
+            build_type, build_type,
+        )
+    end
+    return cmd
 end
 
 local function guessLastExecutable()
@@ -139,45 +187,7 @@ local function run_project_build_async(build_type, opts, on_exit)
     local title = opts.title or ("Build: " .. build_type)
     local max_lines = opts.max_lines or 2000
 
-    local has_make = exists("Makefile") or exists("makefile")
-    local has_cmake = exists("CMakeLists.txt")
-
-    if has_make and has_cmake then
-        vim.notify("Both Makefile and CMakeLists.txt exist — ambiguous. Aborting build.", vim.log.levels.WARN)
-        if on_exit then on_exit(false, "ambiguous") end
-        return nil
-    end
-    if not has_make and not has_cmake then
-        vim.notify("No Makefile or CMakeLists.txt found in cwd.", vim.log.levels.WARN)
-        if on_exit then on_exit(false, "no_build_files") end
-        return nil
-    end
-
-    local cmd
-    if has_make then
-        if build_type == "Debug" then
-            -- test for a debug target quickly
-            local has_debug = false
-            if vim.fn.filereadable("Makefile") == 1 then
-                vim.fn.system('grep -E "^debug:|^debug[ \t]*:" Makefile >/dev/null 2>&1')
-                has_debug = (vim.v.shell_error == 0)
-            end
-            if has_debug then
-                cmd = "make debug " .. M.build_args
-            else
-                vim.notify("No 'debug' target found in Makefile; running plain 'make' for Debug build.",
-                    vim.log.levels.WARN)
-                cmd = "make " .. M.build_args
-            end
-        else
-            cmd = "make " .. M.build_args
-        end
-    else
-        cmd = string.format(
-            'cmake -B build -S . -DCMAKE_BUILD_TYPE=%s && cmake --build build --parallel --config %s',
-            build_type, build_type
-        )
-    end
+    local cmd = getcmd(build_type)
 
     -- accumulator for lines
     local out_lines = {}
@@ -202,7 +212,7 @@ local function run_project_build_async(build_type, opts, on_exit)
     end
 
     -- initial notification; capture returned id so we can replace it later
-    local initial_msg = "Starting build...\nCommand: " .. cmd
+    local initial_msg = "Starting build...\nCommand: " .. cmd .. "\n"
     local notif = nil
     local ok, ret = pcall(function()
         return notify_impl(initial_msg, vim.log.levels.INFO, { title = title, timeout = false })
@@ -226,9 +236,9 @@ local function run_project_build_async(build_type, opts, on_exit)
         if msg == "" then msg = "(no output yet)" end
         local new_ok, new_ret = pcall(function()
             if notif then
-                return notify_impl(msg, level, { title = title, timeout = false, replace = notif })
+                return notify_impl(initial_msg .. msg, level, { title = title, timeout = false, replace = notif })
             else
-                return notify_impl(msg, level, { title = title, timeout = false })
+                return notify_impl(initial_msg .. msg, level, { title = title, timeout = false })
             end
         end)
         if new_ok and new_ret then notif = new_ret end
@@ -247,10 +257,10 @@ local function run_project_build_async(build_type, opts, on_exit)
                 -- final success notification briefly visible
                 local new_ok, new_ret = pcall(function()
                     if notif then
-                        return notify_impl(ok_msg, vim.log.levels.INFO,
+                        return notify_impl(initial_msg .. ok_msg, vim.log.levels.INFO,
                             { title = title, timeout = 3000, replace = notif })
                     else
-                        return notify_impl(ok_msg, vim.log.levels.INFO, { title = title, timeout = 3000 })
+                        return notify_impl(initial_msg .. ok_msg, vim.log.levels.INFO, { title = title, timeout = 3000 })
                     end
                 end)
                 if new_ok and new_ret then notif = new_ret end
@@ -260,9 +270,9 @@ local function run_project_build_async(build_type, opts, on_exit)
                     ("Build failed (exit code " .. tostring(code) .. ")")
                 local new_ok, new_ret = pcall(function()
                     if notif then
-                        return notify_impl(err_msg, vim.log.levels.ERROR, { title = title, timeout = 0, replace = notif })
+                        return notify_impl(initial_msg .. err_msg, vim.log.levels.ERROR, { title = title, timeout = 0, replace = notif })
                     else
-                        return notify_impl(err_msg, vim.log.levels.ERROR, { title = title, timeout = 0 })
+                        return notify_impl(initial_msg .. err_msg, vim.log.levels.ERROR, { title = title, timeout = 0 })
                     end
                 end)
                 if new_ok and new_ret then notif = new_ret end
@@ -288,7 +298,7 @@ local function run_project_build_async(build_type, opts, on_exit)
         if err then
             -- schedule an error notification but keep process running
             vim.schedule(function()
-                notify_impl("Error reading build stdout: " .. tostring(err), vim.log.levels.WARN)
+                notify_impl(initial_msg .. "Error reading build stdout: " .. tostring(err), vim.log.levels.WARN)
             end)
             return
         end
@@ -303,7 +313,7 @@ local function run_project_build_async(build_type, opts, on_exit)
     uv.read_start(stderr, function(err, data)
         if err then
             vim.schedule(function()
-                notify_impl("Error reading build stderr: " .. tostring(err), vim.log.levels.WARN)
+                notify_impl(initial_msg .. "Error reading build stderr: " .. tostring(err), vim.log.levels.WARN)
             end)
             return
         end
@@ -314,60 +324,7 @@ local function run_project_build_async(build_type, opts, on_exit)
         end
     end)
 
-    vim.notify("Build started in background (spawned).", vim.log.levels.INFO)
     return true
-end
-
--- synchronous wrapper kept for compatibility (old behaviour)
-local function run_project_build(blocking_build_type)
-    blocking_build_type = blocking_build_type or "Release"
-
-    local has_make = exists("Makefile") or exists("makefile")
-    local has_cmake = exists("CMakeLists.txt")
-
-    if has_make and has_cmake then
-        vim.notify("Both Makefile and CMakeLists.txt exist — ambiguous. Aborting build.", vim.log.levels.WARN)
-        return false, "ambiguous"
-    end
-    if not has_make and not has_cmake then
-        vim.notify("No Makefile or CMakeLists.txt found in cwd.", vim.log.levels.WARN)
-        return false, "no_build_files"
-    end
-
-    local cmd
-    if has_make then
-        if blocking_build_type == "Debug" then
-            if vim.fn.filereadable("Makefile") == 1 then
-                vim.fn.system('grep -E "^debug:|^debug[ \t]*:" Makefile >/dev/null 2>&1')
-                if vim.v.shell_error == 0 then
-                    cmd = "make debug " .. M.build_args
-                else
-                    vim.notify("No 'debug' target found in Makefile; running plain 'make'.", vim.log.levels.WARN)
-                    cmd = "make " .. M.build_args
-                end
-            else
-                cmd = "make " .. M.build_args
-            end
-        else
-            cmd = "make " .. M.build_args
-        end
-    else
-        cmd = string.format(
-            'cmake -B build -S . -DCMAKE_BUILD_TYPE=%s && cmake --build build --parallel --config %s',
-            blocking_build_type, blocking_build_type
-        )
-    end
-
-    vim.notify("Running build: " .. cmd)
-    local res = vim.fn.system(cmd)
-    local code = vim.v.shell_error
-    if code ~= 0 then
-        vim.notify("Build failed:\n" .. (res or "<no output>"), vim.log.levels.ERROR)
-        return false, res
-    end
-
-    vim.notify("Build finished.")
-    return true, res
 end
 
 -- DAP configurations
