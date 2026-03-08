@@ -62,7 +62,7 @@ local function getcmd(build_type)
         end
         cmd = string.format(
             'cmake -B build -S . -DCMAKE_BUILD_TYPE=%s && cmake --build build --parallel --config %s',
-            build_type, build_type,
+            build_type, build_type
         )
     end
     return cmd

@@ -63,11 +63,11 @@ function create_hint()
     end
   end)
   if M.nextclose then
-    table.insert(lines, "")
-    table.insert(lines, "<Esc> or , → " .. exitPrefix .. "Exit")
+    table.insert(lines, "<Space> or , → " .. exitPrefix .. "Exit")
+    table.insert(lines, "<Esc> → " .. exitPrefix .. "Exit")
   else
-    table.insert(lines, ", → Final command")
-    table.insert(lines, "<Esc> or ,, → " .. exitPrefix .. "Exit")
+    table.insert(lines, "<Space> or , → Final command")
+    table.insert(lines, "<Esc> → " .. exitPrefix .. "Exit")
   end
 
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
@@ -125,14 +125,14 @@ function M.start_hydra()
       if key == "\27" then
         M.active = false
         break
-      elseif key == "," then
-        if nextclose then
+      elseif key == "," or key == " " then
+        if M.nextclose then
           M.active = false
           break
         else
           M.nextclose = true
           create_hint()
-          print("Next command will exit, or press , again to quit")
+          print("Next command will exit")
         end
       else
         local cmd = M.commands[key]
