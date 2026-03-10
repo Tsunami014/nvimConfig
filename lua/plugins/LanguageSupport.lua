@@ -144,15 +144,16 @@ return {
         texoutputext = "pdf",
         textopdf = [[
           pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp %docroot%
+
           rc=$?
           fname=%outputfile%
           echo vim "/tmp/${fname%.*}.log" > /tmp/run.sh
-          chmod +x run.sh
+          chmod +x /tmp/run.sh
           [ $rc -ne 0 ] && xdg-terminal /tmp/run.sh
-          exit 0
+          exit $rc
         ]],
         textopdfviewerlaunch = "sioyek /tmp/%outputfile%",
-        mdtohtmlviewerrefresh = "none",
+        textohtmlviewerrefresh = "none",
       }
     end
   },
