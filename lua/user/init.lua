@@ -1,5 +1,6 @@
 require "user.lualine-theme"
 require "user.keybinds"
+require "user.fix-autosave"
 
 -- Pretend code completion windows are markdown
 vim.api.nvim_create_autocmd("FileType", {
