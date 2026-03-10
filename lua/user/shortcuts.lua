@@ -18,10 +18,8 @@ M.commands = {
   g = { function()
       vim.cmd("LazyGit")
       vim.defer_fn(function()
-        if vim.api.nvim_get_mode().mode == "n" then
-          vim.api.nvim_feedkeys("i", "n", true)
-        end
-      end, 100)
+        vim.cmd("startinsert")
+      end, 150)
     end, "Open LazyGit", exit = true },
   b = { function() require("dap").toggle_breakpoint() end, "Toggle breakpoint" },
   t = { function() vim.cmd("ToggleTerm") end, "Toggle terminal" },
