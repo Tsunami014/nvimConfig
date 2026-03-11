@@ -143,17 +143,22 @@ return {
         -- Latex - run to temp file
         texoutputext = "pdf",
         textopdf = [[
-          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp %docroot%
-
-          rc=$?
-          fname=%outputfile%
-          echo vim "/tmp/${fname%.*}.log" > /tmp/run.sh
-          chmod +x /tmp/run.sh
-          [ $rc -ne 0 ] && xdg-terminal /tmp/run.sh
-          exit $rc
+          rm "/tmp/%outputfile%"
+          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp "%docroot%"
+          fname="%outputfile%"
+          if [ ! -f "/tmp/%outputfile%" ]; then
+            sed 's/\\/\\\\/g' "/tmp/${fname%.*}.log" > "/tmp/${fname%.*}.md"
+            pandoc "/tmp/${fname%.*}.md" -o "/tmp/%outputfile%" > "/tmp/${fname%.*}.log2"
+          fi
+          exit 0
         ]],
-        textopdfviewerlaunch = "sioyek /tmp/%outputfile%",
-        textohtmlviewerrefresh = "none",
+        textopdfviewerrefresh = "none",
+        textopdfviewerlaunch = [[
+          sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --new-instance /tmp/%outputfile% &> /dev/null &
+        ]],
+        textopdfforwardjump = [[
+          sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --reuse-instance --forward-search-file %srcfile% --forward-search-line %line% /tmp/%outputfile%
+        ]]
       }
     end
   },
