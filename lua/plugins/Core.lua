@@ -53,9 +53,7 @@ return {
     opts = {
       load_order = "modification_time",
       autosave = {
-        enabled = true,
-        interval = 60,
-        notify = false,
+        enabled = false
       },
     },
   },
