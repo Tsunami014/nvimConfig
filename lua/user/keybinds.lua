@@ -64,6 +64,9 @@ function ToMap(key, rhs, desc, icon, leader, mode)
     return map
 end
 
+-- A more convenient use
+Map({ 'n', 'v' }, '\\', '@q', '@q')
+
 -- Clipboard stuff
 vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
 Map({ 'n', 'v', 'x' }, '_', '"_', 'Black hole')
@@ -74,8 +77,8 @@ Map('n', ";'", ':let @" = @+<CR>', 'Transfer system clipboard to vim')
 -- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
 -- Move = keybinds to \
-Map({ 'n', 'v', 'x' }, '\\', '=', 'Correct indentation')
-Map({ 'n', 'v', 'x' }, '\\\\', '==', 'Correct indent of current line')
+Map({ 'n', 'v', 'x' }, '?', '=', 'Correct indentation')
+Map({ 'n', 'v', 'x' }, '??', '==', 'Correct indent of current line')
 -- Replace = with - ; So the one button has both + and -
 Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
 Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
@@ -171,11 +174,13 @@ Register("h", "Hunks", "", {
 
 local dap = require("dap")
 local dapui = require("dapui")
+Map("n", "<F4>", dap.close, "DAP Stop")
+Map("n", "<F17>", dap.close, "DAP Stop") -- Shift+F5
 Map("n", "<F5>", dap.continue, "DAP Continue")
 Map("n", "<F6>", dap.run_last, "DAP Run last config")
+Map("n", "<F9>", dap.step_into, "DAP Step Into")
 Map("n", "<F10>", dap.step_over, "DAP Step Over")
-Map("n", "<F11>", dap.step_into, "DAP Step Into")
-Map("n", "<F12>", dap.step_out, "DAP Step Out")
+Map("n", "<F11>", dap.step_out, "DAP Step Out")
 Register("d", "Debug", "", {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     c = { function() require("user.cpp").set_new_build_args() end, "Set build args c/c++" },
@@ -206,6 +211,7 @@ local knap = require("knap")
 Register("k", "Preview (knap)", "", {
     k = { knap.process_once, "Process preview once" },
     r = { function() knap.close_viewer();knap.process_once() end, "Refresh preview" },
+    s = { function() knap.close_viewer();knap.toggle_autopreviewing() end, "Refresh auto preview" },
     c = { knap.close_viewer, "Close preview" },
     a = { knap.toggle_autopreviewing, "Toggle auto preview"},
 })
@@ -284,7 +290,7 @@ Register("[", "Previous", "󰒮", {
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
 Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
 
-Map({ 'n', 'v' }, '?', '<cmd>WhichKey<CR>', 'Activate which-key')
+Map({ 'n', 'v' }, '<C-Space>', '<cmd>WhichKey<CR>', 'Activate which-key')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v' }, "<A-BS>", "<cmd>BufferClose<cr>", "Close buffer")

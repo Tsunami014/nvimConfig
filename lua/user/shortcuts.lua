@@ -1,7 +1,6 @@
 local M = {}
 
 M.active = false
-M.nextclose = false
 M.buf = nil
 M.win = nil
 
@@ -27,7 +26,8 @@ M.commands = {
   c = { function() vim.cmd("Trouble symbols toggle") end, "Toggle symbols" },
   C = { function() vim.cmd("Trouble lsp toggle") end, "Toggle LSP references/definitions" },
   ["."] = { function() require("notify").dismiss() end, "Dismiss notifications" },
-  e = { function() vim.cmd("Neotree toggle") end, "Toggle file explorer" },
+  e = { function() vim.cmd("Neotree toggle") end, "Toggle file tree" },
+  o = { function() vim.cmd("Neotree reveal") end, "Reveal file in tree" },
   d = { function() require("dapui").toggle() end, "Toggle debugger UI" },
   w = { function() vim.cmd("set wrap!") end, "Toggle line wrap" },
 }
@@ -41,7 +41,7 @@ function create_hint()
 
   local lines = {}
   for k, v in pairs(M.commands) do
-    table.insert(lines, string.format("%s → %s%s", k, (M.nextclose or v.exit) and exitPrefix or "", v[2]))
+    table.insert(lines, string.format("%s → %s%s", k, (v.exit) and exitPrefix or "", v[2]))
   end
   table.sort(lines, function(a, b)
     local a1 = string.sub(a, 1, 1)
@@ -60,13 +60,7 @@ function create_hint()
       return sa < sb
     end
   end)
-  if M.nextclose then
-    table.insert(lines, "<Space> or , → " .. exitPrefix .. "Exit")
-    table.insert(lines, "<Esc> → " .. exitPrefix .. "Exit")
-  else
-    table.insert(lines, "<Space> or , → Final command")
-    table.insert(lines, "<Esc> → " .. exitPrefix .. "Exit")
-  end
+  table.insert(lines, "<Esc> or <Space> or , → " .. exitPrefix .. "Exit")
 
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
 
@@ -106,7 +100,6 @@ function M.start_hydra()
     create_hint()
     print("Hydra active! Press keys, <Esc> to exit.")
   end
-  M.nextclose = false
 
   vim.schedule(function()
     while M.active do
@@ -120,18 +113,9 @@ function M.start_hydra()
         key = char
       end
 
-      if key == "\27" then
+      if key == "\27" or key == " " or key == "," then
         M.active = false
         break
-      elseif key == "," or key == " " then
-        if M.nextclose then
-          M.active = false
-          break
-        else
-          M.nextclose = true
-          create_hint()
-          print("Next command will exit")
-        end
       else
         local cmd = M.commands[key]
         if cmd then
@@ -143,7 +127,7 @@ function M.start_hydra()
 
           vim.cmd("redraw")
 
-          if cmd.exit or M.nextclose then
+          if cmd.exit then
             M.active = false
             break
           end

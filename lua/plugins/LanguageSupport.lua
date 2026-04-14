@@ -154,6 +154,7 @@ return {
         ]],
         textopdfviewerrefresh = "none",
         textopdfviewerlaunch = [[
+          pkill -xf "sioyek.*%outputfile%" || true
           sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --new-instance /tmp/%outputfile% &> /dev/null &
         ]],
         textopdfforwardjump = [[
