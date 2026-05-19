@@ -126,13 +126,14 @@ return {
   {
     "frabjous/knap",
     config = function()
-      local runFalkon = "falkon --new-window file:///tmp/%outputfile%"
+      local runFalkonOn = "falkon --new-window "
+      local runFalkon = runFalkonOn .. "file:///tmp/%outputfile%"
       vim.g.knap_settings = {
-        -- HTML - copy file
+        -- HTML - do nothing
         htmloutputext = "html",
-        htmltohtml = "cp %docroot% /tmp/%outputfile%",
-        htmltohtmlviewerlaunch = runFalkon,
-        mdtohtmlviewerrefresh = "none",
+        htmltohtml = "none",
+        htmltohtmlviewerlaunch = runFalkonOn .. "%docroot%",
+        htmltohtmlviewerrefresh = "none",
 
         -- Markdown - run to temp file
         mdoutputext = "html",
@@ -143,18 +144,21 @@ return {
         -- Latex - run to temp file
         texoutputext = "pdf",
         textopdf = [[
-          rm "/tmp/%outputfile%"
-          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp "%docroot%"
           fname="%outputfile%"
+          bname="${fname%.*}"
+          rm "/tmp/$fname" || true
+          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp "%docroot%"
           if [ ! -f "/tmp/%outputfile%" ]; then
-            sed 's/\\/\\\\/g' "/tmp/${fname%.*}.log" > "/tmp/${fname%.*}.md"
-            pandoc "/tmp/${fname%.*}.md" -o "/tmp/%outputfile%" > "/tmp/${fname%.*}.log2"
+            rm "/tmp/$bname.toc" || true
+            sed 's/\\/\\\\/g' "/tmp/$bname.log" > "/tmp/$bname.md"
+            pandoc "/tmp/$bname.md" -o "/tmp/%outputfile%" > "/tmp/$bname.log2"
           fi
           exit 0
         ]],
         textopdfviewerrefresh = "none",
         textopdfviewerlaunch = [[
-          pkill -xf "sioyek.*%outputfile%" || true
+          out=%outputfile%
+          pkill -xf "sioyek.*$out" || true
           sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --new-instance /tmp/%outputfile% &> /dev/null &
         ]],
         textopdfforwardjump = [[

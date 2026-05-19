@@ -311,6 +311,8 @@ wk.add({
 
     ToMap("m", "<cmd>messages<cr>", "Message history", ""),
 
+    ToMap("R", "<cmd>e<cr>", "Refresh buffer", ""),
+
     ToMap(".", function()
         require("notify").dismiss()
     end, "Dismiss notifications", "󱠡"),
