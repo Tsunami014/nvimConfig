@@ -108,49 +108,12 @@ return {
     end,
   },
 
-  -- Live preview for many languages
+  -- Vim latex integration
   {
-    "frabjous/knap",
-    config = function()
-      local runFalkonOn = "falkon --new-window "
-      local runFalkon = runFalkonOn .. "file:///tmp/%outputfile%"
-      vim.g.knap_settings = {
-        -- HTML - do nothing
-        htmloutputext = "html",
-        htmltohtml = "none",
-        htmltohtmlviewerlaunch = runFalkonOn .. "%docroot%",
-        htmltohtmlviewerrefresh = "none",
-
-        -- Markdown - run to temp file
-        mdoutputext = "html",
-        mdtohtml = "pandoc --standalone %docroot% -o /tmp/%outputfile%",
-        mdtohtmlviewerlaunch = runFalkon,
-        mdtohtmlviewerrefresh = "none",
-
-        -- Latex - run to temp file
-        texoutputext = "pdf",
-        textopdf = [[
-          fname="%outputfile%"
-          bname="${fname%.*}"
-          rm "/tmp/$fname" || true
-          pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp "%docroot%"
-          if [ ! -f "/tmp/%outputfile%" ]; then
-            rm "/tmp/$bname.toc" || true
-            sed 's/\\/\\\\/g' "/tmp/$bname.log" > "/tmp/$bname.md"
-            pandoc "/tmp/$bname.md" -o "/tmp/%outputfile%" > "/tmp/$bname.log2"
-          fi
-          exit 0
-        ]],
-        textopdfviewerrefresh = "none",
-        textopdfviewerlaunch = [[
-          out=%outputfile%
-          pkill -xf "sioyek.*$out" || true
-          sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --new-instance /tmp/%outputfile% &> /dev/null &
-        ]],
-        textopdfforwardjump = [[
-          sioyek --inverse-search 'nvim --headless -es --cmd "lua require('"'"'knaphelper'"'"').relayjump('"'"'%servername%'"'"','"'"'%1'"'"',%2,0)"' --reuse-instance --forward-search-file %srcfile% --forward-search-line %line% /tmp/%outputfile%
-        ]]
-      }
+    "lervag/vimtex",
+    lazy = false,
+    init = function()
+      vim.g.vimtex_view_method = "sioyek"
     end
-  },
+  }
 }

@@ -142,12 +142,7 @@ Register("h", "Hunks", "", {
     b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
 }, "<leader>g")
 
-local direnv = require("direnv")
-Register("e", "Environment", "", {
-    a = { direnv.allow_direnv, "Allow envrc" },
-    d = { direnv.deny_direnv, "Deny envrc" },
-    r = { direnv.check_direnv, "Reload envrc" },
-    e = { direnv.edit_envrc, "Edit the direnv file" },
+Register("e", "Environment", "", {
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
     l = { function()
         local cwd = vim.fn.getcwd()
@@ -171,15 +166,6 @@ Register("t", "Terminal", "", {
     h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
     v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
     f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
-})
-
-local knap = require("knap")
-Register("k", "Preview (knap)", "", {
-    k = { knap.process_once, "Process preview once" },
-    r = { function() knap.close_viewer();knap.process_once() end, "Refresh preview" },
-    s = { function() knap.close_viewer();knap.toggle_autopreviewing() end, "Refresh auto preview" },
-    c = { knap.close_viewer, "Close preview" },
-    a = { knap.toggle_autopreviewing, "Toggle auto preview"},
 })
 
 Register("u", "UI", "", {
@@ -228,16 +214,16 @@ Register("b", "Buffer", "󰓩", {
 local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
-Map("n", "<F4>", dbug.stop, "DAP Stop")
-Map("n", "<F17>", dbug.stop, "DAP Stop") -- Shift+F5
+Map("n", "<F4>", dbug.stop, "Stop debugging")
+Map("n", "<F17>", dbug.stop, "Stop debugging") -- Shift+F5
 Map("n", "<F5>", function()
     if dap.session() then
         dap.continue()
     else
         dbug.pick()
     end
-end, "DAP Continue")
-Map("n", "<F6>", dap.run_last, "DAP Run last config")
+end, "Continue or start debugging")
+Map("n", "<F6>", dbug.run_last, "Run last debug")
 Map("n", "<F9>", dap.step_into, "DAP Step Into")
 Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_out, "DAP Step Out")

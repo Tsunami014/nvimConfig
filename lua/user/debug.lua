@@ -10,6 +10,7 @@ local state = {
     action = nil,
     fname = nil,
     cwd = nil,
+    line = nil,
 
     last_executable = "",
 }
@@ -157,18 +158,17 @@ end
 -- Actions
 local function get_actions()
     local actions = {}
-
-    -- Auto import dap configs
     local ft = vim.bo.filetype
 
     if ft ~= "cpp" and ft ~= "c" then
+        -- Auto import dap configs
         local configs = dap.configurations[ft] or {}
         for _, config in ipairs(configs) do
             table.insert(actions, {
                 label = "[dap] " .. config.name,
 
                 after = function()
-                    stop_dap()
+                    M.stop()
                     dap.run(config)
                 end,
             })
@@ -180,7 +180,7 @@ local function get_actions()
         table.insert(actions, {
             label = "Run executable",
             after = function()
-                stop()
+                M.stop()
                 launch_cpp_dap(ask_executable())
             end,
         })
@@ -198,7 +198,7 @@ local function get_actions()
             end,
             after = function(code)
                 if code == 0 then
-                    stop()
+                    M.stop()
                     launch_cpp_dap("/tmp/out")
                 end
             end,
@@ -221,10 +221,73 @@ local function get_actions()
             end,
             after = function(code)
                 if code == 0 then
-                    stop()
+                    M.stop()
                     launch_cpp_dap(ask_executable())
                 end
             end,
+        })
+    end
+    if ft == "tex" or ft == "plaintex" or ft == "latex" then
+        local buildLatex = function()
+            return "latexmk -pdf -silent -halt-on-error -interaction=nonstopmode -file-line-error -synctex=1 -outdir=/tmp " .. vim.fn.shellescape(state.fname)
+        end
+        table.insert(actions, {
+            label = "Build & view LaTeX",
+            terminal = function()
+                return buildLatex()
+            end,
+            after = function(code)
+                if code == 0 then
+                    M.stop()
+                    vim.cmd("drop " .. vim.fn.fnameescape(state.fname))
+                    local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
+                    vim.cmd({ cmd = "VimtexView", args = { outfname } })
+                end
+            end
+        })
+        table.insert(actions, {
+            label = "Compile LaTeX",
+            terminal = function()
+                local build = buildLatex()
+                local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
+                local newfname = vim.fn.fnamemodify(state.fname, ":r") .. ".pdf"
+                local copy = "cp " .. vim.fn.fnameescape(outfname) .. " " .. vim.fn.fnameescape(newfname)
+                return build .. ";" .. build .. ";" .. copy
+            end,
+            after = function(code)
+                if code == 0 then
+                    M.stop()
+                end
+            end
+        })
+    end
+    if ft == "markdown" then
+        table.insert(actions, {
+            label = "Compile markdown",
+            terminal = function()
+                local outfname = vim.fn.fnameescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".html")
+                local compile = "pandoc --standalone " .. state.fname .. " -o " .. outfname
+                return compile .. ";xdg-open " .. outfname
+            end,
+            after = function(code)
+                if code == 0 then
+                    M.stop()
+                end
+            end
+        })
+    end
+    if ft == "html" then
+        table.insert(actions, {
+            label = "View file",
+            terminal = function()
+                return "xdg-open " .. state.fname
+            end
+        })
+        table.insert(actions, {
+            label = "Run http server",
+            terminal = function()
+                return "python3 -m http.server"
+            end
         })
     end
 
@@ -271,6 +334,7 @@ function M.pick()
 
         state.fname = vim.fn.expand("%")
         state.cwd = vim.fn.getcwd()
+        state.line = vim.fn.line(".")
         state.action = choice
         execute()
     end)
@@ -282,7 +346,7 @@ function M.run_last()
         return
     end
 
-    M.stop_all()
+    M.stop()
 
     vim.defer_fn(function()
         execute()
