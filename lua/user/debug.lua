@@ -25,6 +25,9 @@ end
 
 local function ensure_terminal_window()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
+        if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+            vim.api.nvim_win_set_buf(state.win, state.buf)
+        end
         return
     end
 
@@ -40,8 +43,6 @@ local function ensure_terminal_window()
         row = math.floor((vim.o.lines - height) * 0.5),
         col = math.floor((vim.o.columns - width) * 0.5),
     })
-
-    vim.cmd.startinsert()
 end
 
 function M.toggle_terminal()
@@ -55,6 +56,10 @@ function M.toggle_terminal()
         create_terminal_buffer()
     end
     ensure_terminal_window()
+
+    if state.job then
+        vim.cmd.startinsert()
+    end
 end
 
 -- Helpers
@@ -68,11 +73,6 @@ local function stop_terminal()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
         vim.api.nvim_win_close(state.win, true)
         state.win = nil
-    end
-
-    if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-        pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
-        state.buf = nil
     end
 end
 
@@ -88,11 +88,19 @@ function M.stop()
 end
 
 local function run_terminal(command, on_exit)
+    stop_terminal()
+    -- Clear old buffer
+    if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+        pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
+        state.buf = nil
+    end
+
     create_terminal_buffer()
     ensure_terminal_window()
 
-    if state.job then
-        pcall(vim.fn.jobstop, state.job)
+    -- Ensure we run termopen inside the newly created terminal window
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_set_current_win(state.win)
     end
 
     state.job = vim.fn.termopen(command, {
