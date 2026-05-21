@@ -227,17 +227,22 @@ Register("b", "Buffer", "󰓩", {
 -- Debugger stuff
 local dap = require("dap")
 local dapui = require("dapui")
-Map("n", "<F4>", dap.disconnect, "DAP Stop")
-Map("n", "<F17>", dap.disconnect, "DAP Stop") -- Shift+F5
-Map("n", "<F5>", dap.continue, "DAP Continue")
+local dbug = require("user.debug")
+Map("n", "<F4>", dbug.stop, "DAP Stop")
+Map("n", "<F17>", dbug.stop, "DAP Stop") -- Shift+F5
+Map("n", "<F5>", function()
+    if dap.session() then
+        dap.continue()
+    else
+        dbug.pick()
+    end
+end, "DAP Continue")
 Map("n", "<F6>", dap.run_last, "DAP Run last config")
 Map("n", "<F9>", dap.step_into, "DAP Step Into")
 Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_out, "DAP Step Out")
 Register("d", "Debug", "", {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
-    c = { function() require("user.cpp").set_new_build_args() end, "Set build args c/c++" },
-
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
     r = { dap.repl.open, "Open REPL" },
@@ -249,6 +254,8 @@ Register("d", "Debug", "", {
 -- Commands following <leader>
 wk.add({
     -- Commands
+    ToMap(" ", dbug.toggle_terminal, "Toggle Debug Terminal", ""),
+
     ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
@@ -261,7 +268,6 @@ wk.add({
     ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
     ToMap("C", "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁"),
     ToMap("D", require("dapui").toggle, "Toggle debugger UI", ""),
-    ToMap("W", function() vim.cmd("set wrap!") end, "Toggle line wrap", "󰖶"),
 
     ToMap(".", function()
         require("notify").dismiss()

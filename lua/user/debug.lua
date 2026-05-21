@@ -1,0 +1,292 @@
+local M = {}
+
+local dap = require("dap")
+
+local state = {
+    buf = nil,
+    win = nil,
+    job = nil,
+
+    action = nil,
+    fname = nil,
+    cwd = nil,
+
+    last_executable = "",
+}
+
+-- Terminal
+local function create_terminal_buffer()
+    state.buf = vim.api.nvim_create_buf(false, true)
+
+    vim.bo[state.buf].bufhidden = "hide"
+    vim.bo[state.buf].filetype = "debugterm"
+end
+
+local function ensure_terminal_window()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        return
+    end
+
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.7)
+
+    state.win = vim.api.nvim_open_win(state.buf, true, {
+        relative = "editor",
+        style = "minimal",
+        border = "rounded",
+        width = width,
+        height = height,
+        row = math.floor((vim.o.lines - height) * 0.5),
+        col = math.floor((vim.o.columns - width) * 0.5),
+    })
+
+    vim.cmd.startinsert()
+end
+
+function M.toggle_terminal()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+        return
+    end
+
+    if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+        create_terminal_buffer()
+    end
+    ensure_terminal_window()
+end
+
+-- Helpers
+local function stop_terminal()
+    if state.job then
+        pcall(vim.fn.jobstop, state.job)
+        pcall(vim.fn.chanclose, state.job)
+        state.job = nil
+    end
+
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+    end
+
+    if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+        pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
+        state.buf = nil
+    end
+end
+
+local function stop_dap()
+    pcall(dap.disconnect)
+    pcall(dap.close)
+    pcall(dap.terminate)
+end
+
+function M.stop()
+    stop_terminal()
+    stop_dap()
+end
+
+local function run_terminal(command, on_exit)
+    create_terminal_buffer()
+    ensure_terminal_window()
+
+    if state.job then
+        pcall(vim.fn.jobstop, state.job)
+    end
+
+    state.job = vim.fn.termopen(command, {
+        detach = 0,
+        on_exit = function(_, code)
+            state.job = nil
+            vim.schedule(function()
+                if on_exit then
+                    on_exit(code)
+                end
+            end)
+        end,
+    })
+
+    vim.cmd.startinsert()
+end
+
+local function guess_executable()
+    if state.last_executable ~= "" then
+        return state.last_executable
+    end
+
+    local folder = vim.fn.fnamemodify(state.cwd, ":t")
+
+    local guesses = {
+        "./build/" .. folder,
+        "./build/main",
+        "./build/a.out",
+        "./" .. folder,
+    }
+    for _, path in ipairs(guesses) do
+        if vim.fn.executable(path) == 1 then
+            return path
+        end
+    end
+    return "./a.out"
+end
+
+local function ask_executable()
+    local result = vim.fn.input({
+        prompt = "Executable: ",
+        default = guess_executable(),
+        completion = "file",
+    })
+    if result ~= "" then
+        state.last_executable = result
+    end
+
+    return result
+end
+
+local function launch_cpp_dap(progr)
+    dap.run({
+        name = "Launch executable",
+        type = "codelldb",
+        request = "launch",
+        program = progr,
+        cwd = "${workspaceFolder}",
+        stopOnEntry = false,
+    })
+end
+
+-- Actions
+local function get_actions()
+    local actions = {}
+
+    -- Auto import dap configs
+    local ft = vim.bo.filetype
+
+    if ft ~= "cpp" and ft ~= "c" then
+        local configs = dap.configurations[ft] or {}
+        for _, config in ipairs(configs) do
+            table.insert(actions, {
+                label = "[dap] " .. config.name,
+
+                after = function()
+                    stop_dap()
+                    dap.run(config)
+                end,
+            })
+        end
+    end
+
+    -- Add extra
+    if ft == "cpp" or ft == "c" or ft == "rust" then
+        table.insert(actions, {
+            label = "Run executable",
+            after = function()
+                stop()
+                launch_cpp_dap(ask_executable())
+            end,
+        })
+    end
+    if ft == "cpp" or ft == "c" then
+        table.insert(actions, {
+            label = "Compile current file to /tmp and debug",
+
+            terminal = function()
+                return string.format(
+                    "g++ -g %s -o %s -O0",
+                    vim.fn.shellescape(state.fname),
+                    vim.fn.shellescape("/tmp/out")
+                )
+            end,
+            after = function(code)
+                if code == 0 then
+                    stop()
+                    launch_cpp_dap("/tmp/out")
+                end
+            end,
+        })
+    end
+    if ft == "cpp" or ft == "c" or ft == "make" then
+        table.insert(actions, {
+            label = "Build release",
+
+            terminal = function()
+                return "make release"
+            end,
+        })
+
+        table.insert(actions, {
+            label = "Build then run",
+
+            terminal = function()
+                return "make debug"
+            end,
+            after = function(code)
+                if code == 0 then
+                    stop()
+                    launch_cpp_dap(ask_executable())
+                end
+            end,
+        })
+    end
+
+    return actions
+end
+
+-- Runner
+local function execute()
+    if state.action.terminal then
+        local command = state.action.terminal
+        if type(command) == "function" then
+            command = command()
+        end
+        if not command then
+            vim.notify("No build command found")
+            return
+        end
+
+        run_terminal(command, state.action.after)
+        return
+    end
+
+    if state.action.after then
+        state.action.after()
+    end
+end
+
+-- Picker
+function M.pick()
+    local actions = get_actions()
+    if #actions == 0 then
+        vim.notify("No file actions found for filetype: " .. vim.bo.filetype)
+        return
+    end
+    vim.ui.select(actions, {
+        prompt = "Debug",
+        format_item = function(item)
+            return item.label
+        end,
+    }, function(choice)
+        if not choice then
+            return
+        end
+
+        state.fname = vim.fn.expand("%")
+        state.cwd = vim.fn.getcwd()
+        state.action = choice
+        execute()
+    end)
+end
+
+function M.run_last()
+    if not state.action then
+        vim.notify("No previous debug action")
+        return
+    end
+
+    M.stop_all()
+
+    vim.defer_fn(function()
+        execute()
+    end, 50)
+end
+
+return M

@@ -162,8 +162,6 @@ end
 dap.adapters.python  = pyadapter
 dap.adapters.debugpy = pyadapter
 
-cppconfig            = require("user.cpp").config
-
 -- Some language server options
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
