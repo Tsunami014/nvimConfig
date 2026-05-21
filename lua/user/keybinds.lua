@@ -9,30 +9,18 @@ function Register(prefix, group, icon, mappings, leader)
     }
 
     for k, v in pairs(mappings) do
-        if type(v) == "table" and v.__shortcut then
-            local longKey = leader .. prefix .. v.key
-            local altKey = shortcut_leader .. v.parent
-            table.insert(result, {
-                longKey,
-                v.rhs,
-                desc = v.desc,
-                icon = v.icon or icon,
-                mode = v.mode or "n",
-            })
-        else
-            local key = leader .. prefix .. k
-            local rhs = v[1]
-            local desc = v[2]
-            local ico = icon
-            if v.icon ~= nil then
-                ico = v.icon
-            end
-            local mode = "n"
-            if v.mode ~= nil then
-                mode = v.mode
-            end
-            table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
+        local key = leader .. prefix .. k
+        local rhs = v[1]
+        local desc = v[2]
+        local ico = icon
+        if v.icon ~= nil then
+            ico = v.icon
         end
+        local mode = "n"
+        if v.mode ~= nil then
+            mode = v.mode
+        end
+        table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
     end
 
     wk.add({ mode = 'n', result })
@@ -64,32 +52,14 @@ function ToMap(key, rhs, desc, icon, leader, mode)
     return map
 end
 
--- A more convenient use
-Map({ 'n', 'v' }, '\\', '@q', '@q')
-
--- Clipboard stuff
-vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
-Map({ 'n', 'v', 'x' }, '_', '"_', 'Black hole')
-Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
-Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
-Map('n', ';;', ':let @+ = @"<CR>', 'Transfer vim clipboard to system')
-Map('n', ";'", ':let @" = @+<CR>', 'Transfer system clipboard to vim')
--- "_ black hole, "+ or "* system cbd, "" nvim default cbd
-
--- Move = keybinds to \
-Map({ 'n', 'v', 'x' }, '?', '=', 'Correct indentation')
-Map({ 'n', 'v', 'x' }, '??', '==', 'Correct indent of current line')
--- Replace = with - ; So the one button has both + and -
-Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
-Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
--- Now add the delete to black hole!
-Map({ 'n', 'v', 'x' }, '-', '"_dh', 'Delete to black hole')
-
 
 local proj = require("project")
 Register("p", "Projects", "󰉓", {
     s = { proj.save_project, "Save project" },
-    l = { proj.findProjects, "Load project" }
+    l = { proj.findProjects, "Load project" },
+    c = { function()
+        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+    end, "Chdir to parent dir", "󰌑" }
 })
 
 Register("|", "Profiles", "", {
@@ -114,7 +84,7 @@ Register("f", "Find", "󰍉", {
     c = { "<cmd>Telescope commands<cr>", "Find Commands" },
     k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
     s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
-    d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics" },
+    d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics", "" },
     t = { "<cmd>TodoTelescope<cr>", "Find Todos", icon = "" },
     T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
 })
@@ -165,13 +135,96 @@ Register("g", "Git", "󰊢", {
     d = { gs.diffthis, "Diff This" },
     D = { function() gs.diffthis("~") end, "Diff This ~" },
 })
-Register("h", "Hunks", "", {
+Register("h", "Hunks", "", {
     s = { ":Gitsigns stage_hunk<CR>", "Stage Hunk" },
     r = { ":Gitsigns reset_hunk<CR>", "Reset Hunk" },
     p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
     b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
 }, "<leader>g")
 
+local direnv = require("direnv")
+Register("e", "Environment", "", {
+    a = { direnv.allow_direnv, "Allow envrc" },
+    d = { direnv.deny_direnv, "Deny envrc" },
+    r = { direnv.check_direnv, "Reload envrc" },
+    e = { direnv.edit_envrc, "Edit the direnv file" },
+    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    l = { function()
+        local cwd = vim.fn.getcwd()
+        local lua_rc = cwd .. "/.nvim.lua"
+        local vim_rc = cwd .. "/.nvimrc"
+
+        if vim.fn.filereadable(lua_rc) == 1 then
+            dofile(lua_rc)
+            print("Loaded .nvim.lua from " .. lua_rc)
+        elseif vim.fn.filereadable(vim_rc) == 1 then
+            vim.cmd("source " .. vim_rc)
+            print("Sourced .nvimrc from " .. vim_rc)
+        else
+            print("No .nvim.lua or .nvimrc found in current directory.")
+        end
+    end, "Load .nvimrc", "" }
+})
+
+Register("t", "Terminal", "", {
+    t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
+    h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
+    v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
+    f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
+})
+
+local knap = require("knap")
+Register("k", "Preview (knap)", "", {
+    k = { knap.process_once, "Process preview once" },
+    r = { function() knap.close_viewer();knap.process_once() end, "Refresh preview" },
+    s = { function() knap.close_viewer();knap.toggle_autopreviewing() end, "Refresh auto preview" },
+    c = { knap.close_viewer, "Close preview" },
+    a = { knap.toggle_autopreviewing, "Toggle auto preview"},
+})
+
+Register("u", "UI", "", {
+    m = { "<cmd>MarkdownPreview<cr>", "Markdown preview", "󰈈" },
+    ["."] = { proj.loadUI, "Initialise the UI" },
+    w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
+    i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" }
+})
+
+Register("c", "Symbols", "󱔁", {
+    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." }
+})
+
+-- Buffer things
+Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
+Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
+Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
+Register("b", "Buffer", "󰓩", {
+    n = { "<cmd>tabnew<cr>", "New Buffer" },
+    p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
+    c = { "<cmd>BufferClose<cr>", "Close Buffer" },
+    o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
+    r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
+    R = { "<cmd>e<cr>", "Refresh buffer", "" },
+    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" },
+
+    ["1"] = { "<cmd>BufferGoto 1<cr>", "First buffer" },
+    ["0"] = { "<cmd>BufferLast<cr>", "Last Buffer" },
+
+    l = { "<cmd>BufferMoveNext<cr>", "Move Buffer Right" },
+    h = { "<cmd>BufferMovePrevious<cr>", "Move Buffer Left" },
+
+    x = { "<cmd>BufferPin<cr>", "Pin/Unpin Buffer" },
+    X = { "<cmd>BufferCloseAllButPinned<cr>", "Close Unpinned Buffers" },
+
+    s = { "<cmd>BufferOrderByDirectory<cr>", "Sort by Directory" },
+    S = { "<cmd>BufferOrderByLanguage<cr>", "Sort by Language" },
+    L = { "<cmd>BufferOrderByWindowNumber<cr>", "Sort by Window" },
+
+    W = { "<cmd>BufferWipeout<cr>", "Wipeout Buffer" },
+})
+
+-- Debugger stuff
 local dap = require("dap")
 local dapui = require("dapui")
 Map("n", "<F4>", dap.disconnect, "DAP Stop")
@@ -192,99 +245,80 @@ Register("d", "Debug", "", {
     u = { dapui.toggle, "DAP UI Toggle" },
     e = { dapui.eval, "DAP Eval" }
 })
-local direnv = require("direnv")
-Register("D", "Direnv", "", {
-    a = { direnv.allow_direnv, "Allow envrc" },
-    d = { direnv.deny_direnv, "Deny envrc" },
-    r = { direnv.check_direnv, "Reload envrc" },
-    e = { direnv.edit_envrc, "Edit the direnv file" },
+
+-- Commands following <leader>
+wk.add({
+    -- Commands
+    ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
+    ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
+
+    ToMap("A", vim.lsp.buf.code_action, "Apply code action", "󰌑"),
+    ToMap("X", "<cmd>Trouble diagnostics toggle<cr>", "Toggle diagnostics", ""),
+    ToMap("R", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
+    ToMap("F", "<cmd>Telescope live_grep<cr>", "Find grep in all dirs", "󰍉"),
+    ToMap("G", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
+    ToMap("B", require("dap").toggle_breakpoint, "Toggle breakpoint", ""),
+    ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
+    ToMap("C", "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁"),
+    ToMap("D", require("dapui").toggle, "Toggle debugger UI", ""),
+    ToMap("W", function() vim.cmd("set wrap!") end, "Toggle line wrap", "󰖶"),
+
+    ToMap(".", function()
+        require("notify").dismiss()
+    end, "Dismiss notifications", "󱠡"),
+
+    ToMap("'", "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
+
+    ToMap("/", function()
+        local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+        require("user.commenter").toggle_comment_lines(line, line)
+    end, "Toggle comment", "/"),
+    ToMap("/", function()
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+        vim.schedule(function()
+            local start_line = vim.fn.line("'<")
+            local end_line = vim.fn.line("'>")
+
+            if start_line > end_line then
+                start_line, end_line = end_line, start_line
+            end
+
+            require("user.commenter").toggle_comment_lines(start_line - 1, end_line - 1)
+        end)
+    end, "Toggle comments", "/", nil, "v"),
 })
 
-Register("t", "Terminal", "", {
-    t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
-    h = { "<cmd>ToggleTerm direction=horizontal<cr>", "Toggle Horizontal Terminal" },
-    v = { "<cmd>ToggleTerm direction=vertical<cr>", "Toggle Vertical Terminal" },
-    f = { "<cmd>ToggleTerm direction=float<cr>", "Toggle Floating Terminal" }
-})
 
-local knap = require("knap")
-Register("k", "Preview (knap)", "", {
-    k = { knap.process_once, "Process preview once" },
-    r = { function() knap.close_viewer();knap.process_once() end, "Refresh preview" },
-    s = { function() knap.close_viewer();knap.toggle_autopreviewing() end, "Refresh auto preview" },
-    c = { knap.close_viewer, "Close preview" },
-    a = { knap.toggle_autopreviewing, "Toggle auto preview"},
-})
+-- A more convenient use
+Map({ 'n', 'v' }, '\\', '@q', '@q')
 
-Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
-Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
-Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
-Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
-Register("b", "Buffer", "󰓩", {
-    n = { "<cmd>tabnew<cr>", "New Buffer" },
-    p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
-    c = { "<cmd>BufferClose<cr>", "Close Buffer" },
-    o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
-    r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
-    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" },
+-- Clipboard stuff
+vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
+Map({ 'n', 'v', 'x' }, '_', '"_', 'Black hole')
+Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
+Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
+Map('n', ';;', ':let @+ = @"<CR>', 'Transfer vim clipboard to system')
+Map('n', ";'", ':let @" = @+<CR>', 'Transfer system clipboard to vim')
+-- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
-    ["1"] = { "<cmd>BufferGoto 1<cr>", "First buffer" },
-    ["0"] = { "<cmd>BufferLast<cr>", "Last Buffer" },
+-- Move = keybinds to \
+Map({ 'n', 'v', 'x' }, '?', '=', 'Correct indentation')
+Map({ 'n', 'v', 'x' }, '??', '==', 'Correct indent of current line')
+-- Replace = with - ; So the one button has both + and -
+Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
+Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
+-- Now add the delete to black hole!
+Map({ 'n', 'v', 'x' }, '-', '"_dh', 'Delete to black hole')
 
-    l = { "<cmd>BufferMoveNext<cr>", "Move Buffer Right" },
-    h = { "<cmd>BufferMovePrevious<cr>", "Move Buffer Left" },
 
-    x = { "<cmd>BufferPin<cr>", "Pin/Unpin Buffer" },
-    X = { "<cmd>BufferCloseAllButPinned<cr>", "Close Unpinned Buffers" },
+-- Next & prev things
+Map('n', ']t', require("todo-comments").jump_next, 'Next Todo Comment')
+Map('n', ']h', function() gs.nav_hunk("next") end, 'Next Hunk')
+Map('n', ']H', function() gs.nav_hunk("last") end, 'Last Hunk')
 
-    s = { "<cmd>BufferOrderByDirectory<cr>", "Sort by Directory" },
-    S = { "<cmd>BufferOrderByLanguage<cr>", "Sort by Language" },
-    L = { "<cmd>BufferOrderByWindowNumber<cr>", "Sort by Window" },
-
-    W = { "<cmd>BufferWipeout<cr>", "Wipeout Buffer" },
-})
-
-local quotes = {
-    "YOU GOT THIS!",
-    "I BELIEVE IN YOU!",
-    "DON'T GIVE UP!",
-    "KEEP GOING!",
-    "IT'S ALL THE CODE'S FAULT NOT YOURS!",
-    "BUGS ARE INEVITABLE DURING PRODUCTION."
-}
-Register("u", "UI", "", {
-    m = { ":MarkdownPreview<CR>", "Markdown preview", "󰈈" },
-    M = { function()
-            local quote = quotes[math.random(#quotes)]
-            vim.notify(quote, vim.log.levels.INFO, { title = "Motivation Boost" })
-        end, "Motivation", ""
-    },
-
-    ["."] = { proj.loadUI, "Initialise the UI" },
-    w = { function()
-        vim.cmd("set wrap!")
-    end, "Toggle wrap", "󰖶" },
-})
-
-Register("P", "Packages", "", {
-    m = { "<cmd>Mason<cr>", "Open Mason" }
-})
-
-Register("c", "Symbols", "󱔁", {
-    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
-    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." }
-})
-
-Register("]", "Next", "󰒭", {
-    t = { function() require("todo-comments").jump_next() end, "Next Todo Comment", icon = "" },
-    h = { function() gs.nav_hunk("next") end, "Next Hunk", icon = "󰊢" },
-    H = { function() gs.nav_hunk("last") end, "Last Hunk", icon = "󰊢" }
-})
-Register("[", "Previous", "󰒮", {
-    t = { function() require("todo-comments").jump_prev() end, "Previous Todo Comment", icon = "" },
-    h = { function() gs.nav_hunk("prev") end, "Prev Hunk", icon = "󰊢" },
-    H = { function() gs.nav_hunk("first") end, "First Hunk", icon = "󰊢" }
-})
+Map('n', '[t', require("todo-comments").jump_prev, 'Previous Todo Comment')
+Map('n', '[h', function() gs.nav_hunk("prev") end, 'Prev Hunk')
+Map('n', '[H', function() gs.nav_hunk("first") end, 'First Hunk')
 
 -- Misc stuff
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
@@ -302,66 +336,8 @@ Map("v", "<", "<gv", "Deindent selection")
 Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
-comms = require("user.commenter")
--- Commands following <leader>
-wk.add({
-    -- Commands
-    ToMap("e", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
-    ToMap("o", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
-    ToMap("m", "<cmd>messages<cr>", "Message history", ""),
-
-    ToMap("R", "<cmd>e<cr>", "Refresh buffer", ""),
-
-    ToMap(".", function()
-        require("notify").dismiss()
-    end, "Dismiss notifications", "󱠡"),
-
-    ToMap("i", "<cmd>Inspect<cr>", "Inspect", "󰍉"),
-
-    ToMap("n", "<cmd>tabnew<cr>", "New buffer", "󰓩"),
-
-    ToMap("L", function()
-        local cwd = vim.fn.getcwd()
-        local lua_rc = cwd .. "/.nvim.lua"
-        local vim_rc = cwd .. "/.nvimrc"
-
-        if vim.fn.filereadable(lua_rc) == 1 then
-            dofile(lua_rc)
-            print("Loaded .nvim.lua from " .. lua_rc)
-        elseif vim.fn.filereadable(vim_rc) == 1 then
-            vim.cmd("source " .. vim_rc)
-            print("Sourced .nvimrc from " .. vim_rc)
-        else
-            print("No .nvim.lua or .nvimrc found in current directory.")
-        end
-    end, "Load cwd/.nvimrc", ""),
-
-    ToMap("C", function()
-        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-    end, "Chdir to parent dir", "󰌑"),
-
-    ToMap("'", "<Plug>(doge-generate)", "Generate Docstring", "󰏫"), -- <cmd>DogeGenerate<cr>
-
-    ToMap("/", function()
-        local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-        comms.toggle_comment_lines(line, line)
-    end, "Toggle comment", "/"),
-    ToMap("/", function()
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
-        vim.schedule(function()
-            local start_line = vim.fn.line("'<")
-            local end_line = vim.fn.line("'>")
-
-            if start_line > end_line then
-                start_line, end_line = end_line, start_line
-            end
-
-            comms.toggle_comment_lines(start_line - 1, end_line - 1)
-        end)
-    end, "Toggle comments", "/", nil, "v"),
-})
-
+-- Completion stuff
 local cmp = require("cmp")
 Map({ 'i', 's' }, '<Tab>', function()
     if cmp.visible() then
@@ -372,7 +348,6 @@ Map({ 'i', 's' }, '<Tab>', function()
         vim.api.nvim_feedkeys(string.rep(" ", spaces), "n", false)
     end
 end, 'Next completion')
-
 Map({ 'i', 's' }, '<S-Tab>', function()
     if cmp.visible() then
         cmp.select_prev_item()
@@ -380,6 +355,3 @@ Map({ 'i', 's' }, '<S-Tab>', function()
 end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
-
-Map('n', ',', require("user.shortcuts").start_hydra, 'Shortcut')
-
