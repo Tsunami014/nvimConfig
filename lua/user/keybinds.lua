@@ -231,9 +231,9 @@ Register("d", "Debug", "", {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
-    r = { dap.repl.open, "Open REPL" },
-    l = { dap.run_last, "Run Last DAP" },
+    l = { "<cmd>DapShowLog<cr>", "Show logs" },
     u = { dapui.toggle, "DAP UI Toggle" },
+    r = { dap.repl.open, "Open REPL" },
     e = { dapui.eval, "DAP Eval" }
 })
 

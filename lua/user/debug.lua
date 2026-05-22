@@ -170,16 +170,20 @@ local function get_actions()
 
     if ft ~= "cpp" and ft ~= "c" then
         -- Auto import dap configs
-        local configs = dap.configurations[ft] or {}
-        for _, config in ipairs(configs) do
-            table.insert(actions, {
-                label = "[dap] " .. config.name,
+        local bufnr = vim.api.nvim_get_current_buf()
 
-                after = function()
-                    M.stop()
-                    dap.run(config)
-                end,
-            })
+        for _, provider in pairs(dap.providers.configs) do
+            local confs = provider(bufnr) or {}
+            for _, config in ipairs(confs) do
+                table.insert(actions, {
+                    label = "[dap] " .. config.name,
+
+                    after = function()
+                        M.stop()
+                        dap.run(config)
+                    end,
+                })
+            end
         end
     end
 
