@@ -32,6 +32,12 @@ return {
   {
     'stevearc/resession.nvim',
     opts = {
+      buf_filter = function(bufnr)
+        local bt = vim.bo[bufnr].buftype
+        if bt ~= "" then return false end -- no special buffers
+        if not vim.bo[bufnr].buflisted then return false end
+        return true
+      end,
       load_order = "modification_time",
       autosave = {
         enabled = false

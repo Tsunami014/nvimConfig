@@ -155,11 +155,18 @@ end
 local function launch_cpp_dap(progr)
     dap.run({
         name = "Launch executable",
-        type = "codelldb",
+        type = "cppdbg",
         request = "launch",
         program = progr,
         cwd = "${workspaceFolder}",
-        stopOnEntry = false,
+        stopAtEntry = false,
+        setupCommands = {
+            {
+                text = '-enable-pretty-printing',
+                description = 'enable pretty printing',
+                ignoreFailures = false
+            },
+        },
     })
 end
 
@@ -203,9 +210,8 @@ local function get_actions()
 
             terminal = function()
                 return string.format(
-                    "g++ -g %s -o %s -O0",
-                    vim.fn.shellescape(state.fname),
-                    vim.fn.shellescape("/tmp/out")
+                    "g++ -g %s -o /tmp/out -O0",
+                    vim.fn.shellescape(state.fname)
                 )
             end,
             after = function(code)
@@ -218,15 +224,15 @@ local function get_actions()
     end
     if ft == "cpp" or ft == "c" or ft == "make" then
         table.insert(actions, {
-            label = "Build release",
+            label = "Build",
 
             terminal = function()
-                return "make release"
+                return "make"
             end,
         })
 
         table.insert(actions, {
-            label = "Build then run",
+            label = "Build debug then run",
 
             terminal = function()
                 return "make debug"
@@ -241,18 +247,21 @@ local function get_actions()
     end
     if ft == "tex" or ft == "plaintex" or ft == "latex" then
         local buildLatex = function()
-            return "latexmk -pdf -silent -halt-on-error -interaction=nonstopmode -file-line-error -synctex=1 -outdir=/tmp " .. vim.fn.shellescape(state.fname)
+            return "texfot latexmk -pdf -file-line-error -halt-on-error -synctex=1 -outdir=/tmp " .. vim.fn.shellescape(state.fname)
         end
         table.insert(actions, {
             label = "Build & view LaTeX",
             terminal = function()
-                return buildLatex()
+                local outfle = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r"))
+                local onfail = " || { rm " .. outfle .. "*; exit 1; }"
+                return buildLatex() .. onfail
             end,
             after = function(code)
                 if code == 0 then
                     M.stop()
                     vim.cmd("drop " .. vim.fn.fnameescape(state.fname))
                     local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
+                    vim.notify(outfname)
                     vim.cmd({ cmd = "VimtexView", args = { outfname } })
                 end
             end
@@ -261,10 +270,11 @@ local function get_actions()
             label = "Compile LaTeX",
             terminal = function()
                 local build = buildLatex()
-                local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
+                local outfle = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r"))
                 local newfname = vim.fn.fnamemodify(state.fname, ":r") .. ".pdf"
-                local copy = "cp " .. vim.fn.fnameescape(outfname) .. " " .. vim.fn.fnameescape(newfname)
-                return build .. ";" .. build .. ";" .. copy
+                local copy = "cp " .. outfle .. ".pdf " .. vim.fn.shellescape(newfname)
+                local onfail = " || { rm " .. outfle .. "*; exit 1; }"
+                return build .. " && " .. build .. " && " .. copy .. onfail
             end,
             after = function(code)
                 if code == 0 then
@@ -277,7 +287,7 @@ local function get_actions()
         table.insert(actions, {
             label = "Compile markdown",
             terminal = function()
-                local outfname = vim.fn.fnameescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".html")
+                local outfname = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".html")
                 local compile = "pandoc --standalone " .. state.fname .. " -o " .. outfname
                 return compile .. ";xdg-open " .. outfname
             end,

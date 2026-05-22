@@ -33,7 +33,7 @@ return {
 
           -- install debuggers
           "debugpy",
-          "codelldb",
+          "cpptools",
 
           -- install any other package
           "tree-sitter-cli",
@@ -73,7 +73,7 @@ return {
         dependencies = { "williamboman/mason.nvim" },
         config = function()
           require("mason-nvim-dap").setup({
-            ensure_installed = { "codelldb", "python", "js" },
+            ensure_installed = { "cpptools", "python", "js" },
             automatic_installation = true,
             handlers = {},
           })
@@ -96,14 +96,10 @@ return {
     config = function()
       local dap = require("dap")
 
-      -- Sample configuration for LLDB (Rust/C/C++)
-      dap.adapters.codelldb = {
-        type = "server",
-        port = "${port}",
-        executable = {
-          command = vim.fn.exepath("codelldb"),
-          args = { "--port", "${port}" },
-        },
+      dap.adapters.cppdbg = {
+        id = 'cppdbg',
+        type = 'executable',
+        command = vim.fs.joinpath(vim.fn.stdpath('data'), 'mason', 'bin', 'OpenDebugAD7'),
       }
     end,
   },
