@@ -169,7 +169,6 @@ Register("t", "Terminal", "", {
 })
 
 Register("u", "UI", "", {
-    m = { "<cmd>MarkdownPreview<cr>", "Markdown preview", "󰈈" },
     ["."] = { proj.loadUI, "Initialise the UI" },
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" }

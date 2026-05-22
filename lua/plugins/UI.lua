@@ -36,18 +36,6 @@ return {
     },
   },
 
-  -- Markdown renderer
-  -- {
-  --   'MeanderingProgrammer/markdown.nvim',
-  --   dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' },
-  -- },
-  {
-    "iamcco/markdown-preview.nvim",
-    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-    ft = { "markdown" },
-    build = "cd app && npm install",
-  },
-
   -- Search in a nice bubble
   {
     'VonHeikemen/searchbox.nvim',
