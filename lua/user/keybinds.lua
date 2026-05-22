@@ -177,7 +177,8 @@ Register("u", "UI", "", {
 
 Register("c", "Symbols", "󱔁", {
     c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
-    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." }
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
+    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
 
 -- Buffer things
@@ -250,10 +251,10 @@ wk.add({
     ToMap("R", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
     ToMap("F", "<cmd>Telescope live_grep<cr>", "Find grep in all dirs", "󰍉"),
     ToMap("G", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
-    ToMap("B", require("dap").toggle_breakpoint, "Toggle breakpoint", ""),
+    ToMap("B", dap.toggle_breakpoint, "Toggle breakpoint", ""),
     ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
     ToMap("C", "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁"),
-    ToMap("D", require("dapui").toggle, "Toggle debugger UI", ""),
+    ToMap("D", dapui.toggle, "Toggle debugger UI", ""),
 
     ToMap(".", function()
         require("notify").dismiss()
