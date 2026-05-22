@@ -59,6 +59,16 @@ return {
     "kdheepak/lazygit.nvim",
   },
   {
+    "direnv/direnv.vim",
+    config = function()
+      vim.g.direnv_silent_load = 1
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "DirenvLoaded",
+        command = "LspRestart",
+      })
+    end
+  },
+  {
     "hrsh7th/nvim-cmp",
     dependencies = {
       -- LSP source
