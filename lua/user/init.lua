@@ -214,3 +214,28 @@ vim.api.nvim_create_autocmd("LspAttach", {
         end
     end,
 })
+
+
+-- Add ctrl+e keybind for the dap repl for convenience
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "dap-repl",
+  callback = function(args)
+    vim.keymap.set("i", "<C-e>", function()
+      local repl = require("dap.repl")
+      local line = vim.api.nvim_get_current_line()
+      local cmd = line:gsub("^dap> ", "", 1)
+
+      if cmd ~= "" then
+        repl.execute("-exec " .. cmd)
+        vim.api.nvim_set_current_line("dap> ")
+        vim.api.nvim_win_set_cursor(0, {
+          vim.fn.line("."),
+          #"dap> ",
+        })
+      end
+    end, {
+      buffer = args.buf,
+      desc = "Execute REPL command via -exec",
+    })
+  end,
+})

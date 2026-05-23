@@ -48,10 +48,10 @@ function M.loadUI()
   local loaded = pcall(function() require("resession").load(cwd, { dir = "dirsession", reset = true }) end)
   if not loaded then
     vim.cmd("tabnew")
+    vim.cmd("Neotree")
+    vim.cmd("wincmd w")
     vim.notify("No session found!", vim.log.levels.WARN)
   end
-  vim.cmd("Neotree")
-  vim.cmd("wincmd w")
 end
 
 function M.loadProject(ncwd)
