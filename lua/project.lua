@@ -51,6 +51,7 @@ function M.loadUI()
     vim.notify("No session found!", vim.log.levels.WARN)
   end
   vim.cmd("Neotree")
+  vim.cmd("wincmd w")
 end
 
 function M.loadProject(ncwd)

@@ -78,8 +78,6 @@ end
 
 local function stop_dap()
     pcall(dap.disconnect)
-    pcall(dap.close)
-    pcall(dap.terminate)
 end
 
 function M.stop()
