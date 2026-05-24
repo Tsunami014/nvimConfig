@@ -158,13 +158,18 @@ local function launch_cpp_dap(progr)
         program = progr,
         cwd = "${workspaceFolder}",
         stopAtEntry = false,
-        setupCommands = {
-            {
-                text = '-enable-pretty-printing',
-                description = 'enable pretty printing',
-                ignoreFailures = false
-            },
+        logging = {
+            moduleLoad = false,
+            programOutput = false,
         },
+        setupCommands = {
+            { text = "-enable-pretty-printing" },
+            { text = "set print pretty on" },
+            { text = "set print array on" },
+            { text = "set print elements unlimited" },
+            { text = "set print thread-events off" },
+            { text = "add-auto-load-safe-path /" },
+        }
     })
 end
 

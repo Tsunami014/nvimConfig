@@ -227,8 +227,8 @@ Map("n", "<F6>", dbug.run_last, "Run last debug")
 Map("n", "<F9>", dap.step_into, "DAP Step Into")
 Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_out, "DAP Step Out")
+Map("n", "<C-CR>", require("dapui").eval, "DAP Hover")
 Register("d", "Debug", "", {
-    d = { require('dap.ui.widgets').hover, "Show hover popup" },
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },

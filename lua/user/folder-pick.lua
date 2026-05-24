@@ -53,8 +53,8 @@ function M.pick_folder_in(path)
                 actions.close(prompt_bufnr)
                 vim.cmd("cd " .. vim.fn.fnameescape(path .. "/" .. selection[1]))
 
-		vim.cmd("bd") -- Hide dashboard
-		vim.cmd("Neotree show")
+                vim.cmd("bd") -- Hide dashboard
+                require("project").loadUI()
             end)
             return true
         end

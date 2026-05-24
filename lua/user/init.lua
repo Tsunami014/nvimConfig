@@ -12,11 +12,9 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- Add a dump highlights command to dump highlights to a temporary buffer
 vim.api.nvim_create_user_command("DumpHighlights", function()
-    -- Get highlight output as string
     local output = vim.api.nvim_exec2("highlight", { output = true }).output
     local lines = vim.split(output, "\n")
 
-    -- Open a scratch buffer
     vim.cmd("tabnew")
     local buf = vim.api.nvim_get_current_buf()
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -24,12 +22,9 @@ vim.api.nvim_create_user_command("DumpHighlights", function()
     vim.bo[buf].bufhidden = "wipe"
     vim.bo[buf].swapfile = false
 
-    -- Actually highlight group names on each line
     for lnum, line in ipairs(lines) do
-        -- get the first word of each line — usually the group name
         local group = line:match("^([%w_]+)")
         if group then
-            -- Apply the highlight to the group name itself (col 0 to its length)
             vim.api.nvim_buf_add_highlight(buf, -1, group, lnum - 1, 0, #group)
         end
     end
@@ -216,11 +211,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 
 
--- Add ctrl+e keybind for the dap repl for convenience
+-- Add ctrl+enter keybind for the dap repl for convenience
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "dap-repl",
   callback = function(args)
-    vim.keymap.set("i", "<C-e>", function()
+    vim.keymap.set("i", "<C-CR>", function()
       local repl = require("dap.repl")
       local line = vim.api.nvim_get_current_line()
       local cmd = line:gsub("^dap> ", "", 1)

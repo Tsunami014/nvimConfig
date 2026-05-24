@@ -17,31 +17,6 @@ return {
   {
     "neovim/nvim-lspconfig",
   },
-  {
-    "jay-babu/mason-nvim-dap.nvim",
-    dependencies = { "williamboman/mason.nvim", "mfussenegger/nvim-dap" },
-    opts = {
-        ensure_installed = {
-          -- install language servers
-          "lua-language-server",
-          "ruff",
-          "pyright",
-          "clangd",
-
-          -- install formatters
-          "stylua",
-
-          -- install debuggers
-          "debugpy",
-          "cpptools",
-
-          -- install any other package
-          "tree-sitter-cli",
-        },
-      automatic_installation = true,
-      handlers = {}, -- use default handlers
-    },
-  },
   -- The debugger
   {
     "mfussenegger/nvim-dap",
@@ -73,9 +48,28 @@ return {
         dependencies = { "williamboman/mason.nvim" },
         config = function()
           require("mason-nvim-dap").setup({
-            ensure_installed = { "cpptools", "python", "js" },
-            automatic_installation = true,
-            handlers = {},
+            dependencies = { "williamboman/mason.nvim", "mfussenegger/nvim-dap" },
+            opts = {
+                ensure_installed = {
+                  -- install language servers
+                  "lua-language-server",
+                  "ruff",
+                  "pyright",
+                  "clangd",
+
+                  -- install formatters
+                  "stylua",
+
+                  -- install debuggers
+                  "debugpy",
+                  "cpptools",
+
+                  -- install any other package
+                  "tree-sitter-cli",
+                },
+              automatic_installation = true,
+              handlers = {}, -- use default handlers
+            },
           })
         end,
       },

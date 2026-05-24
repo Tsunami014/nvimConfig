@@ -50,7 +50,6 @@ function M.loadUI()
     vim.cmd("tabnew")
     vim.cmd("Neotree")
     vim.cmd("wincmd w")
-    vim.notify("No session found!", vim.log.levels.WARN)
   end
 end
 
