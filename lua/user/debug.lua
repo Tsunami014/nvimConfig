@@ -105,6 +105,7 @@ local function run_terminal(command, on_exit)
         detach = 0,
         on_exit = function(_, code)
             state.job = nil
+            vim.cmd.stopinsert()
             vim.schedule(function()
                 if on_exit then
                     on_exit(code)
@@ -160,7 +161,7 @@ local function launch_cpp_dap(progr)
         stopAtEntry = false,
         logging = {
             moduleLoad = false,
-            programOutput = false,
+            programOutput = true,--false,
         },
         setupCommands = {
             { text = "-enable-pretty-printing" },
@@ -262,10 +263,16 @@ local function get_actions()
             after = function(code)
                 if code == 0 then
                     M.stop()
-                    vim.cmd("drop " .. vim.fn.fnameescape(state.fname))
+                    local old_buf = vim.api.nvim_get_current_buf()
+                    local change = vim.bo.filetype ~= "tex"
+                    if change then
+                      vim.cmd("drop " .. vim.fn.fnameescape(state.fname))
+                    end
                     local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
-                    vim.notify(outfname)
                     vim.cmd({ cmd = "VimtexView", args = { outfname } })
+                    if change and vim.api.nvim_buf_is_valid(old_buf) then
+                      vim.api.nvim_set_current_buf(old_buf)
+                    end
                 end
             end
         })
