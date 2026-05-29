@@ -59,7 +59,23 @@ Register("p", "Projects", "󰉓", {
     l = { proj.findProjects, "Load project" },
     c = { function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-    end, "Chdir to parent dir", "󰌑" }
+    end, "Chdir to parent dir", "󰌑" },
+    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    L = { function()
+        local cwd = vim.fn.getcwd()
+        local lua_rc = cwd .. "/.nvim.lua"
+        local vim_rc = cwd .. "/.nvimrc"
+
+        if vim.fn.filereadable(lua_rc) == 1 then
+            dofile(lua_rc)
+            print("Loaded .nvim.lua from " .. lua_rc)
+        elseif vim.fn.filereadable(vim_rc) == 1 then
+            vim.cmd("source " .. vim_rc)
+            print("Sourced .nvimrc from " .. vim_rc)
+        else
+            print("No .nvim.lua or .nvimrc found in current directory.")
+        end
+    end, "Load .nvimrc", "" }
 })
 
 Register("|", "Profiles", "", {
@@ -141,25 +157,6 @@ Register("h", "Hunks", "", {
     p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
     b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
 }, "<leader>g")
-
-Register("e", "Environment", "", {
-    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
-    l = { function()
-        local cwd = vim.fn.getcwd()
-        local lua_rc = cwd .. "/.nvim.lua"
-        local vim_rc = cwd .. "/.nvimrc"
-
-        if vim.fn.filereadable(lua_rc) == 1 then
-            dofile(lua_rc)
-            print("Loaded .nvim.lua from " .. lua_rc)
-        elseif vim.fn.filereadable(vim_rc) == 1 then
-            vim.cmd("source " .. vim_rc)
-            print("Sourced .nvimrc from " .. vim_rc)
-        else
-            print("No .nvim.lua or .nvimrc found in current directory.")
-        end
-    end, "Load .nvimrc", "" }
-})
 
 Register("t", "Terminal", "", {
     t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
@@ -255,6 +252,7 @@ wk.add({
     ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
     ToMap("C", "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁"),
     ToMap("D", dapui.toggle, "Toggle debugger UI", ""),
+    ToMap("W", function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶"),
 
     ToMap(".", function()
         require("notify").dismiss()
