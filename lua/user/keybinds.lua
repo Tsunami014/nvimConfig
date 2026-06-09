@@ -13,8 +13,8 @@ function Register(prefix, group, icon, mappings, leader)
         local rhs = v[1]
         local desc = v[2]
         local ico = icon
-        if v.icon ~= nil then
-            ico = v.icon
+        if v[3] ~= nil then
+            ico = v[3]
         end
         local mode = "n"
         if v.mode ~= nil then
@@ -76,7 +76,7 @@ Register("p", "Projects", "󰉓", {
             print("No .nvim.lua or .nvimrc found in current directory.")
         end
     end, "Load .nvimrc", "" },
-    a = { "<cmd>DirenvAllow<cr>", "Allow direnv", "" },
+    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
 })
 
 Register("|", "Profiles", "", {
@@ -102,8 +102,8 @@ Register("f", "Find", "󰍉", {
     k = { "<cmd>Telescope keymaps<cr>", "Find Keymaps" },
     s = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Find in Current Buffer" },
     d = { "<cmd>Telescope diagnostics<cr>", "Find Diagnostics", "" },
-    t = { "<cmd>TodoTelescope<cr>", "Find Todos", icon = "" },
-    T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", icon = "" }
+    t = { "<cmd>TodoTelescope<cr>", "Find Todos", "" },
+    T = { "<cmd>TodoTelescope keywords=TODO,FIX,FIXME<cr>", "Find Todo/Fix/Fixme", "" }
 })
 
 Register("r", "Find & replace", "󰗧", {
@@ -125,12 +125,12 @@ Register("l", "LSP", "", {
 Register("x", "Todos & Troubles", "", {
     a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
     X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
-    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", icon = "" },
-    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", icon = "" },
-    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", icon = "" },
+    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", "" },
+    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", "" },
+    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", "" },
     t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
     T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
-    o = { "<C-q>", "Telescope->quickfix (<C-q>)", icon = "󰌑" },
+    o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
     ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
     ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
 })
@@ -190,7 +190,7 @@ Register("b", "Buffer", "󰓩", {
     o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
     r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
     R = { "<cmd>e<cr>", "Refresh buffer", "" },
-    a = { "<cmd>ASToggle<CR>", "Toggle autosave", icon = "" },
+    a = { "<cmd>ASToggle<CR>", "Toggle autosave", "" },
 
     ["1"] = { "<cmd>BufferGoto 1<cr>", "First buffer" },
     ["0"] = { "<cmd>BufferLast<cr>", "Last Buffer" },
