@@ -75,7 +75,8 @@ Register("p", "Projects", "󰉓", {
         else
             print("No .nvim.lua or .nvimrc found in current directory.")
         end
-    end, "Load .nvimrc", "" }
+    end, "Load .nvimrc", "" },
+    a = { "<cmd>DirenvAllow<cr>", "Allow direnv", "" },
 })
 
 Register("|", "Profiles", "", {
@@ -239,6 +240,7 @@ Register("d", "Debug", "", {
 wk.add({
     -- Commands
     ToMap(" ", dbug.toggle_terminal, "Toggle Debug Terminal", ""),
+    ToMap("<Enter>", vim.diagnostic.open_float, "Show diagnostics popup", ""),
 
     ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
@@ -324,6 +326,8 @@ Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
 
+Map("n", "<C-.>", ">>", "Indent line")
+Map("n", "<C-,>", "<<", "De-indent line")
 Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
@@ -346,3 +350,8 @@ Map({ 'i', 's' }, '<S-Tab>', function()
 end, 'Previous completion')
 
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
+
+
+-- Various cool things
+Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
+Map('t', '<A-esc>', "<C-\\><C-n>", 'Exit terminal mode')
