@@ -3,14 +3,16 @@ require "user.keybinds"
 
 vim.api.nvim_create_user_command(
   'LoadUI',
-  function(ncwd)
-    local loaded = false
-    if ncwd ~= nil then
+  function(opts)
+    local ncwd = opts.args
+    if ncwd ~= "" then
       vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
-      loaded = pcall(function() require("resession").load(cwd, { dir = "dirsession", reset = true }) end)
-    end
-    if not loaded then
-      vim.cmd("tabnew")
+      local loaded = pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true, reset = true }) end)
+      vim.defer_fn(function()
+        vim.cmd("Neotree")
+        vim.cmd("wincmd w")
+      end, 10)
+    else
       vim.cmd("Neotree")
       vim.cmd("wincmd w")
     end
@@ -20,6 +22,7 @@ vim.api.nvim_create_user_command(
 local pend = false
 vim.api.nvim_create_autocmd({
   "BufAdd",
+  "BufNewFile",
   "BufDelete",
   "BufWipeout",
 }, {
@@ -41,7 +44,9 @@ vim.api.nvim_create_autocmd("VimEnter", {
     if vim.fn.argc(-1) > 0 then
       local dir = vim.fn.argv(0)
       if vim.fn.isdirectory(dir) == 1 then
-        resession.load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true })
+        vim.defer_fn(function()
+          vim.cmd("LoadUI " .. vim.fn.fnameescape(vim.fn.getcwd()))
+        end, 10)
       end
     end
   end,
