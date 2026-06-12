@@ -1,13 +1,19 @@
 require "user.lualine-theme"
 require "user.keybinds"
 
+local pend = false
+local loading = false
 vim.api.nvim_create_user_command(
   'LoadUI',
   function(opts)
     local ncwd = opts.args
+    loading = true
     if ncwd ~= "" then
       vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
+      local saved_eventignore = vim.o.eventignore
+      vim.o.eventignore = "all"
       local loaded = pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true, reset = true }) end)
+      vim.o.eventignore = saved_eventignore
       vim.defer_fn(function()
         vim.cmd("Neotree")
         vim.cmd("wincmd w")
@@ -16,10 +22,10 @@ vim.api.nvim_create_user_command(
       vim.cmd("Neotree")
       vim.cmd("wincmd w")
     end
+    loading = false
   end, { nargs = '?' }
 )
 
-local pend = false
 vim.api.nvim_create_autocmd({
   "BufAdd",
   "BufNewFile",
@@ -27,7 +33,7 @@ vim.api.nvim_create_autocmd({
   "BufWipeout",
 }, {
   callback = function()
-    if pend then
+    if pend or loading then
       return
     end
     pend = true
@@ -45,7 +51,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
       local dir = vim.fn.argv(0)
       if vim.fn.isdirectory(dir) == 1 then
         vim.defer_fn(function()
-          vim.cmd("LoadUI " .. vim.fn.fnameescape(vim.fn.getcwd()))
+          vim.cmd("LoadUI " .. vim.fn.fnameescape(dir))
         end, 10)
       end
     end
