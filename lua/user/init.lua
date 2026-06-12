@@ -1,6 +1,53 @@
 require "user.lualine-theme"
 require "user.keybinds"
 
+vim.api.nvim_create_user_command(
+  'LoadUI',
+  function(ncwd)
+    local loaded = false
+    if ncwd ~= nil then
+      vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
+      loaded = pcall(function() require("resession").load(cwd, { dir = "dirsession", reset = true }) end)
+    end
+    if not loaded then
+      vim.cmd("tabnew")
+      vim.cmd("Neotree")
+      vim.cmd("wincmd w")
+    end
+  end, { nargs = '?' }
+)
+
+local pend = false
+vim.api.nvim_create_autocmd({
+  "BufAdd",
+  "BufDelete",
+  "BufWipeout",
+}, {
+  callback = function()
+    if pend then
+      return
+    end
+    pend = true
+    vim.defer_fn(function()
+      if vim.api.nvim_get_mode().mode == "n" then
+        require("resession").save(vim.fn.getcwd(), { dir = "dirsession", notify = false })
+      end
+      pend = false
+    end, 500)
+  end,
+})
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    if vim.fn.argc(-1) > 0 then
+      local dir = vim.fn.argv(0)
+      if vim.fn.isdirectory(dir) == 1 then
+        resession.load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true })
+      end
+    end
+  end,
+  nested = true,
+})
+
 -- Pretend code completion windows are markdown
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "codecompanion",

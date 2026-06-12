@@ -51,10 +51,8 @@ function M.pick_folder_in(path)
             actions.select_default:replace(function(prompt_bufnr)
                 local selection = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
-                vim.cmd("cd " .. vim.fn.fnameescape(path .. "/" .. selection[1]))
-
                 vim.cmd("bd") -- Hide dashboard
-                require("project").loadUI()
+                vim.cmd("LoadUI " .. vim.fn.fnameescape(path .. "/" .. selection[1]))
             end)
             return true
         end

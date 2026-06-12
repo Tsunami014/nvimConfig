@@ -53,14 +53,13 @@ function ToMap(key, rhs, desc, icon, leader, mode)
 end
 
 
-local proj = require("project")
-Register("p", "Projects", "󰉓", {
-    s = { proj.save_project, "Save project" },
-    l = { proj.findProjects, "Load project" },
+Register("e", "Environment", "", {
     c = { function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
     end, "Chdir to parent dir", "󰌑" },
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
     L = { function()
         local cwd = vim.fn.getcwd()
         local lua_rc = cwd .. "/.nvim.lua"
@@ -76,8 +75,14 @@ Register("p", "Projects", "󰉓", {
             print("No .nvim.lua or .nvimrc found in current directory.")
         end
     end, "Load .nvimrc", "" },
-    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
 })
+Register("s", "Session", "", {
+    s = { function() require("resession").save() end, "Save Session" },
+    l = { "<cmd>Telescope resession<CR>", "Session picker" },
+    L = { function() require("resession").load() end, "Load Session" },
+    d = { function() require("resession").delete() end, "Delete Session" }
+}, "<leader>e")
+
 
 Register("|", "Profiles", "", {
     ["|"] = { function()
@@ -135,13 +140,6 @@ Register("x", "Todos & Troubles", "", {
     ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
 })
 
-Register("s", "Session", "", {
-    s = { function() require("resession").save() end, "Save Session" },
-    l = { "<cmd>Telescope resession<CR>", "Session picker" },
-    L = { function() require("resession").load() end, "Load Session" },
-    d = { function() require("resession").delete() end, "Delete Session" }
-})
-
 local gs = require("gitsigns")
 Register("g", "Git", "󰊢", {
     g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
@@ -167,7 +165,7 @@ Register("t", "Terminal", "", {
 })
 
 Register("u", "UI", "", {
-    ["."] = { proj.loadUI, "Initialise the UI" },
+    ["."] = { "<cmd>LoadUI<cr>", "Initialise the UI" },
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" }
 })
