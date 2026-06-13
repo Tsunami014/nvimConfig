@@ -12,14 +12,20 @@ vim.api.nvim_create_user_command(
       vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
       local saved_eventignore = vim.o.eventignore
       vim.o.eventignore = "all"
-      local loaded = pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true, reset = true }) end)
+      vim.cmd("Neotree close")
+      local loaded, err = pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", silence_errors = true, reset = true }) end)
       vim.o.eventignore = saved_eventignore
       vim.defer_fn(function()
-        vim.cmd("Neotree")
-        vim.cmd("wincmd w")
-      end, 10)
+        if loaded then
+          vim.cmd("wincmd w")
+          pcall(function() vim.cmd("edit!") end)
+        else
+          vim.cmd("Neotree show")
+          vim.cmd("wincmd w")
+        end
+      end, 50)
     else
-      vim.cmd("Neotree")
+      vim.cmd("Neotree show")
       vim.cmd("wincmd w")
     end
     loading = false
