@@ -295,6 +295,9 @@ Register("x", "Todos & Troubles", "", {
 
 Register(".", "Debug", "", {
     ["."] = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
+    [","] = { function()
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>,", true, false, true), "m", false)
+    end, "Dismiss popups", "󱠡" },
     ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
     [" "] = { vim.lsp.buf.hover, "Show hover info", "󰋗" },
 
