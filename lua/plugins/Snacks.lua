@@ -1,8 +1,8 @@
 local confDir
 if vim.fn.has("win32") == 1 then
-    confDir = "$APPDATA"
+  confDir = "$APPDATA"
 else
-    confDir = "~/.config"
+  confDir = "~/.config"
 end
 
 ---@type LazySpec
@@ -63,10 +63,8 @@ return {
             if #parts == 0 then
                 return nil, nil
             end
-
             local a = table.concat(parts, "/", 1, #parts - 1) -- All but the last part
             local b = parts[#parts] -- Last part
-
             return a, b
           end
 
@@ -102,7 +100,6 @@ return {
           for idx, panel in ipairs(panels) do
             panel.pane = idx
           end
-
           return panels
         end,
       },

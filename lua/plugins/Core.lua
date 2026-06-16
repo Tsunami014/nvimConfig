@@ -5,7 +5,7 @@ return {
   {
     'wakatime/vim-wakatime',
     lazy = false,
-    enabled = (p.current == p.OPTS.Full)
+    enabled = p.OPTS.Full
   },
 
   {

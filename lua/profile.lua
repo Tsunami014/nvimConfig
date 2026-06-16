@@ -1,15 +1,38 @@
 local M = {}
 
-M.OptNams = { "Minimal", "Full" }
-M.OPTS = {
-  Minimal = 1,
-  Full = 2
-}
+M.OptNams = { "Minimal", "Full", "Notes" }
+M.OPTS = {}
 M.DEFAULT = 1
+
+local current
+function M.current_name()
+  return M.OptNams[current]
+end
+local function update_opts()
+    for i, profile in ipairs(M.OptNams) do
+        M.OPTS[profile] = (i == current)
+    end
+end
 
 local profile_file = vim.fn.stdpath("config") .. "/profile.txt"
 
+local function get_env_profile()
+  local profile = vim.env.NVIM_PROFILE
+  if not profile or profile == "" then
+    return nil
+  end
+  for i, profile_name in ipairs(M.OptNams) do
+    if profile_name == profile then
+      return i
+    end
+  end
+end
+
 local function load_profile()
+  local cli_profile = get_env_profile()
+  if cli_profile then
+    return cli_profile
+  end
   local f = io.open(profile_file, "r")
   if f then
     local content = f:read("*a")
@@ -40,10 +63,8 @@ local function get_profile_name(index)
     return M.OptNams[index]
 end
 
-M.current = load_profile()
-function M.current_name()
-  return M.OptNams[M.current]
-end
+current = load_profile()
+update_opts()
 
 function M.set_profile(profile_name)
     local index = 0

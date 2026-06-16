@@ -1,13 +1,24 @@
+local p = require("profile")
+
 return {
   -- Theme
   {
     "folke/tokyonight.nvim",
     lazy = false,
     priority = 1000,
-    opts = {},
     config = function()
       vim.cmd.colorscheme("tokyonight-night")
     end,
+    enabled = not p.OPTS.Notes
+  },
+  {
+    "catppuccin/nvim", name = "catppuccin",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      vim.cmd.colorscheme("catppuccin-frappe")
+    end,
+    enabled = p.OPTS.Notes
   },
 
   -- Highlight similar words
