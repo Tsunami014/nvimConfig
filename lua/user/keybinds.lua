@@ -53,35 +53,12 @@ function ToMap(key, rhs, desc, icon, leader, mode)
 end
 
 
-Register("e", "Environment", "", {
-    c = { function()
-        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
-    end, "Chdir to parent dir", "󰌑" },
-    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
-    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
-    L = { function()
-        local cwd = vim.fn.getcwd()
-        local lua_rc = cwd .. "/.nvim.lua"
-        local vim_rc = cwd .. "/.nvimrc"
-
-        if vim.fn.filereadable(lua_rc) == 1 then
-            dofile(lua_rc)
-            print("Loaded .nvim.lua from " .. lua_rc)
-        elseif vim.fn.filereadable(vim_rc) == 1 then
-            vim.cmd("source " .. vim_rc)
-            print("Sourced .nvimrc from " .. vim_rc)
-        else
-            print("No .nvim.lua or .nvimrc found in current directory.")
-        end
-    end, "Load .nvimrc", "" },
-})
 Register("s", "Session", "", {
     s = { function() require("resession").save() end, "Save Session" },
     l = { "<cmd>Telescope resession<CR>", "Session picker" },
     L = { function() require("resession").load() end, "Load Session" },
     d = { function() require("resession").delete() end, "Delete Session" }
-}, "<leader>e")
+})
 
 
 Register("|", "Profiles", "", {
@@ -119,27 +96,6 @@ Register("r", "Find & replace", "󰗧", {
     e = { "<cmd>SearchReplaceSingleBufferCExpr<cr>", "Replace current expression" }
 })
 
-Register("l", "LSP", "", {
-    L = { "<cmd>LspLog<cr>", "Lsp logs" },
-    l = { "<cmd>LspInfo<cr>", "Lsp info" },
-    s = { "<cmd>LspStart<cr>", "Start lsp" },
-    S = { "<cmd>LspStop<cr>", "Stop lsp" },
-    r = { "<cmd>LspRestart<cr>", "Restart lsp" }
-})
-
-Register("x", "Todos & Troubles", "", {
-    a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
-    X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
-    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", "" },
-    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", "" },
-    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", "" },
-    t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
-    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
-    o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
-    ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
-    ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
-})
-
 local gs = require("gitsigns")
 Register("g", "Git", "󰊢", {
     g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
@@ -168,12 +124,6 @@ Register("u", "UI", "", {
     ["."] = { "<cmd>LoadUI<cr>", "Initialise the UI" },
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" }
-})
-
-Register("c", "Symbols", "󱔁", {
-    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
-    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
-    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
 
 -- Buffer things
@@ -236,24 +186,23 @@ Register("d", "Debug", "", {
 
 -- Commands following <leader>
 wk.add({
-    -- Commands
-    ToMap(" ", dbug.toggle_terminal, "Toggle Debug Terminal", ""),
-    ToMap("<Enter>", vim.diagnostic.open_float, "Show diagnostics popup", ""),
-
     ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
-    ToMap("A", vim.lsp.buf.code_action, "Apply code action", "󰌑"),
-    ToMap("X", "<cmd>Trouble diagnostics toggle<cr>", "Toggle diagnostics", ""),
     ToMap("R", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
     ToMap("F", "<cmd>Telescope live_grep<cr>", "Find grep in all dirs", "󰍉"),
     ToMap("G", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
-    ToMap("B", dap.toggle_breakpoint, "Toggle breakpoint", ""),
     ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
-    ToMap("C", "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁"),
-    ToMap("D", dapui.toggle, "Toggle debugger UI", ""),
     ToMap("W", function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶"),
 
+    ToMap(",", function()
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local config = vim.api.nvim_win_get_config(win)
+            if config.relative ~= "" then
+                vim.api.nvim_win_close(win, false)
+            end
+        end
+    end, "Dismiss popups", "󱠡"),
     ToMap(".", function()
         require("notify").dismiss()
     end, "Dismiss notifications", "󱠡"),
@@ -278,6 +227,90 @@ wk.add({
         end)
     end, "Toggle comments", "/", nil, "v"),
 })
+
+
+-- Some lsp stuff!
+Register("e", "Environment", "", {
+    c = { function()
+        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
+    end, "Chdir to parent dir", "󰌑" },
+    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
+    L = { function()
+        local cwd = vim.fn.getcwd()
+        local lua_rc = cwd .. "/.nvim.lua"
+        local vim_rc = cwd .. "/.nvimrc"
+
+        if vim.fn.filereadable(lua_rc) == 1 then
+            dofile(lua_rc)
+            print("Loaded .nvim.lua from " .. lua_rc)
+        elseif vim.fn.filereadable(vim_rc) == 1 then
+            vim.cmd("source " .. vim_rc)
+            print("Sourced .nvimrc from " .. vim_rc)
+        else
+            print("No .nvim.lua or .nvimrc found in current directory.")
+        end
+    end, "Load .nvimrc", "" },
+}, ".")
+
+local picker = require("snacks").picker
+Register("g", "Goto", "󱞩", {
+    D = { function() picker.lsp_declarations({ jump = { reuse_win = false } }) end, "Goto this declaration" },
+    d = { function() picker.lsp_definitions({ jump = { reuse_win = false } }) end, "Goto this definition" },
+    i = { function() picker.lsp_implementations({ jump = { reuse_win = false } }) end, "Goto this implementations" },
+    t = { function() picker.lsp_type_definitions({ jump = { reuse_win = false } }) end, "Goto this type def" },
+    r = { function() picker.lsp_references({ jump = { reuse_win = false } }) end, "Goto this references" },
+    I = { picker.lsp_symbols, "Goto symbol" },
+    s = { picker.lsp_symbols, "Goto symbol" },
+    S = { picker.lsp_workspace_symbols, "Goto workspace symbol" },
+}, ".")
+
+Register("l", "LSP", "", {
+    L = { "<cmd>LspLog<cr>", "Lsp logs" },
+    l = { "<cmd>LspInfo<cr>", "Lsp info" },
+    s = { "<cmd>LspStart<cr>", "Start lsp" },
+    S = { "<cmd>LspStop<cr>", "Stop lsp" },
+    r = { "<cmd>LspRestart<cr>", "Restart lsp" }
+}, ".")
+
+Register("c", "Symbols", "󱔁", {
+    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
+    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
+}, ".")
+
+Register("x", "Todos & Troubles", "", {
+    a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
+    X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
+    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", "" },
+    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", "" },
+    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", "" },
+    t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
+    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
+    o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
+    ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
+    ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
+}, ".")
+
+Register(".", "Debug", "", {
+    ["."] = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
+    ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
+    [" "] = { vim.lsp.buf.hover, "Show hover info", "󰋗" },
+
+    V = { "<cmd>VenvSelect<cr>", "Select venv python" },
+    B = { dap.toggle_breakpoint, "Toggle Breakpoint", "" },
+    C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
+    A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
+
+    L = { "<cmd>DapShowLog<cr>", "Show logs" },
+    S = { "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁" },
+    X = { "<cmd>Trouble diagnostics toggle<cr>", "Toggle diagnostics", "" },
+    D = { dapui.toggle, "DAP UI Toggle", "" },
+    R = { vim.lsp.buf.rename, "Rename", "󰘎" },
+    U = { dap.repl.open, "Open REPL", "" },
+    E = { dapui.eval, "DAP Eval", "" },
+}, "")
 
 
 -- A more convenient use
@@ -306,10 +339,16 @@ Map({ 'n', 'v', 'x' }, '-', '"_dh', 'Delete to black hole')
 Map('n', ']t', require("todo-comments").jump_next, 'Next Todo Comment')
 Map('n', ']h', function() gs.nav_hunk("next") end, 'Next Hunk')
 Map('n', ']H', function() gs.nav_hunk("last") end, 'Last Hunk')
+Map('n', ']x', function() vim.diagnostic.jump({ count = 1, float = true, severity = nil }) end, 'Next diagnostic')
+Map('n', ']w', function() vim.diagnostic.jump({ count = 1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Next warning')
+Map('n', ']e', function() vim.diagnostic.jump({ count = 1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Next error')
 
 Map('n', '[t', require("todo-comments").jump_prev, 'Previous Todo Comment')
 Map('n', '[h', function() gs.nav_hunk("prev") end, 'Prev Hunk')
 Map('n', '[H', function() gs.nav_hunk("first") end, 'First Hunk')
+Map('n', '[x', function() vim.diagnostic.jump({ count = -1, float = true, severity = nil }) end, 'Prev diagnostic')
+Map('n', '[w', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Prev warning')
+Map('n', '[e', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Prev error')
 
 -- Misc stuff
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
@@ -350,6 +389,6 @@ end, 'Previous completion')
 Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')
 
 
--- Various cool things
+-- Window shenanigans
 Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
 Map('t', '<A-esc>', "<C-\\><C-n>", 'Exit terminal mode')
