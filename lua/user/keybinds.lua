@@ -305,6 +305,7 @@ Register(".", "Debug", "", {
     B = { dap.toggle_breakpoint, "Toggle Breakpoint", "" },
     C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
     A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
+    F = { function() vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", }) end, "Reenter directory", "" }, -- Fixes problems
 
     L = { "<cmd>DapShowLog<cr>", "Show logs" },
     S = { "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁" },
