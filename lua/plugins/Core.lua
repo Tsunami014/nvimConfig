@@ -52,14 +52,21 @@ return {
   {
     "romgrk/barbar.nvim",
     requires = "kyazdani42/nvim-web-devicons",  -- for icons
-    config = function()
-      require("bufferline").setup {
-        animation = true, -- Smooth transitions
-        auto_hide = false, -- Never hide the bufferline
-        tabpages = true, -- Show tabpages
-        icons = { filetype = { enabled = true } }
+    opts = {
+      animation = true,
+      auto_hide = false,
+      tabpages = false,
+      clickable = true,
+      hide = {extensions = true, inactive = false},
+      icons = {
+        filetype = { enabled = true },
+        inactive = { button = false },
+        separator = { left = '▍', right = '' },
+        modified = { button = '!' },
+        pinned = { button = '', filename = false },
+        button = '×',
       }
-    end
+    }
   },
   {
     "kdheepak/lazygit.nvim",
