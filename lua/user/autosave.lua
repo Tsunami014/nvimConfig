@@ -1,3 +1,32 @@
+local home = vim.fs.normalize(vim.fn.expand("~"))
+local ignored_exact = {
+  home,
+  home .. "/Downloads",
+  home .. "/Documents",
+  "/",
+}
+local ignored_trees = {
+  "/tmp",
+  "/var/tmp",
+}
+
+local function should_save_session()
+  local cwd = vim.fs.normalize(vim.fn.getcwd())
+
+  for _, v in ipairs(ignored_exact) do
+    if v == cwd then
+      return false
+    end
+  end
+
+  for _, dir in ipairs(ignored_trees) do
+    if cwd == dir or vim.startswith(cwd, dir .. "/") then
+      return false
+    end
+  end
+  return true
+end
+
 local pend = false
 local loading = false
 vim.api.nvim_create_user_command(
@@ -41,7 +70,7 @@ vim.api.nvim_create_autocmd({
     end
     pend = true
     vim.defer_fn(function()
-      if vim.api.nvim_get_mode().mode == "n" then
+      if vim.api.nvim_get_mode().mode == "n" and should_save_session() then
         require("resession").save(vim.fn.getcwd(), { notify = false })
       end
       pend = false

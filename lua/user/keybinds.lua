@@ -2,6 +2,7 @@ local wk = require("which-key")
 local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
+local sesh = require("resession")
 
 function Register(prefix, group, icon, mappings, leader)
     if leader == nil then
@@ -246,6 +247,12 @@ Register("u", "UI", "", {
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     n = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
+})
+
+Register("s", "Session", "", {
+    s = { sesh.save, "Save Session" },
+    l = { "<cmd>Telescope resession<CR>", "Session picker" },
+    d = { sesh.delete, "Delete Session" }
 })
 
 -- Buffer things
