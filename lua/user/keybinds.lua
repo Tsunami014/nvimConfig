@@ -1,4 +1,7 @@
 local wk = require("which-key")
+local dap = require("dap")
+local dapui = require("dapui")
+local dbug = require("user.debug")
 
 function Register(prefix, group, icon, mappings, leader)
     if leader == nil then
@@ -57,12 +60,128 @@ function ToMap(key, rhs, desc, icon, leader, mode)
 end
 
 
-Register("s", "Session", "", {
-    s = { function() require("resession").save() end, "Save Session" },
-    l = { "<cmd>Telescope resession<CR>", "Session picker" },
-    d = { function() require("resession").delete() end, "Delete Session" }
-})
+local dbgld = "."
 
+Register("e", "Environment", "", {
+    c = { function()
+        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
+        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
+    end, "Chdir to parent dir", "󰌑" },
+    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
+    L = { function()
+        local cwd = vim.fn.getcwd()
+        local lua_rc = cwd .. "/.nvim.lua"
+        local vim_rc = cwd .. "/.nvimrc"
+
+        if vim.fn.filereadable(lua_rc) == 1 then
+            dofile(lua_rc)
+            print("Loaded .nvim.lua from " .. lua_rc)
+        elseif vim.fn.filereadable(vim_rc) == 1 then
+            vim.cmd("source " .. vim_rc)
+            print("Sourced .nvimrc from " .. vim_rc)
+        else
+            print("No .nvim.lua or .nvimrc found in current directory.")
+        end
+    end, "Load .nvimrc", "" },
+}, dbgld)
+
+local picker = require("snacks").picker
+Register("g", "Goto", "󱞩", {
+    D = { function() picker.lsp_declarations({ jump = { reuse_win = false } }) end, "Goto this declaration" },
+    d = { function() picker.lsp_definitions({ jump = { reuse_win = false } }) end, "Goto this definition" },
+    i = { function() picker.lsp_implementations({ jump = { reuse_win = false } }) end, "Goto this implementations" },
+    t = { function() picker.lsp_type_definitions({ jump = { reuse_win = false } }) end, "Goto this type def" },
+    r = { function() picker.lsp_references({ jump = { reuse_win = false } }) end, "Goto this references" },
+    I = { picker.lsp_symbols, "Goto symbol" },
+    s = { picker.lsp_symbols, "Goto symbol" },
+    S = { picker.lsp_workspace_symbols, "Goto workspace symbol" },
+}, dbgld)
+
+Register("l", "LSP", "", {
+    L = { "<cmd>LspLog<cr>", "Lsp logs" },
+    l = { "<cmd>LspInfo<cr>", "Lsp info" },
+    s = { "<cmd>LspStart<cr>", "Start lsp" },
+    S = { "<cmd>LspStop<cr>", "Stop lsp" },
+    r = { "<cmd>LspRestart<cr>", "Restart lsp" }
+}, dbgld)
+
+Register("c", "Symbols", "󱔁", {
+    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
+    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
+    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
+}, dbgld)
+
+Register("x", "Todos & Troubles", "", {
+    a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
+    X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
+    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", "" },
+    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", "" },
+    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", "" },
+    t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
+    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
+    o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
+    ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
+    ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
+}, dbgld)
+
+-- Commands following <debug>
+Register(dbgld, "Debug", "", {
+    ["."] = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
+    [","] = { RunKeys("<leader>,"), "Dismiss popups", "󱠡" },
+    ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
+    [" "] = { vim.lsp.buf.hover, "Show hover info", "󰋗" },
+
+    V = { "<cmd>VenvSelect<cr>", "Select venv python" },
+    B = { dap.toggle_breakpoint, "Toggle Breakpoint", "" },
+    C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
+    A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
+    F = { function() vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", }) end, "Reenter directory", "" }, -- Fixes problems
+    L = { "<cmd>DapShowLog<cr>", "Show logs" },
+    D = { dapui.toggle, "DAP UI Toggle", "" },
+    R = { vim.lsp.buf.rename, "Rename", "󰘎" },
+    U = { dap.repl.open, "Open REPL", "" },
+    E = { dapui.eval, "DAP Eval", "" },
+
+    S = { RunKeys(dbgld.."cc"), "Toggle symbols", "󱔁" },
+    X = { RunKeys(dbgld.."xx"), "Toggle diagnostics", "" },
+}, "")
+
+
+Register("=", "Indentation", "", {
+    ["="] = { "<cmd>GuessIndent<cr>", "Guess indentation" },
+    ["s"] = {
+        function()
+            vim.ui.input({ prompt = "Set indent spacing & re-indent file: " }, function(input)
+                local spaces = tonumber(input)
+                if spaces then
+                    vim.opt_local.shiftwidth = spaces
+                    vim.opt_local.tabstop = spaces
+                    vim.opt_local.softtabstop = spaces
+
+                    local current_win = vim.api.nvim_get_current_win()
+                    local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
+                    vim.cmd("silent! retab!")
+                    vim.cmd("normal! gg=G")
+                    pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
+                    vim.notify("File indented to " .. spaces .. " spaces.")
+                elseif input ~= nil then
+                    vim.notify("Invalid input", vim.log.levels.WARN)
+                end
+            end)
+        end,
+        "Set indentation"
+    },
+    ["w"] = {
+        function()
+            local view = vim.fn.winsaveview()
+            vim.cmd([[%s/\s\+$//e]])
+            vim.fn.winrestview(view)
+            vim.notify("Trailing whitespace cleared")
+        end,
+        "Delete trailing whitespace"
+    }
+})
 
 Register("|", "Profiles", "", {
     ["|"] = { function()
@@ -71,7 +190,6 @@ Register("|", "Profiles", "", {
     S = { function() require('profile').choose_profile() end, "Switch Profile" },
     g = { string.format(":!cd %s && git pull<CR>", vim.fn.stdpath("config")), "Git sync config" }
 }, "")
-
 
 Register("f", "Find", "󰍉", {
     g = { "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs" },
@@ -162,9 +280,6 @@ Register("b", "Buffer", "󰓩", {
 })
 
 -- Debugger stuff
-local dap = require("dap")
-local dapui = require("dapui")
-local dbug = require("user.debug")
 Map("n", "<F4>", dbug.stop, "Stop debugging")
 Map("n", "<F17>", dbug.stop, "Stop debugging") -- Shift+F5
 Map("n", "<F5>", function()
@@ -235,92 +350,6 @@ wk.add({
 })
 
 
--- Some lsp stuff!
-Register("e", "Environment", "", {
-    c = { function()
-        vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
-    end, "Chdir to parent dir", "󰌑" },
-    m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
-    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
-    L = { function()
-        local cwd = vim.fn.getcwd()
-        local lua_rc = cwd .. "/.nvim.lua"
-        local vim_rc = cwd .. "/.nvimrc"
-
-        if vim.fn.filereadable(lua_rc) == 1 then
-            dofile(lua_rc)
-            print("Loaded .nvim.lua from " .. lua_rc)
-        elseif vim.fn.filereadable(vim_rc) == 1 then
-            vim.cmd("source " .. vim_rc)
-            print("Sourced .nvimrc from " .. vim_rc)
-        else
-            print("No .nvim.lua or .nvimrc found in current directory.")
-        end
-    end, "Load .nvimrc", "" },
-}, ".")
-
-local picker = require("snacks").picker
-Register("g", "Goto", "󱞩", {
-    D = { function() picker.lsp_declarations({ jump = { reuse_win = false } }) end, "Goto this declaration" },
-    d = { function() picker.lsp_definitions({ jump = { reuse_win = false } }) end, "Goto this definition" },
-    i = { function() picker.lsp_implementations({ jump = { reuse_win = false } }) end, "Goto this implementations" },
-    t = { function() picker.lsp_type_definitions({ jump = { reuse_win = false } }) end, "Goto this type def" },
-    r = { function() picker.lsp_references({ jump = { reuse_win = false } }) end, "Goto this references" },
-    I = { picker.lsp_symbols, "Goto symbol" },
-    s = { picker.lsp_symbols, "Goto symbol" },
-    S = { picker.lsp_workspace_symbols, "Goto workspace symbol" },
-}, ".")
-
-Register("l", "LSP", "", {
-    L = { "<cmd>LspLog<cr>", "Lsp logs" },
-    l = { "<cmd>LspInfo<cr>", "Lsp info" },
-    s = { "<cmd>LspStart<cr>", "Start lsp" },
-    S = { "<cmd>LspStop<cr>", "Stop lsp" },
-    r = { "<cmd>LspRestart<cr>", "Restart lsp" }
-}, ".")
-
-Register("c", "Symbols", "󱔁", {
-    c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
-    C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
-    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
-}, ".")
-
-Register("x", "Todos & Troubles", "", {
-    a = { vim.lsp.buf.code_action, "apply lsp actions", "󰌑" },
-    X = { "<cmd>trouble diagnostics toggle<cr>", "diagnostics", "" },
-    x = { "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", "Buffer Diagnostics", "" },
-    l = { "<cmd>Trouble loclist toggle<cr>", "Location List", "" },
-    q = { "<cmd>Trouble qflist toggle<cr>", "Quickfix List", "" },
-    t = { "<cmd>Trouble todo toggle<cr>", "Todo" },
-    T = { "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", "Todo/Fix/Fixme" },
-    o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
-    ["]"] = { "<cmd>cnext<cr>", "Next quick fix", "" },
-    ["["] = { "<cmd>cprev<cr>", "Previous quick fix", "" }
-}, ".")
-
-Register(".", "Debug", "", {
-    ["."] = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
-    [","] = { RunKeys("<leader>,"), "Dismiss popups", "󱠡" },
-    ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
-    [" "] = { vim.lsp.buf.hover, "Show hover info", "󰋗" },
-
-    V = { "<cmd>VenvSelect<cr>", "Select venv python" },
-    B = { dap.toggle_breakpoint, "Toggle Breakpoint", "" },
-    C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
-    A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
-    F = { function() vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", }) end, "Reenter directory", "" }, -- Fixes problems
-    L = { "<cmd>DapShowLog<cr>", "Show logs" },
-    D = { dapui.toggle, "DAP UI Toggle", "" },
-    R = { vim.lsp.buf.rename, "Rename", "󰘎" },
-    U = { dap.repl.open, "Open REPL", "" },
-    E = { dapui.eval, "DAP Eval", "" },
-
-    S = { RunKeys(".cc"), "Toggle symbols", "󱔁" },
-    X = { RunKeys(".xx"), "Toggle diagnostics", "" },
-}, "")
-
-
 -- A more convenient use
 Map({ 'n', 'v' }, '\\', '@q', '@q')
 
@@ -362,8 +391,6 @@ Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
-
-Map({ 'n', 'v', 'x' }, '=+', "<cmd>GuessIndent<cr>", 'Guess indentation')
 
 Map("n", "<C-.>", ">>", "Indent line")
 Map("n", "<C-,>", "<<", "De-indent line")
