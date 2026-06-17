@@ -77,7 +77,6 @@ Register("f", "Find", "󰍉", {
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
     h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
-    H = { "<cmd>DumpHighlights<cr>", "Find highlights" },
     w = { "<cmd>Telescope grep_string<cr>", "Find Word Under Cursor" },
     F = { "<cmd>Telescope oldfiles<cr>", "Find Recent Files" },
     c = { "<cmd>Telescope commands<cr>", "Find Commands" },
@@ -123,7 +122,8 @@ Register("t", "Terminal", "", {
 Register("u", "UI", "", {
     ["."] = { "<cmd>LoadUI<cr>", "Initialise the UI" },
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
-    i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" }
+    i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
+    h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
 })
 
 -- Buffer things
@@ -327,16 +327,8 @@ Map({ 'n', 'v', 'x' }, ';', '"+', 'System clipboard')
 Map({ 'n', 'v', 'x' }, "'", '""', 'Vim clipboard')
 Map('n', ';;', ':let @+ = @"<CR>', 'Transfer vim clipboard to system')
 Map('n', ";'", ':let @" = @+<CR>', 'Transfer system clipboard to vim')
--- "_ black hole, "+ or "* system cbd, "" nvim default cbd
-
--- Move = keybinds to \
-Map({ 'n', 'v', 'x' }, '?', '=', 'Correct indentation')
-Map({ 'n', 'v', 'x' }, '??', '==', 'Correct indent of current line')
--- Replace = with - ; So the one button has both + and -
-Map({ 'n', 'v', 'x' }, '=', '-', 'Start of previous line')
-Map({ 'n', 'v', 'x' }, '+', '+', 'Start of next line')  -- To get the docs
--- Now add the delete to black hole!
 Map({ 'n', 'v', 'x' }, '-', '"_dh', 'Delete to black hole')
+-- "_ black hole, "+ or "* system cbd, "" nvim default cbd
 
 
 -- Next & prev things
@@ -366,6 +358,8 @@ Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
+
+Map({ 'n', 'v', 'x' }, '=+', "<cmd>GuessIndent<cr>", 'Guess indentation')
 
 Map("n", "<C-.>", ">>", "Indent line")
 Map("n", "<C-,>", "<<", "De-indent line")
