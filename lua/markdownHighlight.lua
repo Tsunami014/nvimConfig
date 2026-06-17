@@ -111,6 +111,8 @@ vim.schedule(function()
 
     local normal_hl = vim.api.nvim_get_hl(0, { name = "Normal" })
     vim.api.nvim_set_hl(0, "MarkdownHide", { fg = normal_hl.bg, bg = normal_hl.bg })
+    local todo_hl = vim.api.nvim_get_hl(0, { name = "Todo" })
+    vim.api.nvim_set_hl(0, "TodoHide", { fg = todo_hl.bg, bg = todo_hl.bg })
 end)
 
 local lang_icons = {
@@ -225,12 +227,12 @@ function M.redraw(bufnr)
             local specs = {
                 { pat = "(`)([^`][^`]-)(`)",           hl = "InlineQuote" },
                 { pat = "(~~)(..-)(~~)",               hl = "@markup.strikethrough" },
-                { pat = "(==)(.-)(==)",                hl = "Todo" },
 
                 { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
                 { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
                 { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
 
+                -- Tables
                 {
                   handler = function(ln)
                     -- capture leading and trailing whitespace
@@ -275,7 +277,7 @@ function M.redraw(bufnr)
                         elseif c == "-" or c == " " then
                           table.insert(chars, "─")
                         elseif c == ":" then
-                          table.insert(chars, ".")    -- colon-specific horizontal marker
+                          table.insert(chars, ":")    -- colon-specific horizontal marker
                         else
                           table.insert(chars, c)
                         end
@@ -340,6 +342,7 @@ function M.redraw(bufnr)
                   end
                 },
 
+                -- Horizontal rules
                 {
                     handler = function(ln)
                         local trimmed = vim.trim(ln)
@@ -354,7 +357,26 @@ function M.redraw(bufnr)
                     end,
                 },
 
+                -- Block quotes
+                {
+                  handler = function(ln)
+                    local bef, aft = ln:match("^(%s*[>%s]+ )(.*)$")
+                    if not bef then
+                      return {}
+                    end
+                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                      virt_text = {
+                        { bef:sub(x_scroll + 1):gsub(">", "│"), "BlockQuoteSurroundIco" },
+                        { aft:sub(math.max(x_scroll - #bef + 1, 0)), "BlockQuote" },
+                      },
+                      virt_text_pos = "overlay",
+                    })
 
+                    return {}
+                    end,
+                },
+
+                -- <- and -> arrows
                 {
                     handler = function(ln)
                         local start_pos = 1
@@ -362,40 +384,34 @@ function M.redraw(bufnr)
                         local spacing = ""
 
                         while true do
-                            -- Find the next -> and <- after start_pos
                             local s1, e1 = string.find(ln2, spacing .. "-> ", start_pos, true)
                             local s2, e2 = string.find(ln2, spacing .. "<- ", start_pos, true)
-
-                            -- If neither found, break
                             if not s1 and not s2 then break end
 
-                            -- Determine which comes first
                             local s, e, icon
                             if s1 and (not s2 or s1 <= s2) then
                                 s, e = s1, e1
-                                icon = " "  -- icon for ->
+                                icon = " "
                             else
                                 s, e = s2, e2
-                                icon = " "  -- icon for <-
+                                icon = " "
                             end
                             s = s + #spacing
                             spacing = " "
 
-                            -- Skip if the arrow is before the scroll position
                             if x_scroll < s then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
                                     virt_text = { { icon, hl } },
                                     virt_text_pos = "overlay",
                                 })
                             end
-
-                            -- Move start_pos to after this arrow
                             start_pos = e + 1
                         end
                         return {}
                     end,
                 },
 
+                -- Todos
                 {
                     handler = function(ln)
                         for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
@@ -419,6 +435,21 @@ function M.redraw(bufnr)
                     end,
                 },
 
+                -- ==Highlights==
+                {
+                    handler = function(ln)
+                        for s, cont, e in ln:gmatch("()==(.-)==()") do
+                            add_hl(s, s+1, "MarkdownHide")
+                            add_hl(s+1, s+2, "TodoHide")
+                            add_hl(s+2, e-2, "Todo")
+                            add_hl(e-2, e-1, "TodoHide")
+                            add_hl(e-1, e, "MarkdownHide")
+                        end
+                        return {}
+                    end,
+                },
+
+                -- Images and links
                 {
                     handler = function(ln)
                         for _, link in ipairs(parse_md_links(ln)) do
