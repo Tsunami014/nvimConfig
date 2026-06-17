@@ -41,8 +41,8 @@ require("lualine").setup {
       { "diagnostics", sources = { "nvim_diagnostic" } },
       { "filename", file_status = false, path = 1, cond = hide_when_short },
     },
-    lualine_c = { { function() return get_runes(2, 1) end, color = "CursorLineNr" } },
-    lualine_x = { { function() return get_runes(2, 2) end, color = "CursorLineNr" } },
+    lualine_c = { { function() return get_runes(4, 0) end, color = "CursorLineNr" } },
+    lualine_x = { { function() return get_runes(4, 1) end, color = "CursorLineNr" } },
     lualine_y = { "filetype" },
     lualine_z = {
       { "%l:%c", separator={ left = ""} },

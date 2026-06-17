@@ -235,33 +235,32 @@ function M.redraw(bufnr)
                 -- Tables
                 {
                   handler = function(ln)
-                    -- capture leading and trailing whitespace
                     local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(|.*|)(%s*)$") 
                     if not trimmed then
-                      -- line is empty or all whitespace
                       return {}
                     end
-
-                    -- quick reject: must contain at least one pipe to be a table line
                     if not trimmed:find("|", 1, true) then
                       return {}
                     end
 
-                    -- Count pipes and ensure all characters are from the allowed set for a separator
                     local pipe_count = 0
                     local all_sep_chars = true
+                    local has_cont = false
                     for j = 1, #trimmed do
                       local ch = trimmed:sub(j, j)
                       if ch == "|" then
                         pipe_count = pipe_count + 1
+                      end
+                      if not (ch == "|" or ch == " ") then
+                        has_cont = true
                       end
                       if not (ch == "|" or ch == "-" or ch == ":" or ch == " ") then
                         all_sep_chars = false
                       end
                     end
 
-                    -- CASE 2 (separator): line is composed only of |, -, :, and spaces, and has >= 2 pipes
-                    if all_sep_chars and pipe_count >= 2 then
+                    -- Separator: line is composed only of |, -, :, and spaces, and has >= 2 pipes and is not blank (|  |)
+                    if all_sep_chars and has_cont and pipe_count >= 2 then
                       local chars = {}
                       local L = #trimmed
                       for j = math.max(x_scroll-(#lead_ws)+1, 0), L do
@@ -283,15 +282,17 @@ function M.redraw(bufnr)
                         end
                       end
 
+                      local pad = math.max(#lead_ws-x_scroll, 0)
+                      local prefix = pad > 0 and string.rep(" ", pad) or ""
                       vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { table.concat(chars), "Normal" } },
+                        virt_text = { { prefix .. table.concat(chars), "Normal" } },
                         virt_text_pos = "overlay",
                       })
 
                       return {}
                     end
 
-                    -- CASE 1 (content row): is not all separators
+                    -- Content row: is not all separators
                     local new_line = lead_ws .. trimmed:gsub("|", "│")
                     local byte_idx, pad = 1, 0
 
@@ -317,8 +318,8 @@ function M.redraw(bufnr)
 
                         if disp < x_scroll and disp + w > x_scroll then
                           local cut = x_scroll - disp  -- how much of the character was “passed”
-                          pad = w - cut                -- how many spaces needed
-                          byte_idx = i + clen          -- skip whole character
+                          pad = w - cut -- how many spaces needed
+                          byte_idx = i + clen -- skip whole character
                           break
                         end
 
@@ -361,7 +362,7 @@ function M.redraw(bufnr)
                 {
                   handler = function(ln)
                     local bef, aft = ln:match("^(%s*[>%s]+ )(.*)$")
-                    if not bef then
+                    if not bef or not bef:find(">") then
                       return {}
                     end
                     vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {

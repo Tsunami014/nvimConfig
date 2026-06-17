@@ -39,6 +39,10 @@ function Map(mode, lhs, rhs, desc, options)
     vim.keymap.set(mode, lhs, rhs, options)
 end
 
+function RunKeys(keys)
+    return function() vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "m", false) end
+end
+
 function ToMap(key, rhs, desc, icon, leader, mode)
     leader = leader or "<leader>"
     local fullKey = leader .. key
@@ -124,6 +128,7 @@ Register("u", "UI", "", {
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
+    n = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
 })
 
 -- Buffer things
@@ -135,6 +140,7 @@ Register("b", "Buffer", "󰓩", {
     n = { "<cmd>tabnew<cr>", "New Buffer" },
     p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
     c = { "<cmd>BufferClose<cr>", "Close Buffer" },
+    C = { "<cmd>BufferClose!<cr>", "Force close Buffer" },
     o = { "<cmd>BufferCloseAllButCurrent<cr>", "Close Other Buffers" },
     r = { "<cmd>BufferRestore<cr>", "Restore Buffer" },
     R = { "<cmd>e<cr>", "Refresh buffer", "" },
@@ -189,11 +195,12 @@ wk.add({
     ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
 
-    ToMap("R", "<cmd>SearchReplaceSingleBufferOpen<cr>", "Replace in current buffer", "󰗧"),
-    ToMap("F", "<cmd>Telescope live_grep<cr>", "Find grep in all dirs", "󰍉"),
-    ToMap("G", "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢"),
-    ToMap("T", "<cmd>ToggleTerm<cr>", "Toggle terminal", ""),
-    ToMap("W", function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶"),
+    ToMap("N", RunKeys("<leader>bn"), "New buffer", "󰓩"),
+    ToMap("R", RunKeys("<leader>rr"), "Replace in current buffer", "󰗧"),
+    ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
+    ToMap("G", RunKeys("<leader>gg"), "Open LazyGit", "󰊢"),
+    ToMap("T", RunKeys("<leader>tt"), "Toggle terminal", ""),
+    ToMap("W", RunKeys("<leader>uw"), "Toggle wrap", "󰖶"),
 
     ToMap(",", function()
         for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -295,9 +302,7 @@ Register("x", "Todos & Troubles", "", {
 
 Register(".", "Debug", "", {
     ["."] = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
-    [","] = { function()
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>,", true, false, true), "m", false)
-    end, "Dismiss popups", "󱠡" },
+    [","] = { RunKeys("<leader>,"), "Dismiss popups", "󱠡" },
     ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
     [" "] = { vim.lsp.buf.hover, "Show hover info", "󰋗" },
 
@@ -306,14 +311,14 @@ Register(".", "Debug", "", {
     C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
     A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
     F = { function() vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", }) end, "Reenter directory", "" }, -- Fixes problems
-
     L = { "<cmd>DapShowLog<cr>", "Show logs" },
-    S = { "<cmd>Trouble symbols toggle<cr>", "Toggle symbols", "󱔁" },
-    X = { "<cmd>Trouble diagnostics toggle<cr>", "Toggle diagnostics", "" },
     D = { dapui.toggle, "DAP UI Toggle", "" },
     R = { vim.lsp.buf.rename, "Rename", "󰘎" },
     U = { dap.repl.open, "Open REPL", "" },
     E = { dapui.eval, "DAP Eval", "" },
+
+    S = { RunKeys(".cc"), "Toggle symbols", "󱔁" },
+    X = { RunKeys(".xx"), "Toggle diagnostics", "" },
 }, "")
 
 
