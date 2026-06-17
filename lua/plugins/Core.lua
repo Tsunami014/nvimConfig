@@ -5,7 +5,7 @@ return {
   {
     'wakatime/vim-wakatime',
     lazy = false,
-    enabled = p.OPTS.Full
+    cond = p.OPTS.Full
   },
 
   {
@@ -27,7 +27,13 @@ return {
     "nvim-treesitter/nvim-treesitter",
     branch = 'master',
     lazy = false,
-    build = ":TSUpdate"
+    build = ":TSUpdate",
+    config = function()
+      require('nvim-treesitter.configs').setup({
+        ensure_installed = { "lua", "markdown", "markdown_inline", "python", "vim", "regex", 
+            "bash", "yaml", "css", "html", "javascript", "latex", "tsx", "typst", "c", "cpp" },
+      })
+    end,
   },
   {
     'stevearc/resession.nvim',

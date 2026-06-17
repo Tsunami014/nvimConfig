@@ -24,13 +24,15 @@ if not pcall(require, "lazy") then
   vim.cmd.quit()
 end
 
--- My plugins
-require "profile"
-require "markdownHighlight"
-
+require "opts"
+require "profile" -- Must be loaded first
 -- Load other plugins
-require "lazy_setup"
-
--- Run user scripts after plugins have loaded
+require("lazy").setup({
+  spec = {
+    { import = "plugins" },
+  },
+  checker = { enabled = true },
+})
+-- Run user plugins after plugins have loaded
 require "user"
 

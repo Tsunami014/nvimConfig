@@ -9,7 +9,7 @@ return {
     config = function()
       vim.cmd.colorscheme("tokyonight-night")
     end,
-    enabled = not p.OPTS.Notes
+    cond = not p.OPTS.Notes
   },
   {
     "catppuccin/nvim", name = "catppuccin",
@@ -18,7 +18,7 @@ return {
     config = function()
       vim.cmd.colorscheme("catppuccin-frappe")
     end,
-    enabled = p.OPTS.Notes
+    cond = p.OPTS.Notes
   },
 
   -- Highlight similar words
