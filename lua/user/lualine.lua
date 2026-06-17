@@ -1,5 +1,8 @@
+local function hide_when_med()
+  return vim.fn.winwidth(0) > 50
+end
 local function hide_when_short()
-  return vim.fn.winwidth(0) > 80
+  return vim.fn.winwidth(0) > 70
 end
 
 local icons = {
@@ -39,10 +42,10 @@ require("lualine").setup {
     lualine_b = {
       "diff",
       { "diagnostics", sources = { "nvim_diagnostic" } },
-      { "filename", file_status = false, path = 1, cond = hide_when_short },
+      { "filename", file_status = false, path = 1, cond = hide_when_med },
     },
-    lualine_c = { { function() return get_runes(4, 0) end, color = "CursorLineNr" } },
-    lualine_x = { { function() return get_runes(4, 1) end, color = "CursorLineNr" } },
+    lualine_c = { { function() return get_runes(4, 0) end, color = "CursorLineNr", cond = hide_when_short } },
+    lualine_x = { { function() return get_runes(4, 1) end, color = "CursorLineNr", cond = hide_when_short } },
     lualine_y = { "filetype" },
     lualine_z = {
       { "%l:%c", separator={ left = ""} },
@@ -55,7 +58,7 @@ require("lualine").setup {
   },
   inactive_sections = {
     lualine_a = {},
-    lualine_b = { { "filename", file_status = false, path = 0, cond = hide_when_short, } },
+    lualine_b = { { "filename", file_status = false, path = 0, cond = hide_when_med, } },
     lualine_c = {},
     lualine_x = { "filetype" },
     lualine_y = { { "%l:%c", separator = {} }, "%p%%/%L" },

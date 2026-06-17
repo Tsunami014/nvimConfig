@@ -63,8 +63,10 @@ return {
       auto_hide = false,
       tabpages = false,
       clickable = true,
-      hide = {extensions = true, inactive = false},
       icons = {
+        diagnostics = {
+          [vim.diagnostic.severity.ERROR] = {enabled = true, icon = ''},
+        },
         filetype = { enabled = true },
         inactive = { button = false },
         separator = { left = '▍', right = '' },

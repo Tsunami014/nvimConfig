@@ -137,7 +137,10 @@ Register(dbgld, "Debug", "", {
     B = { dap.toggle_breakpoint, "Toggle Breakpoint", "" },
     C = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint", "" },
     A = { vim.lsp.buf.code_action, "Apply code action", "󰌑" },
-    F = { function() vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", }) end, "Reenter directory", "" }, -- Fixes problems
+    F = { function()
+        vim.notify("Reentering dir...")
+        vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
+    end, "Reenter directory", "" }, -- Fixes problems with some things
     L = { "<cmd>DapShowLog<cr>", "Show logs" },
     D = { dapui.toggle, "DAP UI Toggle", "" },
     R = { vim.lsp.buf.rename, "Rename", "󰘎" },
