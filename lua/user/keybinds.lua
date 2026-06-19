@@ -4,6 +4,7 @@ local dapui = require("dapui")
 local dbug = require("user.debug")
 local sesh = require("resession")
 local picker = require("snacks").picker
+local links = require("user.utils.links")
 
 function Register(prefix, group, icon, mappings, leader)
     if leader == nil then
@@ -297,6 +298,7 @@ wk.add({
     ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
     ToMap("U", "<cmd>UndotreeToggle<cr>", "Undo tree", ""),
+    ToMap("I", links.toggle, "Toggle index file", ""),
 
     ToMap("N", RunKeys("<leader>bn"), "New buffer", "󰓩"),
     ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
@@ -382,7 +384,6 @@ Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
 -- Links
-local links = require("user.utils.links")
 Map('n', '<Enter>', links.follow, 'Follow link')
 Map('n', '<S-Enter>', function() links.follow(true) end, 'Follow link in current buf')
 Map({ 'v', 'x' }, '<Enter>', links.visual_follow, 'Follow link')

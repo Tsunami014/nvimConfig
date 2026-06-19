@@ -1,5 +1,7 @@
 local M = {}
 
+local INDEX = "*index.md"
+
 -- Extensions safe to auto-create when a link points at a non-existent file
 local AUTO_CREATE = { md = true, txt = true, tex = true }
 
@@ -11,6 +13,110 @@ local INTERNAL = {
   csv = true, conf = true, ini = true, c = true, cpp = true, h = true,
   hpp = true, sh = true, bash = true,
 }
+
+local state = {
+  win = nil,
+  buf = nil,
+}
+
+local function new_scratch_buf()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  return buf
+end
+
+local function close_window()
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    vim.api.nvim_win_close(state.win, true)
+  end
+  state.win = nil
+  state.buf = nil
+end
+
+local function load_real_file()
+  local path = vim.fn.getcwd() .. "/" .. INDEX
+  vim.cmd("edit " .. vim.fn.fnameescape(path))
+  state.buf = vim.api.nvim_get_current_buf()
+  vim.bo[state.buf].bufhidden = "wipe"
+  vim.bo[state.buf].buflisted = false
+end
+
+local augroup = vim.api.nvim_create_augroup("IndexToggle", { clear = true })
+vim.api.nvim_create_autocmd("WinClosed", {
+  group = augroup,
+  callback = function(args)
+    if state.win and tonumber(args.match) == state.win then
+      state.win = nil
+      state.buf = nil
+    end
+  end,
+})
+
+function M.toggle()
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    close_window()
+    return
+  end
+
+  local width = math.floor(vim.o.columns * 0.6)
+  local height = math.floor(vim.o.lines * 0.6)
+
+  local win = vim.api.nvim_open_win(new_scratch_buf(), true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    style = "minimal",
+    border = "rounded",
+    title = " " .. INDEX .. " ",
+    title_pos = "center",
+  })
+  state.win = win
+
+  local path = vim.fn.getcwd() .. "/" .. INDEX
+  local uv = vim.uv or vim.loop
+  if uv.fs_stat(path) ~= nil then
+    load_real_file()
+  else
+    local buf = new_scratch_buf()
+
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+      "",
+      "  " .. INDEX .. " was not found in:",
+      "    " .. vim.fn.getcwd(),
+      "",
+      "  Create it?",
+      "",
+      "    [y / <CR>] Yes      [n / <Esc>] No",
+      "",
+    })
+    vim.bo[buf].modifiable = false
+    vim.bo[buf].buftype = "nofile"
+    vim.bo[buf].filetype = "index-toggle-prompt"
+
+    vim.api.nvim_win_set_buf(state.win, buf)
+    state.buf = buf
+
+    local function confirm()
+      local fd = uv.fs_open(path, "w", 420) -- 420 = 0644
+      if not fd then
+        vim.notify("index_toggle: failed to create " .. path, vim.log.levels.ERROR)
+        return
+      end
+      uv.fs_close(fd)
+      load_real_file()
+    end
+
+    local opts = { buffer = buf, nowait = true, silent = true }
+    vim.keymap.set("n", "y", confirm, opts)
+    vim.keymap.set("n", "<CR>", confirm, opts)
+    vim.keymap.set("n", "n", close_window, opts)
+    vim.keymap.set("n", "q", close_window, opts)
+    vim.keymap.set("n", "<Esc>", close_window, opts)
+  end
+end
+
 
 local function open_system(target)
   vim.ui.open(target)
@@ -50,6 +156,11 @@ local function open_target(target, replace)
   if ext and not INTERNAL[ext] then
     open_with_system(path)
   else
+    if state.win ~= nil
+      and vim.api.nvim_win_is_valid(state.win)
+      and vim.api.nvim_get_current_win() == state.win then
+        close_window()
+    end
     local aft = replace and " | bd #" or ""
     vim.cmd("edit " .. vim.fn.fnameescape(path) .. aft)
   end
