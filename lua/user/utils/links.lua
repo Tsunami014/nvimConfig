@@ -19,49 +19,11 @@ local state = {
   buf = nil,
 }
 
-local function new_scratch_buf()
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.bo[buf].bufhidden = "wipe"
-  return buf
-end
-
-local function close_window()
-  if state.win and vim.api.nvim_win_is_valid(state.win) then
-    vim.api.nvim_win_close(state.win, true)
-  end
-  state.win = nil
-  state.buf = nil
-end
-
-local function load_real_file()
-  local path = vim.fn.getcwd() .. "/" .. INDEX
-  vim.cmd("edit " .. vim.fn.fnameescape(path))
-  state.buf = vim.api.nvim_get_current_buf()
-  vim.bo[state.buf].bufhidden = "wipe"
-  vim.bo[state.buf].buflisted = false
-end
-
-local augroup = vim.api.nvim_create_augroup("IndexToggle", { clear = true })
-vim.api.nvim_create_autocmd("WinClosed", {
-  group = augroup,
-  callback = function(args)
-    if state.win and tonumber(args.match) == state.win then
-      state.win = nil
-      state.buf = nil
-    end
-  end,
-})
-
-function M.toggle()
-  if state.win and vim.api.nvim_win_is_valid(state.win) then
-    close_window()
-    return
-  end
-
+local function floating_opts()
   local width = math.floor(vim.o.columns * 0.6)
   local height = math.floor(vim.o.lines * 0.6)
 
-  local win = vim.api.nvim_open_win(new_scratch_buf(), true, {
+  return {
     relative = "editor",
     width = width,
     height = height,
@@ -71,50 +33,70 @@ function M.toggle()
     border = "rounded",
     title = " " .. INDEX .. " ",
     title_pos = "center",
-  })
+  }
+end
+
+local function open_real_file(path)
+  local buf = vim.fn.bufadd(path)
+  vim.fn.bufload(buf)
+
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].buflisted = false
+
+  local win = vim.api.nvim_open_win(buf, true, floating_opts())
   state.win = win
+  state.buf = buf
+end
+
+function M.toggle()
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    close_window()
+    return
+  end
 
   local path = vim.fn.getcwd() .. "/" .. INDEX
   local uv = vim.uv or vim.loop
+
   if uv.fs_stat(path) ~= nil then
-    load_real_file()
-  else
-    local buf = new_scratch_buf()
-
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
-      "",
-      "  " .. INDEX .. " was not found in:",
-      "    " .. vim.fn.getcwd(),
-      "",
-      "  Create it?",
-      "",
-      "    [y / <CR>] Yes      [n / <Esc>] No",
-      "",
-    })
-    vim.bo[buf].modifiable = false
-    vim.bo[buf].buftype = "nofile"
-    vim.bo[buf].filetype = "index-toggle-prompt"
-
-    vim.api.nvim_win_set_buf(state.win, buf)
-    state.buf = buf
-
-    local function confirm()
-      local fd = uv.fs_open(path, "w", 420) -- 420 = 0644
-      if not fd then
-        vim.notify("index_toggle: failed to create " .. path, vim.log.levels.ERROR)
-        return
-      end
-      uv.fs_close(fd)
-      load_real_file()
-    end
-
-    local opts = { buffer = buf, nowait = true, silent = true }
-    vim.keymap.set("n", "y", confirm, opts)
-    vim.keymap.set("n", "<CR>", confirm, opts)
-    vim.keymap.set("n", "n", close_window, opts)
-    vim.keymap.set("n", "q", close_window, opts)
-    vim.keymap.set("n", "<Esc>", close_window, opts)
+    open_real_file(path)
+    return
   end
+
+  local buf = new_scratch_buf()
+  local win = vim.api.nvim_open_win(buf, true, floating_opts())
+  state.win = win
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "",
+    "  " .. INDEX .. " was not found in:",
+    "    " .. vim.fn.getcwd(),
+    "",
+    "  Create it?",
+    "",
+    "    [y / <CR>] Yes      [n / <Esc>] No",
+    "",
+  })
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].filetype = "index-toggle-prompt"
+  state.buf = buf
+
+  local function confirm()
+    local fd = uv.fs_open(path, "w", 420)
+    if not fd then
+      vim.notify("index_toggle: failed to create " .. path, vim.log.levels.ERROR)
+      return
+    end
+    uv.fs_close(fd)
+    open_real_file(path)
+  end
+
+  local opts = { buffer = buf, nowait = true, silent = true }
+  vim.keymap.set("n", "y", confirm, opts)
+  vim.keymap.set("n", "<CR>", confirm, opts)
+  vim.keymap.set("n", "n", close_window, opts)
+  vim.keymap.set("n", "q", close_window, opts)
+  vim.keymap.set("n", "<Esc>", close_window, opts)
 end
 
 
@@ -218,10 +200,14 @@ local function scan_links(line)
   return links
 end
 
+function M.normalise(link)
+  local page = link:match("^[^#]+") or link
+  return page:lower():gsub("%s+", "-"):gsub("[^%w%-]", "") .. ".md"
+end
+
 local function link_target(link)
   if link.type == "wiki" then
-    local page = link.target:match("^[^#]+") or link.target
-    return "./" .. page:lower():gsub("%s+", "-"):gsub("[^%w%-]", "") .. ".md"
+    return "./" .. normalise(link.target)
   end
   return link.target
 end

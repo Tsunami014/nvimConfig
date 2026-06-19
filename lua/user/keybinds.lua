@@ -299,6 +299,7 @@ wk.add({
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
     ToMap("U", "<cmd>UndotreeToggle<cr>", "Undo tree", ""),
     ToMap("I", links.toggle, "Toggle index file", ""),
+    ToMap("L", require("user.utils.links-buf").toggle, "Toggle links", ""),
 
     ToMap("N", RunKeys("<leader>bn"), "New buffer", "󰓩"),
     ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
