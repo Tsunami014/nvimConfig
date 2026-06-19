@@ -374,6 +374,10 @@ Map('n', '[x', function() vim.diagnostic.jump({ count = -1, float = true, severi
 Map('n', '[w', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Prev warning')
 Map('n', '[e', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Prev error')
 
+local ji = require("user.utils.jump").interest
+vim.keymap.set("n", "]]", function() ji("next") end, { desc = "Next interesting thing" })
+vim.keymap.set("n", "[[", function() ji("prev") end, { desc = "Previous interesting thing" })
+
 -- Indent stuff
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
