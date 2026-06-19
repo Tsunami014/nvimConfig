@@ -381,6 +381,13 @@ Map("n", "<C-,>", "<<", "De-indent line")
 Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
+-- Links
+local links = require("user.utils.links")
+Map('n', '<Enter>', links.follow, 'Follow link')
+Map('n', '<S-Enter>', function() links.follow(true) end, 'Follow link in current buf')
+Map({ 'v', 'x' }, '<Enter>', links.visual_follow, 'Follow link')
+Map({ 'v', 'x' }, '<S-Enter>', function() links.visual_follow(true) end, 'Follow link in current buf')
+
 -- Misc stuff
 Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
 Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')

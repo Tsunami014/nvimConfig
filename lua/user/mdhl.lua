@@ -138,6 +138,16 @@ local lang_icons = {
     sql = "",
 }
 
+local all_bullets = "xX~!->"
+local bullet_icons = {
+    x = "󰄵 ",
+    X = "󰄵 ",
+    ["~"] = "󰅘 ",
+    ["!"] = "󰳤 ",
+    ["-"] = "󰛲 ",
+    [">"] = "󰧛 ",
+}
+
 -- Redraw overlays only for visible lines (w0..w$). Still scan the whole buffer to find fenced-code blocks
 function M.redraw(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -415,10 +425,8 @@ function M.redraw(bufnr)
                 -- Todos
                 {
                     handler = function(ln)
-                        for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([ xX])%]%s-(.-)()") do
-                            local checked = mark:lower() == "x"
-                            local icon = checked and "󰄵 " or "󰄱 "
-                            local hl = checked and "TodoChecked" or "TodoUnchecked"
+                        for s, bullet, mark, task, e in ln:gmatch("()([%-%*]%s-)%[([" .. all_bullets .. "])%]%s-(.-)()") do
+                            local icon = bullet_icons[mark:lower()] or "󰄱 "
                             local pos = s + #bullet
                             add_hl(pos, pos + 3, "MarkdownHide")
                             if x_scroll == pos + 1 then
@@ -426,9 +434,8 @@ function M.redraw(bufnr)
                             end
                             if x_scroll <= pos + 1 then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, pos, {
-                                    virt_text = { { icon, hl } },
+                                    virt_text = { { icon } },
                                     virt_text_pos = "overlay",
-                                    hl_group = hl,
                                 })
                             end
                         end
@@ -455,7 +462,6 @@ function M.redraw(bufnr)
                     handler = function(ln)
                         for _, link in ipairs(parse_md_links(ln)) do
                             local icon = link.is_image and " " or "󰌷"
-                            local hl = link.is_image and "ImageLink" or "Urllink"
                             if link.start - x_scroll == 0 then
                                 icon = link.is_image and "" or ""
                             elseif link.start - x_scroll < 0 then
@@ -465,15 +471,26 @@ function M.redraw(bufnr)
                                 icon = icon:sub(x_scroll - link.start + 1)
                             end
                             vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
-                                virt_text = { { icon, hl } },
+                                virt_text = { { icon, "markdownLinkText" } },
                                 virt_text_pos = "overlay",
-                                hl_group = hl,
+                                hl_group = "markdownLinkText",
                             })
                             if link.text_s and link.text_e and link.url_s and link.url_e then
                                 add_hl(link.start, link.text_s, "MarkdownHide")
                                 add_hl(link.text_e + 1, link.url_s, "MarkdownHide")
                                 add_hl(link.url_e + 1, link.finish + 1, "MarkdownHide")
                             end
+                        end
+                        return {}
+                    end,
+                },
+                -- [[wiki links]]
+                {
+                    handler = function(ln)
+                        for s, conts, e in ln:gmatch("()%[%[([^[%]]-[^[%]])%]%]()") do
+                            add_hl(s, s + 2, "markdownUrl")
+                            add_hl(s + 2, e - 2, "markdownLinkText")
+                            add_hl(e - 2, e, "markdownUrl")
                         end
                         return {}
                     end,
