@@ -8,6 +8,8 @@ vim.opt.expandtab = true -- Converts tabs to spaces
 vim.opt.exrc = true   -- Allow loading .nvim.lua files in the project root
 vim.opt.secure = true -- Disable unsafe commands in those local files
 vim.opt.inccommand = "split" -- Show a replace preview in a split window
+vim.opt.ignorecase = true -- search case insensitive
+vim.opt.smartcase = true -- search matters if capital letter
 
 -- These get overridden by later indent guessing anyway
 vim.opt.tabstop = 4    -- Sets the width of a tab character

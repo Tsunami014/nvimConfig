@@ -56,12 +56,17 @@ return {
     opts = {},
   },
   {
+    "mbbill/undotree",
+    lazy = true,
+    cmd = "UndotreeToggle"
+  },
+  {
     "romgrk/barbar.nvim",
     requires = "kyazdani42/nvim-web-devicons",  -- for icons
     opts = {
       animation = true,
       auto_hide = false,
-      tabpages = false,
+      tabpages = true,
       clickable = true,
       icons = {
         diagnostics = {
