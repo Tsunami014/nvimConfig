@@ -56,7 +56,6 @@ function M.toggle_terminal()
         create_terminal_buffer()
     end
     ensure_terminal_window()
-
     if state.job then
         vim.cmd.startinsert()
     end

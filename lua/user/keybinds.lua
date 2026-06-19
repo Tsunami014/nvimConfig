@@ -331,7 +331,6 @@ wk.add({
             if start_line > end_line then
                 start_line, end_line = end_line, start_line
             end
-
             require("user.utils.commenter").toggle_comment_lines(start_line - 1, end_line - 1)
         end)
     end, "Toggle comments", "/", nil, "v"),
@@ -344,6 +343,10 @@ Map({ 'n', 'v' }, '\\', '@@', '@@')
 -- Window shenanigans
 Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
 Map('t', '<A-esc>', "<C-\\><C-n>", 'Exit terminal mode')
+Map({ 'n', 'i', 'v', 't' }, '<A-space>', function()
+    dbug.toggle_terminal()
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), 'n', true)
+end, 'Toggle Debug Terminal')
 
 -- Clipboard stuff - "_ black hole, "+ or "* system cbd, "" nvim default cbd
 vim.schedule(function() vim.opt.clipboard = "" end) -- Use Vim's default clipboard
