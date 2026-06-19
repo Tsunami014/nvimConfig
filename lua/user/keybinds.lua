@@ -150,6 +150,7 @@ Map("n", "<F10>", dap.step_over, "DAP Step Over")
 Map("n", "<F11>", dap.step_out, "DAP Step Out")
 Map("n", "<C-CR>", require("dapui").eval, "DAP Hover")
 Register("d", "Debug", "", {
+    d = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
@@ -286,11 +287,11 @@ Register("u", "UI/Formatting", "󰉼", {
         end, "Delete trailing whitespace"
     },
 
-    l = { "<cmd>LoadUI<cr>", "Initialise the UI" },
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
+    [","] = { require("notify").dismiss, "Dismiss notifications", "󱠡" },
 })
 
 -- Commands following <leader>
@@ -303,11 +304,9 @@ wk.add({
 
     ToMap("N", RunKeys("<leader>bn"), "New buffer", "󰓩"),
     ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
-    ToMap("G", RunKeys("<leader>gg"), "Open LazyGit", "󰊢"),
     ToMap("T", RunKeys("<leader>tt"), "Toggle terminal", ""),
     ToMap("D", RunKeys("<leader>dd"), "Toggle DAP UI", ""),
 
-    ToMap("<leader>", dbug.toggle_terminal, "Toggle Debug Terminal", ""),
     ToMap("<Enter>", vim.diagnostic.open_float, "Show diagnostics popup", ""),
     ToMap(",", function()
         for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -317,9 +316,6 @@ wk.add({
             end
         end
     end, "Dismiss popups", "󱠡"),
-    ToMap(".", function()
-        require("notify").dismiss()
-    end, "Dismiss notifications", "󱠡"),
 
     ToMap("/", function()
         local line = vim.api.nvim_win_get_cursor(0)[1] - 1
