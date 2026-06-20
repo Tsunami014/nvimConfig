@@ -42,12 +42,22 @@ return {{
       },
     })
 
+    require('mini.cmdline').setup()
+    require('mini.completion').setup({
+      window = {
+        info = { border = 'rounded' },
+        signature = { border = 'single' }
+      }
+    })
+
     require('mini.diff').setup()
     require('user.statusline') -- Sets up mini.statusline
 
+    require('mini.ai').setup()
     require('mini.comment').setup()
     require('mini.cursorword').setup()
     require('mini.trailspace').setup()
+    require('mini.indentscope').setup()
 
     require('mini.pick').setup()
     require('mini.extra').setup()

@@ -388,20 +388,19 @@ Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 
 -- Completion stuff
-local cmp = require("cmp")
+local function t(keys)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+end
+
 Map({ 'i', 's' }, '<Tab>', function()
-    if cmp.visible() then
-        cmp.select_next_item()
-    else
-        local col = vim.fn.col(".")
-        local spaces = vim.o.tabstop - ((col - 1) % vim.o.tabstop)
-        vim.api.nvim_feedkeys(string.rep(" ", spaces), "n", false)
+    if vim.fn.pumvisible() == 1 then
+        return t("<C-n>")
     end
+    return vim.api.nvim_feedkeys(string.rep(" ", vim.o.tabstop), "i", false)
 end, 'Next completion')
 Map({ 'i', 's' }, '<S-Tab>', function()
-    if cmp.visible() then
-        cmp.select_prev_item()
+    if vim.fn.pumvisible() == 1 then
+        return t("<C-p>")
     end
+    return t("<C-h>")
 end, 'Previous completion')
-
-Map({ 'i', 's' }, '<C-Space>', function() cmp.complete() end, 'Open completions')

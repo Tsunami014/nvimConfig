@@ -66,9 +66,6 @@ end
 dap.adapters.python  = pyadapter
 dap.adapters.debugpy = pyadapter
 
--- Some language server options
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
 vim.lsp.config('pyright', {
   settings = {
     python = {
@@ -93,7 +90,6 @@ vim.lsp.config('ruff', {
 })
 
 vim.lsp.config('clangd', {
-  capabilities = capabilities,
   cmd = {
     "clangd",
     "-j=8",
