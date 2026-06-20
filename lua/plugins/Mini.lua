@@ -8,6 +8,8 @@ end
 return {{
   "nvim-mini/mini.nvim", version = '*',
   config = function()
+    require('mini.icons').setup()
+
     local starter = require('mini.starter')
     starter.setup({
       header = [[
@@ -39,6 +41,10 @@ return {{
         starter.gen_hook.padding(0, 2),
       },
     })
+
+    require('mini.diff').setup()
+    require('user.statusline') -- Sets up mini.statusline
+
     require('mini.pick').setup()
     require('mini.extra').setup()
   end

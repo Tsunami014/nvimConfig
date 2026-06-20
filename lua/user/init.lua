@@ -1,4 +1,3 @@
-require "user.lualine"
 require "user.keybinds"
 require "user.daplsp"
 require "user.seshs"

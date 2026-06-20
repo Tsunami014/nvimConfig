@@ -44,8 +44,8 @@ vim.api.nvim_create_user_command(
         vim.cmd("Neotree focus")
         vim.cmd("wincmd w")
         pcall(function() vim.cmd("edit!") end)
-        vim.defer_fn(function() vim.cmd("Neotree close") end, 20)
-      end, 20)
+        vim.defer_fn(function() vim.cmd("Neotree close") end, 30)
+      end, 30)
     else
       vim.cmd("Neotree show")
       vim.cmd("wincmd w")
