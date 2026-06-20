@@ -48,19 +48,6 @@ function RunKeys(keys)
     return function() vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "m", false) end
 end
 
-function ToMap(key, rhs, desc, icon, leader, mode)
-    leader = leader or "<leader>"
-    local fullKey = leader .. key
-    local map = {
-        fullKey,
-        rhs,
-        desc = desc,
-    }
-    if icon then map.icon = icon end
-    if mode then map.mode = mode end
-    return map
-end
-
 
 Register("f", "Find", "󰍉", {
     g = { "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs" },
@@ -297,43 +284,43 @@ Register("u", "UI/Formatting", "󰉼", {
 })
 
 -- Commands following <leader>
-wk.add({
-    ToMap("E", "<cmd>Neotree toggle<cr>", "Toggle NeoTree", ""),
-    ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
-    ToMap("U", "<cmd>UndotreeToggle<cr>", "Undo tree", ""),
-    ToMap("I", links.toggle, "Toggle index file", ""),
-    ToMap("L", require("user.utils.links-buf").toggle, "Toggle links panel", ""),
+Register("<leader>", "", "󱁐", {
+    E = { "<cmd>Neotree toggle<cr>", "Toggle NeoTree", "" },
+    O = { "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈" },
+    U = { "<cmd>UndotreeToggle<cr>", "Undo tree", "" },
+    I = { links.toggle, "Toggle index file", "" },
+    L = { require("user.utils.links-buf").toggle, "Toggle links panel", "" },
 
-    ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
-    ToMap("T", RunKeys("<leader>tt"), "Toggle terminal", ""),
-    ToMap("D", RunKeys("<leader>dd"), "Toggle DAP UI", ""),
+    F = { RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉" },
+    T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
+    D = { RunKeys("<leader>dd"), "Toggle DAP UI", "" },
 
-    ToMap("<Enter>", vim.diagnostic.open_float, "Show diagnostics popup", ""),
-    ToMap(",", function()
+    ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
+    [","] = { function()
         for _, win in ipairs(vim.api.nvim_list_wins()) do
             local config = vim.api.nvim_win_get_config(win)
             if config.relative ~= "" then
                 vim.api.nvim_win_close(win, false)
             end
         end
-    end, "Dismiss popups", "󱠡"),
+    end, "Dismiss popups", "󱠡" },
 
-    ToMap("/", function()
+    ["/"] = { function()
         local line = vim.api.nvim_win_get_cursor(0)[1]
         MiniComment.toggle_lines(line, line)
-    end, "Toggle comment", "/"),
-    ToMap("/", function()
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
-        vim.schedule(function()
-            local start_line = vim.fn.line("'<")
-            local end_line = vim.fn.line("'>")
-            if start_line > end_line then
-                start_line, end_line = end_line, start_line
-            end
-            MiniComment.toggle_lines(start_line, end_line)
-        end)
-    end, "Toggle comments", "/", nil, "v"),
-})
+    end, "Toggle comment", "/" },
+}, "")
+Map('v', "<leader>/", function()
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+    vim.schedule(function()
+        local start_line = vim.fn.line("'<")
+        local end_line = vim.fn.line("'>")
+        if start_line > end_line then
+            start_line, end_line = end_line, start_line
+        end
+        MiniComment.toggle_lines(start_line, end_line)
+    end)
+end, "Toggle comments")
 
 
 -- A more convenient @@
