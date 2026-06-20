@@ -22,21 +22,6 @@ return {
     cond = p.OPTS.Notes
   },
 
-  -- Highlight similar words
-  {
-    "RRethy/vim-illuminate",
-    event = { "BufReadPost", "BufNewFile" },
-    config = function()
-      -- You can customize delay, filetypes, etc. if desired
-      require("illuminate").configure({
-        delay = 200,
-        large_file_cutoff = 2000,
-        large_file_overrides = {
-          providers = { "lsp" },
-        },
-      })
-    end,
-  },
   -- Highlight colours (e.g. #2F34E2)
   {
     "brenoprata10/nvim-highlight-colors",

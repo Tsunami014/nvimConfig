@@ -46,6 +46,7 @@ return {{
     require('user.statusline') -- Sets up mini.statusline
 
     require('mini.comment').setup()
+    require('mini.cursorword').setup()
 
     require('mini.pick').setup()
     require('mini.extra').setup()
