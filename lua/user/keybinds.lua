@@ -260,32 +260,34 @@ Register("u", "UI/Formatting", "󰉼", {
     n = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
     ["'"] = { "<Plug>(doge-generate)", "Generate Docstring", "󰏫" }, -- <cmd>DogeGenerate<cr>
     s = { function()
-            vim.ui.input({ prompt = "Set indent spacing & re-indent file: " }, function(input)
-                local spaces = tonumber(input)
-                if spaces then
-                    vim.opt_local.shiftwidth = spaces
-                    vim.opt_local.tabstop = spaces
-                    vim.opt_local.softtabstop = spaces
+        vim.opt.spell = not vim.opt.spell
+        vim.notify((vim.opt.spell and "Checking" or "Not checking") .. " spelling")
+    end, "Toggle spell check", "" },
+    S = { function()
+        vim.ui.input({ prompt = "Set indent spacing & re-indent file: " }, function(input)
+            local spaces = tonumber(input)
+            if spaces then
+                vim.opt_local.shiftwidth = spaces
+                vim.opt_local.tabstop = spaces
+                vim.opt_local.softtabstop = spaces
 
-                    local current_win = vim.api.nvim_get_current_win()
-                    local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
-                    vim.cmd("silent! retab!")
-                    vim.cmd("normal! gg=G")
-                    pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
-                    vim.notify("File indented to " .. spaces .. " spaces.")
-                elseif input ~= nil then
-                    vim.notify("Invalid input", vim.log.levels.WARN)
-                end
-            end)
-        end, "Set indentation"
-    },
+                local current_win = vim.api.nvim_get_current_win()
+                local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
+                vim.cmd("silent! retab!")
+                vim.cmd("normal! gg=G")
+                pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
+                vim.notify("File indented to " .. spaces .. " spaces.")
+            elseif input ~= nil then
+                vim.notify("Invalid input", vim.log.levels.WARN)
+            end
+        end)
+    end, "Set indentation" },
     W = { function()
-            local view = vim.fn.winsaveview()
-            vim.cmd([[%s/\s\+$//e]])
-            vim.fn.winrestview(view)
-            vim.notify("Trailing whitespace cleared")
-        end, "Delete trailing whitespace"
-    },
+        local view = vim.fn.winsaveview()
+        vim.cmd([[%s/\s\+$//e]])
+        vim.fn.winrestview(view)
+        vim.notify("Trailing whitespace cleared")
+    end, "Delete trailing whitespace" },
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
@@ -300,9 +302,8 @@ wk.add({
     ToMap("O", "<cmd>Neotree reveal<cr>", "Reveal File in NeoTree", "󰈈"),
     ToMap("U", "<cmd>UndotreeToggle<cr>", "Undo tree", ""),
     ToMap("I", links.toggle, "Toggle index file", ""),
-    ToMap("L", require("user.utils.links-buf").toggle, "Toggle links", ""),
+    ToMap("L", require("user.utils.links-buf").toggle, "Toggle links panel", ""),
 
-    ToMap("N", RunKeys("<leader>bn"), "New buffer", "󰓩"),
     ToMap("F", RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉"),
     ToMap("T", RunKeys("<leader>tt"), "Toggle terminal", ""),
     ToMap("D", RunKeys("<leader>dd"), "Toggle DAP UI", ""),

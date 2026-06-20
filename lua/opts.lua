@@ -10,6 +10,7 @@ vim.opt.secure = true -- Disable unsafe commands in those local files
 vim.opt.inccommand = "split" -- Show a replace preview in a split window
 vim.opt.ignorecase = true -- search case insensitive
 vim.opt.smartcase = true -- search matters if capital letter
+vim.opt.spelllang = 'en_au' -- Set spell check language
 
 -- These get overridden by later indent guessing anyway
 vim.opt.tabstop = 4    -- Sets the width of a tab character

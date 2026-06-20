@@ -12,7 +12,6 @@ local ignored_trees = {
 
 local function should_save_session()
   local cwd = vim.fs.normalize(vim.fn.getcwd())
-
   for _, v in ipairs(ignored_exact) do
     if v == cwd then
       return false
@@ -45,7 +44,8 @@ vim.api.nvim_create_user_command(
         vim.cmd("Neotree focus")
         vim.cmd("wincmd w")
         pcall(function() vim.cmd("edit!") end)
-      end, 50)
+        vim.defer_fn(function() vim.cmd("Neotree close") end, 10)
+      end, 10)
     else
       vim.cmd("Neotree show")
       vim.cmd("wincmd w")
