@@ -77,10 +77,13 @@ end
 vim.api.nvim_create_autocmd('ColorScheme', { callback = refresh_devinfo_fills })
 refresh_devinfo_fills()
 
-local function sep(from, to)
+local function hlcat(from, to)
   local name = 'MiniStatuslineSep_' .. to .. '_' .. from
   vim.api.nvim_set_hl(0, name, { fg = get_hl(to).bg, bg = get_hl(from).bg })
-  return '%#' .. name .. '#'
+  return name
+end
+local function sep(from, to)
+  return '%#' .. hlcat(from, to) .. '#'
 end
 
 statlne.setup({ content = {
@@ -103,7 +106,7 @@ statlne.setup({ content = {
 
     local fileinfo = (function()
       local ft = vim.bo.filetype
-      if ft == '' then return '' end
+      if ft == '' then return '[Blank]' end
       local ico = require('mini.icons').get('filetype', ft)
       if statlne.is_truncated(60) then return ico end
       local txt = ico .. ' ' .. ft
@@ -115,15 +118,15 @@ statlne.setup({ content = {
       sep('Normal', mode_hl) .. bubble.left,
       { hl = mode_hl, strings = { mode } },
       sep('MiniStatuslineDevinfo', mode_hl) .. bubble.right,
-      { hl = 'MiniStatuslineDevinfo', strings = devinf },
+      { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = devinf },
       '%<', -- Truncate
-      { hl = 'MiniStatuslineDevinfo', strings = { filename } },
+      { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = { filename } },
       sep('StatusLine', 'MiniStatuslineDevinfo') .. slant.left,
       '%=', -- Pad
       { hl = 'CursorLineNr', strings = { get_runes(6) } },
       '%=', -- Pad
       sep('StatusLine', 'MiniStatuslineFileinfo') .. slant.right,
-      { hl = 'MiniStatuslineFileinfo', strings = { fileinfo } },
+      { hl = hlcat('MiniStatuslineFileinfo', mode_hl), strings = { fileinfo } },
       sep('MiniStatuslineFileinfo', mode_hl) .. triang.left,
       { hl = mode_hl, strings = { '%l:%c ' .. arrow.right .. ' %p%%/%L' } },
       sep('Normal', mode_hl) .. triang.right,
