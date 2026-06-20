@@ -285,10 +285,8 @@ Register("u", "UI/Formatting", "󰉼", {
         end)
     end, "Set indentation" },
     W = { function()
-        local view = vim.fn.winsaveview()
-        vim.cmd([[%s/\s\+$//e]])
-        vim.fn.winrestview(view)
-        vim.notify("Trailing whitespace cleared")
+        MiniTrailspace.trim()
+        MiniTrailspace.trim_last_lines()
     end, "Delete trailing whitespace" },
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
