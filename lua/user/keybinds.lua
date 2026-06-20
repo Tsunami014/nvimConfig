@@ -321,19 +321,18 @@ wk.add({
     end, "Dismiss popups", "󱠡"),
 
     ToMap("/", function()
-        local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-        require("user.utils.commenter").toggle_comment_lines(line, line)
+        local line = vim.api.nvim_win_get_cursor(0)[1]
+        MiniComment.toggle_lines(line, line)
     end, "Toggle comment", "/"),
     ToMap("/", function()
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
         vim.schedule(function()
             local start_line = vim.fn.line("'<")
             local end_line = vim.fn.line("'>")
-
             if start_line > end_line then
                 start_line, end_line = end_line, start_line
             end
-            require("user.utils.commenter").toggle_comment_lines(start_line - 1, end_line - 1)
+            MiniComment.toggle_lines(start_line, end_line)
         end)
     end, "Toggle comments", "/", nil, "v"),
 })

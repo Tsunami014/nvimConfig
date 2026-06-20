@@ -45,6 +45,8 @@ return {{
     require('mini.diff').setup()
     require('user.statusline') -- Sets up mini.statusline
 
+    require('mini.comment').setup()
+
     require('mini.pick').setup()
     require('mini.extra').setup()
   end
