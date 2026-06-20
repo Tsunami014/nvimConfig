@@ -3,7 +3,6 @@ local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
 local sesh = require("resession")
-local picker = require("snacks").picker
 local links = require("user.utils.links")
 
 function Register(prefix, group, icon, mappings, leader)
@@ -182,18 +181,21 @@ Register("h", "Hunks", "", {
     b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
 }, "<leader>g")
 
+local function lsp(scope)
+  return function() require('mini.extra').pickers.lsp({ scope = scope }) end
+end
 Register("c", "Symbols", "󱔁", {
     c = { "<cmd>Trouble symbols toggle<cr>", "Symbols" },
     C = { "<cmd>Trouble lsp toggle<cr>", "LSP references/definitions/..." },
     R = { vim.lsp.buf.rename, "Rename symbol", "󰘎" },
 
-    D = { function() picker.lsp_declarations({ jump = { reuse_win = false } }) end, "Goto this declaration" },
-    d = { function() picker.lsp_definitions({ jump = { reuse_win = false } }) end, "Goto this definition" },
-    i = { function() picker.lsp_implementations({ jump = { reuse_win = false } }) end, "Goto this implementations" },
-    t = { function() picker.lsp_type_definitions({ jump = { reuse_win = false } }) end, "Goto this type def" },
-    r = { function() picker.lsp_references({ jump = { reuse_win = false } }) end, "Goto this references" },
-    s = { picker.lsp_symbols, "Goto symbol" },
-    S = { picker.lsp_workspace_symbols, "Goto workspace symbol" },
+    D = { lsp('declaration'), "Goto this declaration" },
+    d = { lsp('definition'), "Goto this definition" },
+    i = { lsp('implementation'), "Goto this implementations" },
+    t = { lsp('type_definition'), "Goto this type def" },
+    r = { lsp('references'), "Goto this references" },
+    s = { lsp('document_symbol'), "Goto symbol" },
+    S = { lsp('workspace_symbol'), "Goto workspace symbol" },
 })
 
 Register("e", "Environment", "", {

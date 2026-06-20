@@ -1,13 +1,3 @@
--- On enter, ensure the lcd is in the right spot
-vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    local arg = vim.fn.argv(0)
-    if vim.fn.isdirectory(arg) == 1 then
-      vim.cmd("lcd " .. arg)
-    end
-  end,
-})
-
 -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 if not (vim.env.LAZY or (vim.uv or vim.loop).fs_stat(lazypath)) then
@@ -24,8 +14,8 @@ if not pcall(require, "lazy") then
   vim.cmd.quit()
 end
 
-require "opts"
 require "profile" -- Must be loaded first
+require "opts"
 -- Load other plugins
 require("lazy").setup({
   spec = {
