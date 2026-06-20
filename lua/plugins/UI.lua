@@ -33,14 +33,6 @@ return {
     },
   },
 
-  -- Search in a nice bubble
-  {
-    'VonHeikemen/searchbox.nvim',
-    requires = {
-      {'MunifTanjim/nui.nvim'}
-    }
-  },
-
   -- Notifications in nice bubbles
   {
     "rcarriga/nvim-notify",
@@ -58,14 +50,9 @@ return {
       --"rcarriga/nvim-notify",
     },
     opts = {
-      -- Get rid of messages (interferes with ! commands)
+      popupmenu = { enabled = false },
       messages = { enabled = false },
-      lsp = {
-        override = {
-          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-          ["vim.lsp.util.stylize_markdown"] = true,
-        },
-      },
+      cmdline = { enabled = false },
       routes = {
         {
           filter = {
@@ -79,14 +66,36 @@ return {
           view = "mini",
         },
       },
-      presets = {
-        bottom_search = true,
-        command_palette = true,
-      },
-      popupmenu = {
-        enabled = false,
-      },
     },
+  },
+
+  {
+    "gelguy/wilder.nvim",
+    event = "CmdlineEnter",
+    config = function()
+      local wilder = require("wilder")
+
+      wilder.setup({ modes = { ":", "/", "?" } })
+      wilder.set_option("use_python_remote_plugin", 0) -- this kills the _wilder_python_* errors
+
+      wilder.set_option("pipeline", {
+        wilder.branch(
+          wilder.cmdline_pipeline({ fuzzy = 0 }),
+          wilder.vim_search_pipeline()
+        ),
+      })
+
+      wilder.set_option("renderer", wilder.popupmenu_renderer(
+        wilder.popupmenu_palette_theme({
+          border = "rounded",
+          highlights = { border = "Normal" },
+          prompt_position = "top",  -- input line at the top of the box, list below it
+          max_height = "30%",
+          min_height = 0,
+          reverse = 0,
+        })
+      ))
+    end,
   },
 
   -- Rainbow brackets

@@ -378,14 +378,10 @@ Map({ 'v', 'x' }, '<Enter>', links.visual_follow, 'Follow link')
 Map({ 'v', 'x' }, '<S-Enter>', function() links.visual_follow(true) end, 'Follow link in current buf')
 
 -- Misc stuff
-Map('n', '/', '<cmd>SearchBoxIncSearch<CR>', 'Search')
-Map({ 'v', 'x' }, '/', '<cmd>SearchBoxIncSearch visual_mode=true<CR>', 'Search')
-
 Map({ 'n', 'v' }, '<C-Space>', '<cmd>WhichKey<CR>', 'Activate which-key')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
-
 
 -- Completion stuff
 local function t(keys)

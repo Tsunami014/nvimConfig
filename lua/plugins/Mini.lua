@@ -42,11 +42,9 @@ return {{
       },
     })
 
-    require('mini.cmdline').setup()
     require('mini.completion').setup({
       window = {
         info = { border = 'rounded' },
-        signature = { border = 'single' }
       }
     })
 
