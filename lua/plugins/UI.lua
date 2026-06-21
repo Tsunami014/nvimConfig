@@ -80,19 +80,18 @@ return {
 
       wilder.set_option("pipeline", {
         wilder.branch(
-          wilder.cmdline_pipeline({ fuzzy = 0 }),
-          wilder.vim_search_pipeline()
+          wilder.cmdline_pipeline(),
+          wilder.vim_search_pipeline({ fuzzy = 1 })
         ),
       })
-
-      wilder.set_option("renderer", wilder.popupmenu_renderer(
-        wilder.popupmenu_palette_theme({
-          border = "rounded",
-          highlights = { border = "Normal" },
-          prompt_position = "top",  -- input line at the top of the box, list below it
-          max_height = "30%",
-          min_height = 0,
-          reverse = 0,
+      wilder.set_option('renderer', wilder.popupmenu_renderer(
+        wilder.popupmenu_border_theme({
+          highlighter = wilder.basic_highlighter(),
+          highlights = {
+            accent = wilder.make_hl('WilderAccent', 'Pmenu', {{a = 1}, {a = 1}, {foreground = '#f4468f'}}),
+            border = 'Normal', -- highlight to use for the border
+          },
+          border = 'rounded',
         })
       ))
     end,

@@ -103,7 +103,7 @@ statlne.setup({ content = {
     local diff = statlne.is_truncated(80) and '' or (vim.b.minidiff_summary_string or '')
     local diagn = statlne.section_diagnostics({ trunc_width = 70, icon = '', signs = diag_signs })
     local devinf
-    local arr = '%#MiniStatuslineDevinfo#' .. arrow.left .. ' '
+    local arr = sep('MiniStatuslineDevinfo', mode_hl) .. arrow.left .. ' '
     if diff ~= '' and diagn ~= '' then
       devinf = { diff, arrow.left, diagn, arr }
     elseif diff ~= '' or diagn ~= '' then
@@ -123,12 +123,12 @@ statlne.setup({ content = {
       { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = { filename } },
       sep('StatusLine', 'MiniStatuslineDevinfo') .. slant.left,
       '%=', -- Pad
-      { hl = 'CursorLineNr', strings = { get_runes(statlne.is_truncated(40) and 1 or (statlne.is_truncated(50) and 3 or 6)) } },
+      { hl = 'Title', strings = { get_runes(statlne.is_truncated(40) and 1 or (statlne.is_truncated(50) and 3 or 6)) } },
       '%=', -- Pad
       sep('StatusLine', 'MiniStatuslineFileinfo') .. slant.right,
       { hl = hlcat('MiniStatuslineFileinfo', mode_hl), strings = { fileinfo() } },
       sep('MiniStatuslineFileinfo', mode_hl) .. triang.left,
-      { hl = mode_hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or (arrow.right .. ' %p%%/%L')) } },
+      { hl = mode_hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or (' ' .. arrow.right .. ' %p%%/%L')) } },
       sep('Normal', mode_hl) .. triang.right,
     })
   end,
