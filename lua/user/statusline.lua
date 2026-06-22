@@ -77,14 +77,15 @@ end
 vim.api.nvim_create_autocmd('ColorScheme', { callback = refresh_devinfo_fills })
 refresh_devinfo_fills()
 
-local function fileinfo()
+local function fileinfo(arr)
   local ft = vim.bo.filetype
   if ft == '' then return '[Blank]' end
   local ico = require('mini.icons').get('filetype', ft)
   if statlne.is_truncated(60) then return ico end
   local txt = ico .. ' ' .. ft
-  if statlne.is_truncated(100) or vim.bo.buftype ~= '' then return txt end
-  return file_size() .. ' ' .. arrow.right .. ' ' .. txt
+  if statlne.is_truncated(95) or vim.bo.buftype ~= '' then return txt end
+  local a = arr and (' ' .. arrow.right .. ' ') or ' '
+  return file_size() .. a .. txt
 end
 
 local function hlcat(from, to)
@@ -98,12 +99,12 @@ end
 
 statlne.setup({ content = {
   active = function()
-    local mode, mode_hl = statlne.section_mode({ trunc_width = 75 })
+    local mode, mode_hl = statlne.section_mode({ trunc_width = 70 })
 
-    local diff = statlne.is_truncated(80) and '' or (vim.b.minidiff_summary_string or '')
-    local diagn = statlne.section_diagnostics({ trunc_width = 70, icon = '', signs = diag_signs })
+    local diff = statlne.is_truncated(65) and '' or (vim.b.minidiff_summary_string or '')
+    local diagn = statlne.section_diagnostics({ trunc_width = 60, icon = '', signs = diag_signs })
     local devinf
-    local arr = sep('MiniStatuslineDevinfo', mode_hl) .. arrow.left .. ' '
+    local arr = sep('MiniStatuslineDevinfo', mode_hl) .. arrow.left
     if diff ~= '' and diagn ~= '' then
       devinf = { diff, arrow.left, diagn, arr }
     elseif diff ~= '' or diagn ~= '' then
@@ -123,10 +124,10 @@ statlne.setup({ content = {
       { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = { filename } },
       sep('StatusLine', 'MiniStatuslineDevinfo') .. slant.left,
       '%=', -- Pad
-      { hl = 'Title', strings = { get_runes(statlne.is_truncated(40) and 1 or (statlne.is_truncated(50) and 3 or 6)) } },
+      { hl = hlcat('Title', mode_hl), strings = { get_runes(statlne.is_truncated(50) and 2 or (statlne.is_truncated(65) and 3 or (statlne.is_truncated(80) and 4 or 6))) } },
       '%=', -- Pad
       sep('StatusLine', 'MiniStatuslineFileinfo') .. slant.right,
-      { hl = hlcat('MiniStatuslineFileinfo', mode_hl), strings = { fileinfo() } },
+      { hl = hlcat('MiniStatuslineFileinfo', mode_hl), strings = { fileinfo(true) } },
       sep('MiniStatuslineFileinfo', mode_hl) .. triang.left,
       { hl = mode_hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or (' ' .. arrow.right .. ' %p%%/%L')) } },
       sep('Normal', mode_hl) .. triang.right,
@@ -139,7 +140,7 @@ statlne.setup({ content = {
     return statlne.combine_groups({
       { hl = hl, strings = { filename } },
       '%=', -- Pad
-      { hl = hl, strings = { fileinfo() } },
+      { hl = hl, strings = { fileinfo(false) } },
       { hl = hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or ' %p%%/%L') } },
     })
   end,
