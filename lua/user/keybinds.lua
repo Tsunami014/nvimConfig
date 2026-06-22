@@ -378,7 +378,7 @@ Map({ 'v', 'x' }, '<S-Enter>', function() links.visual_follow(true) end, 'Follow
 
 -- Misc stuff
 Map({ 'n', 'v' }, '<C-Space>', '<cmd>WhichKey<CR>', 'Activate which-key')
-Map('n', '<Esc>', '<C-l>', 'Clear annoying things off the screen')
+Map('n', '<Esc>', '<C-l><cmd>noh<cr>', 'Clear annoying things off the screen')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
