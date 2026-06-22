@@ -33,42 +33,6 @@ return {
     },
   },
 
-  -- Notifications in nice bubbles
-  {
-    "rcarriga/nvim-notify",
-    opts = {
-      minimum_width = 30,
-    }
-  },
-
-  -- Very Nice UI (experimental)
-  {
-    "folke/noice.nvim",
-    event = "VeryLazy",
-    dependencies = {
-      "MunifTanjim/nui.nvim",
-      --"rcarriga/nvim-notify",
-    },
-    opts = {
-      popupmenu = { enabled = false },
-      messages = { enabled = false },
-      cmdline = { enabled = false },
-      routes = {
-        {
-          filter = {
-            event = "msg_show",
-            any = {
-              { find = "%d+L, %d+B" },
-              { find = "; after #%d+" },
-              { find = "; before #%d+" },
-            },
-          },
-          view = "mini",
-        },
-      },
-    },
-  },
-
   {
     "gelguy/wilder.nvim",
     event = "CmdlineEnter",

@@ -51,7 +51,7 @@ end
 
 Register("f", "Find", "󰍉", {
     g = { "<cmd>Telescope live_grep<cr>", "Find Grep in all dirs" },
-    n = { "<cmd>Telescope notify<cr>", "Find notifications" },
+    n = { require("user.utils.notifs").pick, "Find notifications" },
     m = { "<cmd>messages<cr>", "Find messages" },
     f = { "<cmd>Telescope find_files<cr>", "Find Files in all dirs" },
     b = { "<cmd>Telescope buffers<cr>", "Find Buffers" },
@@ -280,7 +280,6 @@ Register("u", "UI/Formatting", "󰉼", {
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
-    [","] = { require("notify").dismiss, "Dismiss notifications", "󱠡" },
 })
 
 -- Commands following <leader>

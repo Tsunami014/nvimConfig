@@ -9,6 +9,8 @@ return {{
   "nvim-mini/mini.nvim", version = '*',
   config = function()
     require('mini.icons').setup()
+    require("mini.pick").setup()
+    require('mini.extra').setup()
 
     local starter = require('mini.starter')
     starter.setup({
@@ -48,6 +50,8 @@ return {{
       }
     })
 
+    require('user.utils.notifs').setup() -- Sets up mini.notify
+
     require('mini.diff').setup()
     require('user.statusline') -- Sets up mini.statusline
 
@@ -56,8 +60,5 @@ return {{
     require('mini.cursorword').setup()
     require('mini.trailspace').setup()
     require('mini.indentscope').setup()
-
-    require('mini.pick').setup()
-    require('mini.extra').setup()
   end
 }}

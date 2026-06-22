@@ -90,7 +90,8 @@ end
 
 local function hlcat(from, to)
   local name = 'MiniStatuslineSep_' .. to .. '_' .. from
-  vim.api.nvim_set_hl(0, name, { fg = get_hl(to).bg, bg = get_hl(from).bg })
+  local frhl = get_hl(from)
+  vim.api.nvim_set_hl(0, name, { fg = get_hl(to).bg, bg = frhl.bg, bold = frhl.bold })
   return name
 end
 local function sep(from, to)
