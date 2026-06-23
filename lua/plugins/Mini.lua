@@ -28,6 +28,7 @@ return {{
 
       evaluate_single = true,
       items = {
+        { name = "New", action = function() starter.close() vim.cmd('startinsert') end, section = "Open" },
         { name = "Files", action = ":lua Snacks.dashboard.pick('files')", section = "Open" },
         { name = "Folders", action = ":lua require('user.utils.folder-pick').pick_folder_in()", section = "Open" },
         { name = "Config", action = ":lua require('user.utils.folder-pick').pick_folder_in('" .. confDir:gsub("'", "\\'") .. "')", section = "Open" },
