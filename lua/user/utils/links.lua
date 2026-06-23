@@ -207,7 +207,7 @@ end
 
 local function link_target(link)
   if link.type == "wiki" then
-    return "./" .. normalise(link.target)
+    return "./" .. M.normalise(link.target)
   end
   return link.target
 end

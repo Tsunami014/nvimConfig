@@ -57,6 +57,7 @@ return {{
     require('user.statusline') -- Sets up mini.statusline
 
     require('mini.ai').setup()
+    require('mini.jump').setup()
     require('mini.comment').setup()
     require('mini.cursorword').setup()
     require('mini.trailspace').setup()

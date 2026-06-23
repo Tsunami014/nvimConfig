@@ -13,11 +13,12 @@ return {
     cond = not p.OPTS.Notes
   },
   {
-    "catppuccin/nvim", name = "catppuccin",
+    "neanias/everforest-nvim",
+    version = false,
     lazy = false,
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme("catppuccin-frappe")
+      vim.cmd.colorscheme("everforest")
     end,
     cond = p.OPTS.Notes
   },
