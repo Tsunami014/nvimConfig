@@ -3,15 +3,19 @@ local statlne = require('mini.statusline')
 local slant = { left = '', right = '' }
 local bubble = { left = '', right = '' }
 local triang = { left = '', right = '' }
-local arrow = { left = '', right = '' }
-local clipping = { left = '', right = '' }
+local arrow = { left = '', right = '' }
+local line = { left = '╱', right = '╲' }
 
 local diag_signs = {
-  ERROR = '%#MiniStatuslineDevinfoError#',
-  WARN = '%#MiniStatuslineDevinfoWarn#',
-  INFO = '%#MiniStatuslineDevinfoInfo#',
-  HINT = '%#MiniStatuslineDevinfoHint#󰌶',
+  ERROR = '%#MiniStatuslineDevinfoError#!',
+  WARN = '%#MiniStatuslineDevinfoWarn#*',
+  INFO = '%#MiniStatuslineDevinfoInfo#@',
+  HINT = '%#MiniStatuslineDevinfoHint#~',
 }
+
+local function ns(tbl)
+  return '%#' .. tbl.hl .. '#' .. table.concat(tbl.strings, " ")
+end
 
 local icons = {
   -- Runes
@@ -46,17 +50,6 @@ function get_runes(count, xtra)
 end
 
 
-local function file_size()
-  local size = math.max(vim.fn.line2byte(vim.fn.line('$') + 1) - 1, 0)
-  if size < 1024 then
-    return size .. 'B'
-  elseif size < 1048576 then
-    return string.format('%.2fKiB', size / 1024)
-  else
-    return string.format('%.2fMiB', size / 1048576)
-  end
-end
-
 local function get_hl(name)
   return vim.api.nvim_get_hl(0, { name = name, link = false })
 end
@@ -74,75 +67,187 @@ local function refresh_devinfo_fills()
   fill('MiniStatuslineDevinfoChange', 'MiniDiffSignChange')
   fill('MiniStatuslineDevinfoDelete', 'MiniDiffSignDelete')
 end
-vim.api.nvim_create_autocmd('ColorScheme', { callback = refresh_devinfo_fills })
 refresh_devinfo_fills()
 
-local function fileinfo(arr)
+local function fileinfo1()
+  if statlne.is_truncated(95) or vim.bo.buftype ~= '' then return '' end
+  local a = arr and (' ' .. arrow.right .. ' ') or ' '
+  local size = math.max(vim.fn.line2byte(vim.fn.line('$') + 1) - 1, 0)
+  if size < 1024 then
+    return size .. 'B'
+  elseif size < 1048576 then
+    return string.format('%.2fKiB', size / 1024)
+  else
+    return string.format('%.2fMiB', size / 1048576)
+  end
+end
+local function fileinfo2()
   local ft = vim.bo.filetype
   if ft == '' then return '[Blank]' end
   local ico = require('mini.icons').get('filetype', ft)
   if statlne.is_truncated(60) then return ico end
-  local txt = ico .. ' ' .. ft
-  if statlne.is_truncated(95) or vim.bo.buftype ~= '' then return txt end
-  local a = arr and (' ' .. arrow.right .. ' ') or ' '
-  return file_size() .. a .. txt
+  return ico .. ' ' .. ft
 end
 
-local function hlcat(from, to)
-  local name = 'MiniStatuslineSep_' .. to .. '_' .. from
-  local frhl = get_hl(from)
-  vim.api.nvim_set_hl(0, name, { fg = get_hl(to).bg, bg = frhl.bg, bold = frhl.bold })
-  return name
-end
-local function sep(from, to)
-  return '%#' .. hlcat(from, to) .. '#'
-end
 
+local modes = {
+  "MiniStatuslineModeReplace",
+  "MiniStatuslineModeCommand",
+  "MiniStatuslineModeInsert",
+  "MiniStatuslineModeOther",
+  "MiniStatuslineModeNormal",
+  "MiniStatuslineModeVisual",
+}
+local mode_idx = {}
+for i, mode in ipairs(modes) do
+  if mode ~= "" then
+    mode_idx[mode] = i
+  end
+end
+local colours = {
+  "RainbowDelimiterRed",
+  "RainbowDelimiterYellow",
+  "RainbowDelimiterGreen",
+  "RainbowDelimiterCyan",
+  "RainbowDelimiterBlue",
+  "RainbowDelimiterViolet",
+}
+
+local decors = {
+  { mid = true,
+    next = true,
+    inv = true,
+    bold = true,
+  },
+  { mid = true,
+    bgmid = true,
+  },
+  { space = true,
+    bold = true,
+  },
+  { mid = true,
+    bgmid = true,
+    next = true,
+    colsep = true,
+  },
+  { next = true,
+    nxtinv = true,
+  },
+  { next = true,
+    nxtinv = true,
+    inv = true,
+    bold = true,
+  },
+}
+local last = ""
+local function redecorate(mode_hl)
+    local idx = mode_idx[mode_hl]
+    local function rotate()
+      local out = colours[idx]
+      idx = (idx % #colours) + 1
+      return out
+    end
+    local function gen(name, fg, bg, dec, skipinv, isnxt)
+      local info
+      if ((not skipinv) and dec.inv) or (isnxt and dec.nxtinv) then
+        info = { fg = bg, bg = fg }
+      else
+        info = { fg = fg, bg = bg }
+      end
+      info.bold = dec.bold
+      vim.api.nvim_set_hl(0, name, info)
+    end
+    local norm = get_hl('Normal').bg
+    local reg = get_hl('MiniStatuslineFileinfo').bg
+    for index, dec in ipairs(decors) do
+      local name = 'Status_' .. index
+      local col = get_hl(rotate()).fg
+      if dec.mid then
+        local cur
+        if dec.bgmid then cur = reg
+        else cur = col
+        end
+        gen(name .. '_Mid', cur, norm, dec, true)
+      end
+      if dec.next then
+        local nxti = (index % #colours) + 1
+        local cur
+        if not (dec.inv or dec.colsep) then cur = reg
+        else cur = col
+        end
+        local nxt
+        if not decors[nxti].inv then nxt = reg
+        else nxt = get_hl(colours[idx]).fg
+        end
+        gen(name .. '_' .. nxti, cur, nxt, dec, true, true)
+      end
+      if dec.space then
+        gen(name, col, norm, dec)
+      else
+        gen(name, col, reg, dec)
+      end
+    end
+end
+vim.api.nvim_create_autocmd('ColorScheme', { callback = function() refresh_devinfo_fills(); last = "" end })
+
+local inactivehl = 'InactiveStatusLine'
+local frhl = get_hl('Normal')
+vim.api.nvim_set_hl(0, inactivehl, { fg = get_hl('MiniStatuslineDevinfo').bg, bg = frhl.bg, bold = frhl.bold })
 statlne.setup({ content = {
   active = function()
     local mode, mode_hl = statlne.section_mode({ trunc_width = 70 })
+    if mode_hl ~= last then
+      redecorate(mode_hl)
+      last = mode_hl
+    end
 
     local diff = statlne.is_truncated(65) and '' or (vim.b.minidiff_summary_string or '')
     local diagn = statlne.section_diagnostics({ trunc_width = 60, icon = '', signs = diag_signs })
     local devinf
-    local arr = sep('MiniStatuslineDevinfo', mode_hl) .. arrow.left
+    local arr = true
     if diff ~= '' and diagn ~= '' then
-      devinf = { diff, arrow.left, diagn, arr }
+      devinf = diff, arr.left, diagn
     elseif diff ~= '' or diagn ~= '' then
-      devinf = { (diff ~= '' and diff or diagn), arr }
+      devinf = (diff ~= '' and diff or diagn)
     else
-      devinf = {''}
+      devinf = ''
+      arr = false
     end
 
     local filename = statlne.is_truncated(90) and '%f' or '%F'
+    local fi1 = fileinfo1()
 
     return statlne.combine_groups({
-      sep('Normal', mode_hl) .. bubble.left,
-      { hl = mode_hl, strings = { mode } },
-      sep('MiniStatuslineDevinfo', mode_hl) .. bubble.right,
-      { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = devinf },
+      ns({ hl = 'Status_1_Mid', strings = { bubble.left } }),
+      { hl = 'Status_1', strings = { mode } },
+      ns({ hl = 'Status_1_2', strings = { triang.right } }),
+      { hl = 'Status_2', strings = { devinf } },
+      { hl = 'Status_2', strings = { arr and arrow.right or '' } },
       '%<', -- Truncate
-      { hl = hlcat('MiniStatuslineDevinfo', mode_hl), strings = { filename } },
-      sep('StatusLine', 'MiniStatuslineDevinfo') .. slant.left,
+      { hl = 'Status_2', strings = { filename } },
+      ns({ hl = 'Status_2_Mid', strings = { slant.left } }),
       '%=', -- Pad
-      { hl = hlcat('Title', mode_hl), strings = { get_runes(statlne.is_truncated(50) and 2 or (statlne.is_truncated(65) and 3 or (statlne.is_truncated(80) and 4 or 6))) } },
+      { hl = 'Status_3', strings = { get_runes(statlne.is_truncated(50) and 2 or (statlne.is_truncated(65) and 3 or (statlne.is_truncated(80) and 4 or 6))) } },
       '%=', -- Pad
-      sep('StatusLine', 'MiniStatuslineFileinfo') .. slant.right,
-      { hl = hlcat('MiniStatuslineFileinfo', mode_hl), strings = { fileinfo(true) } },
-      sep('MiniStatuslineFileinfo', mode_hl) .. triang.left,
-      { hl = mode_hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or (' ' .. arrow.right .. ' %p%%/%L')) } },
-      sep('Normal', mode_hl) .. triang.right,
+      ns({ hl = 'Status_4_Mid', strings = { slant.right } }),
+      { hl = 'Status_4', strings = { fi1 } },
+      ns({ hl = 'Status_4_5', strings = { fi1 == "" and line.left or arrow.left } }),
+      { hl = 'Status_5', strings = { fileinfo2() } },
+      ns({ hl = 'Status_5_6', strings = { triang.left } }),
+      { hl = 'Status_6', strings = { '%l:%c' } },
+      ns({ hl = 'Status_6_1', strings = { triang.left } }),
+      { hl = 'Status_1', strings = { statlne.is_truncated(30) and '' or '%p%%/%L' } },
+      ns({ hl = 'Status_1_Mid', strings = { bubble.right } }),
     })
   end,
   inactive = function()
-    local hl = hlcat('Normal', 'MiniStatuslineDevinfo')
     local filename = statlne.is_truncated(90) and '%f' or '%F'
 
     return statlne.combine_groups({
-      { hl = hl, strings = { filename } },
+      { hl = inactivehl, strings = { filename } },
       '%=', -- Pad
-      { hl = hl, strings = { fileinfo(false) } },
-      { hl = hl, strings = { '%l:%c' .. (statlne.is_truncated(30) and '' or ' %p%%/%L') } },
+      { hl = inactivehl, strings = { fileinfo1(), fileinfo2() } },
+      { hl = inactivehl, strings = { '%l:%c' .. (statlne.is_truncated(20) and '' or ' %p%%/%L') } },
     })
   end,
 }})
