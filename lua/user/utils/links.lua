@@ -99,25 +99,66 @@ function M.toggle()
   vim.keymap.set("n", "<Esc>", close_window, opts)
 end
 
+local function slugify(text)
+  return text:lower():gsub("%s+", "-"):gsub("[^%w%-]", "")
+end
+
+local function split_anchor(target)
+  local hash = target:find("#", 1, true)
+  if not hash then
+    return target, nil
+  end
+  return target:sub(1, hash - 1), target:sub(hash + 1)
+end
+
+-- Jumps the cursor in the current buffer to the ATX heading matching
+local function goto_heading(anchor, anchor_is_slug)
+  local query = anchor_is_slug and slugify(anchor) or anchor:lower()
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  for lnum, line in ipairs(lines) do
+    local text = line:match("^#+%s+(.-)%s*$")
+    if text then
+      local candidate = anchor_is_slug and slugify(text) or text:lower()
+      if candidate == query then
+        vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+        vim.cmd("normal! zz")
+        return true
+      end
+    end
+  end
+
+  vim.notify("Heading not found: #" .. anchor, vim.log.levels.WARN)
+  return false
+end
 
 local function open_system(target)
   vim.ui.open(target)
   vim.notify("Opening externally: " .. target, vim.log.levels.INFO)
 end
 
-local function open_target(target, replace)
-  if not target or target == "" then
+local function open_target(info, replace)
+  if not info or (not info.file and not info.anchor) then
     return vim.notify("Link has no target", vim.log.levels.WARN)
   end
-  if target:match("^%a[%w+.-]*://") ~= nil then
-    return open_system(target)
+
+  if info.file and info.file:match("^%a[%w+.-]*://") ~= nil then
+    local url = info.file
+    if info.anchor and info.anchor ~= "" then
+      url = url .. "#" .. info.anchor
+    end
+    return open_system(url)
   end
 
-  local file = target:match("^([^#]*)") or target
-  if file == "" then
-    return vim.notify("Link has no file target", vim.log.levels.WARN)
+  if not info.file or info.file == "" then
+    if not info.anchor or info.anchor == "" then
+      return vim.notify("Link has no file target", vim.log.levels.WARN)
+    end
+    goto_heading(info.anchor, info.anchor_is_slug)
+    return
   end
-  local path = vim.fs.normalize(vim.fn.fnamemodify(file, ":p"))
+
+  local path = vim.fs.normalize(vim.fn.fnamemodify(info.file, ":p"))
   if vim.fn.isdirectory(path) == 1 then
     return vim.notify("Link is a directory", vim.log.levels.WARN)
   end
@@ -136,15 +177,20 @@ local function open_target(target, replace)
   end
 
   if ext and not INTERNAL[ext] then
-    open_with_system(path)
-  else
-    if state.win ~= nil
-      and vim.api.nvim_win_is_valid(state.win)
-      and vim.api.nvim_get_current_win() == state.win then
-        close_window()
-    end
-    local aft = replace and " | bd #" or ""
-    vim.cmd("edit " .. vim.fn.fnameescape(path) .. aft)
+    open_system(path)
+    return
+  end
+
+  if state.win ~= nil
+    and vim.api.nvim_win_is_valid(state.win)
+    and vim.api.nvim_get_current_win() == state.win then
+      close_window()
+  end
+  local aft = replace and " | bd #" or ""
+  vim.cmd("edit " .. vim.fn.fnameescape(path) .. aft)
+
+  if info.anchor and info.anchor ~= "" then
+    goto_heading(info.anchor, info.anchor_is_slug)
   end
 end
 
@@ -202,14 +248,26 @@ end
 
 function M.normalise(link)
   local page = link:match("^[^#]+") or link
-  return page:lower():gsub("%s+", "-"):gsub("[^%w%-]", "") .. ".md"
+  return slugify(page) .. ".md"
 end
 
+-- Converts a scanned link into the descriptor consumed by `open_target`.
 local function link_target(link)
+  local file, anchor = split_anchor(link.target)
+
   if link.type == "wiki" then
-    return "./" .. M.normalise(link.target)
+    return {
+      file = file ~= "" and ("./" .. M.normalise(file)) or nil,
+      anchor = anchor,
+      anchor_is_slug = false,
+    }
   end
-  return link.target
+
+  return {
+    file = file ~= "" and file or nil,
+    anchor = anchor,
+    anchor_is_slug = true,
+  }
 end
 
 function M.follow(replace)
