@@ -15,17 +15,8 @@ function Register(prefix, group, icon, mappings, leader)
 
     for k, v in pairs(mappings) do
         local key = leader .. prefix .. k
-        local rhs = v[1]
-        local desc = v[2]
-        local ico = icon
-        if v[3] ~= nil then
-            ico = v[3]
-        end
-        local mode = "n"
-        if v.mode ~= nil then
-            mode = v.mode
-        end
-        table.insert(result, { key, rhs, desc = desc, icon = ico, mode = mode })
+        table.insert(result, { key, v[1], desc = v[2], icon = v[3] or icon,
+            mode = v.mode or "n", expr = v.expr })
     end
 
     wk.add({ mode = 'n', result })
@@ -151,22 +142,22 @@ Register("d", "Debug", "", {
     R = { "<cmd>LspRestart<cr>", "Restart lsp", "" },
 })
 
-local gs = require("gitsigns")
-Register("g", "Git", "󰊢", {
-    g = { "<cmd>LazyGit<cr>", "Open LazyGit" },
+Register("g", "Git", "", {
+    g = { "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢" },
 
-    s = { gs.stage_buffer, "Stage Buffer" },
-    R = { gs.reset_buffer, "Reset Buffer" },
-    b = { function() gs.blame() end, "Blame Buffer" },
-    d = { gs.diffthis, "Diff This" },
-    D = { function() gs.diffthis("~") end, "Diff This ~" },
+    u = { function()
+        MiniDiff.config.view.style = MiniDiff.config.view.style == 'sign' and 'number' or 'sign'
+        vim.cmd('edit')
+    end, "Toggle diff style" },
+    p = { MiniDiff.toggle_overlay, "Toggle diff preview" },
+
+    s = { function() return MiniDiff.operator('apply') .. "gh" end, "Stage Hunk", expr = true },
+    S = { function() return "mggg" .. MiniDiff.operator('apply') .. "ghG`g" end, "Stage Buffer", expr = true },
+    r = { function() return MiniDiff.operator('reset') .. "gh" end, "Reset Hunk", expr = true },
+    R = { function() return "gg" .. MiniDiff.operator('reset') .. "ghG<C-o>mg" end, "Reset Buffer", expr = true },
+    y = { function() return MiniDiff.operator('yank') .. "gh" end, "Yank Hunk", expr = true },
+    Y = { function() return "gg" .. MiniDiff.operator('yank') .. "ghG<C-o>" end, "Yank Buffer", expr = true },
 })
-Register("h", "Hunks", "", {
-    s = { ":Gitsigns stage_hunk<CR>", "Stage Hunk" },
-    r = { ":Gitsigns reset_hunk<CR>", "Reset Hunk" },
-    p = { gs.preview_hunk_inline, "Preview Hunk Inline" },
-    b = { function() gs.blame_line({ full = true }) end, "Blame Line" }
-}, "<leader>g")
 
 local function lsp(scope)
   return function() require('mini.extra').pickers.lsp({ scope = scope }) end
@@ -344,15 +335,11 @@ Map({ 'n', 'v', 'x' }, '-', '"_d', 'Delete to black hole')
 
 -- Next & prev things
 Map('n', ']t', require("todo-comments").jump_next, 'Next Todo Comment')
-Map('n', ']h', function() gs.nav_hunk("next") end, 'Next Hunk')
-Map('n', ']H', function() gs.nav_hunk("last") end, 'Last Hunk')
 Map('n', ']x', function() vim.diagnostic.jump({ count = 1, float = true, severity = nil }) end, 'Next diagnostic')
 Map('n', ']w', function() vim.diagnostic.jump({ count = 1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Next warning')
 Map('n', ']e', function() vim.diagnostic.jump({ count = 1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Next error')
 
 Map('n', '[t', require("todo-comments").jump_prev, 'Previous Todo Comment')
-Map('n', '[h', function() gs.nav_hunk("prev") end, 'Prev Hunk')
-Map('n', '[H', function() gs.nav_hunk("first") end, 'First Hunk')
 Map('n', '[x', function() vim.diagnostic.jump({ count = -1, float = true, severity = nil }) end, 'Prev diagnostic')
 Map('n', '[w', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Prev warning')
 Map('n', '[e', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Prev error')

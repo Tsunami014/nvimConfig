@@ -41,32 +41,6 @@ return {
     },
   },
 
-  -- git signs highlights text that has changed since the list
-  -- git commit, and also lets you interactively stage & unstage
-  -- hunks in a commit.
-  {
-    "lewis6991/gitsigns.nvim",
-    event = "VeryLazy",
-    opts = {
-      signs = {
-        add = { text = "▎" },
-        change = { text = "▎" },
-        delete = { text = "▁" },
-        topdelete = { text = "▔" },
-        changedelete = { text = "~" },
-        untracked = { text = "┆" },
-      },
-      signs_staged = {
-        add = { text = "▎" },
-        change = { text = "▎" },
-        delete = { text = "▁" },
-        topdelete = { text = "▔" },
-        changedelete = { text = "~" },
-        untracked = { text = "┆" },
-      },
-    },
-  },
-
   -- find and replace
   {
     "roobert/search-replace.nvim",
