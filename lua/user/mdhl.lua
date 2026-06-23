@@ -98,21 +98,29 @@ local function parse_md_links(line)
 end
 
 vim.schedule(function()
-    vim.api.nvim_set_hl(0, "ItalicBold", { italic = true, bold = true })
-    local hlRaw = vim.api.nvim_get_hl(0, { name = "Constant" })
-    vim.api.nvim_set_hl(0, "InlineQuote", { fg = hlRaw.fg, italic = true })
+    local function gethl(name)
+        return vim.api.nvim_get_hl(0, { name = name })
+    end
+    local function sethl(name, inf)
+        vim.api.nvim_set_hl(0, name, inf)
+    end
+    sethl("ItalicBold", { italic = true, bold = true })
+    sethl("InlineQuote", { fg = gethl("Constant").fg, italic = true })
 
     local bqBg = "#383838"
-    local hlTx1 = vim.api.nvim_get_hl(0, { name = "Macro" })
-    vim.api.nvim_set_hl(0, "BlockQuoteSurround", { fg = hlTx1.fg, bg = bqBg, bold = true })
-    local hlTx2 = vim.api.nvim_get_hl(0, { name = "Special" })
-    vim.api.nvim_set_hl(0, "BlockQuoteSurroundIco", { fg = hlTx2.fg, bg = bqBg, bold = true })
-    vim.api.nvim_set_hl(0, "BlockQuote", { bg = bqBg })
+    sethl("BlockQuoteSurround", { fg = gethl("Macro").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteSurroundIco", { fg = gethl("Special").fg, bg = bqBg, bold = true })
+    sethl("BlockQuote", { bg = bqBg })
+    sethl("BlockQuoteNote", { fg = gethl("DiagnosticInfo").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteTip", { fg = gethl("DiagnosticHint").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteImport", { fg = gethl("Statement").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteWarn", { fg = gethl("DiagnosticWarn").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteCaution", { fg = gethl("DiagnosticError").fg, bg = bqBg, bold = true })
 
-    local normal_hl = vim.api.nvim_get_hl(0, { name = "Normal" })
-    vim.api.nvim_set_hl(0, "MarkdownHide", { fg = normal_hl.bg, bg = normal_hl.bg })
-    local todo_hl = vim.api.nvim_get_hl(0, { name = "Todo" })
-    vim.api.nvim_set_hl(0, "TodoHide", { fg = todo_hl.bg, bg = todo_hl.bg })
+    local normal_hl = gethl("Normal")
+    sethl("MarkdownHide", { fg = normal_hl.bg, bg = normal_hl.bg })
+    local todo_hl = gethl("Todo")
+    sethl("TodoHide", { fg = todo_hl.bg, bg = todo_hl.bg })
 end)
 
 local lang_icons = {
@@ -138,7 +146,7 @@ local lang_icons = {
     sql = "",
 }
 
-local all_bullets = "xX~!->"
+local all_bullets = "xX~!-> "
 local bullet_icons = {
     x = "󰄵 ",
     X = "󰄵 ",
@@ -371,14 +379,52 @@ function M.redraw(bufnr)
                 -- Block quotes
                 {
                   handler = function(ln)
-                    local bef, aft = ln:match("^(%s*[>%s]+ )(.*)$")
+                    local bef, txt = ln:match("^(%s*[>%s]+ )(.*)$")
                     if not bef or not bef:find(">") then
                       return {}
                     end
+                    local txtsub = math.max(x_scroll - #bef + 1, 0)
+                    local ico
+                    local hl
+                    local innr = txt:match("^%[!(.-)%]%s*$")
+                    if innr then
+                        local low = innr:lower()
+                        if low == "note" then
+                            ico = ""
+                            txt = "Note "
+                            hl = "BlockQuoteNote"
+                        elseif low == "tip" then
+                            ico = ""
+                            txt = "Tip "
+                            hl = "BlockQuoteTip"
+                        elseif low == "important" or low == "import" then
+                            ico = "󰅽"
+                            txt = "Important "
+                            hl = "BlockQuoteImport"
+                        elseif low == "warning" or low == "warn" then
+                            ico = ""
+                            txt = "Warning "
+                            hl = "BlockQuoteWarn"
+                        elseif low == "caution" then
+                            ico = ""
+                            txt = "Caution "
+                            hl = "BlockQuoteCaution"
+                        end
+                        if ico then
+                            if txtsub > 2 then ico = "  "
+                            elseif txtsub == 2 then ico = " " .. ico
+                            else ico = ico .. " "
+                            end
+                        else
+                            ico = ""
+                        end
+                    else
+                        ico = ""
+                    end
                     vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
                       virt_text = {
-                        { bef:sub(x_scroll + 1):gsub(">", "│"), "BlockQuoteSurroundIco" },
-                        { aft:sub(math.max(x_scroll - #bef + 1, 0)), "BlockQuote" },
+                        { bef:sub(x_scroll + 1):gsub(">", "│"), hl or "BlockQuoteSurroundIco" },
+                        { (ico .. txt):sub(txtsub), hl or "BlockQuote" },
                       },
                       virt_text_pos = "overlay",
                     })
