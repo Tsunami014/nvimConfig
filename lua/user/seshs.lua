@@ -53,41 +53,34 @@ local function should_save_session(cwd)
   return true
 end
 
--- Walks every tabpage and records, per tab, which real file buffers were
--- open, which one had focus, and cursor positions. Tabs with no real file
--- buffers (e.g. a tab only showing a sidebar) are skipped entirely.
 local function collect_state()
-  local tabs = {}
-  local current_tabpage = vim.api.nvim_get_current_tabpage()
-  local active_index = nil
-
-  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    local files = {}
-    local cursors = {}
-    local current = nil
-    local active_win = vim.api.nvim_tabpage_get_win(tab)
-
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if is_real_file_buf(buf) then
-        local name = vim.api.nvim_buf_get_name(buf)
-        table.insert(files, name)
+  local files = {}
+  local cursors = {}
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if is_real_file_buf(buf) then
+      local name = vim.api.nvim_buf_get_name(buf)
+      table.insert(files, name)
+      local win = vim.fn.bufwinid(buf)
+      if win ~= -1 then
         cursors[name] = vim.api.nvim_win_get_cursor(win)[1]
-        if win == active_win then
-          current = name
-        end
-      end
-    end
-
-    if #files > 0 then
-      table.insert(tabs, { files = files, current = current, cursors = cursors })
-      if tab == current_tabpage then
-        active_index = #tabs
       end
     end
   end
 
-  return { tabs = tabs, active_tab = active_index }
+  local current_tabpage = vim.api.nvim_get_current_tabpage()
+  local tabs = {}
+  local active_tab = nil
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    local buf = vim.api.nvim_win_get_buf(vim.api.nvim_tabpage_get_win(tab))
+    if is_real_file_buf(buf) then
+      table.insert(tabs, vim.api.nvim_buf_get_name(buf))
+      if tab == current_tabpage then
+        active_tab = #tabs
+      end
+    end
+  end
+
+  return { files = files, cursors = cursors, tabs = tabs, active_tab = active_tab }
 end
 
 function M.save()
@@ -96,7 +89,7 @@ function M.save()
     return
   end
   local state = collect_state()
-  if #state.tabs == 0 then
+  if #state.files == 0 then
     return
   end
   vim.fn.mkdir(session_dir, "p")
@@ -106,8 +99,6 @@ function M.save()
   end
 end
 
--- Deletes every "real file" buffer (their windows survive, showing an
--- empty buffer in their place).
 local function clean_bufs()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if is_real_file_buf(buf) then
@@ -116,21 +107,12 @@ local function clean_bufs()
   end
 end
 
--- Closes windows showing anything that ISN'T a real file buffer: neo-tree,
--- undotree, netrw directory listings, terminals, quickfix, help, etc.
--- Crucially this closes the *window* (not just the buffer), and does so
--- without eventignore active, so the owning plugin's own autocmds (e.g.
--- WinClosed) fire and it can clean up its internal state correctly.
--- Without that, plugins like neo-tree/undotree can end up thinking a
--- stale window is still valid, which is what caused them to take over the
--- whole screen instead of splitting properly the next time they were
--- opened.
+-- Closes the window (not just the buffer) so plugins like neo-tree/undotree
+-- get their normal close autocmds and don't end up in a stale state.
 local function close_non_file_windows()
   if #vim.api.nvim_list_wins() == 1 then
     local only_buf = vim.api.nvim_win_get_buf(vim.api.nvim_list_wins()[1])
     if not is_real_file_buf(only_buf) then
-      -- Make sure there's a normal landing window before we close the
-      -- only window in the tab.
       vim.cmd("new")
     end
   end
@@ -151,9 +133,8 @@ local function close_non_file_windows()
   end
 end
 
--- After their windows are gone, wipe out the now-hidden non-file buffers
--- themselves (old neo-tree/undotree/terminal/directory buffers) so they
--- don't pile up across directory switches.
+-- Wipes the now-hidden non-file buffers themselves (old neo-tree/undotree/
+-- terminal/directory buffers) so they don't pile up across switches.
 local function wipe_non_file_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(buf) and not is_real_file_buf(buf) then
@@ -165,9 +146,8 @@ local function wipe_non_file_buffers()
   end
 end
 
--- Removes leftover unnamed/empty scratch buffers that aren't shown in any
--- window (e.g. the placeholder buffer a window had before we :edit'd a
--- real file into it).
+-- Removes leftover unnamed scratch buffers left behind once a real file
+-- has been :edit'd into their window.
 local function wipe_stray_scratch_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if
@@ -182,34 +162,6 @@ local function wipe_stray_scratch_buffers()
   end
 end
 
--- Loads one saved tab's files into the current tab/window.
-local function open_tab_contents(t)
-  for _, f in ipairs(t.files or {}) do
-    if vim.fn.filereadable(f) == 1 then
-      pcall(vim.cmd, "badd " .. vim.fn.fnameescape(f))
-    end
-  end
-
-  local target = t.current
-  if not target or vim.fn.filereadable(target) ~= 1 then
-    target = nil
-    for _, f in ipairs(t.files or {}) do
-      if vim.fn.filereadable(f) == 1 then
-        target = f
-        break
-      end
-    end
-  end
-
-  if target then
-    pcall(vim.cmd, "edit " .. vim.fn.fnameescape(target))
-    local line = t.cursors and t.cursors[target]
-    if line and line > 0 then
-      pcall(vim.api.nvim_win_set_cursor, 0, { math.min(line, vim.api.nvim_buf_line_count(0)), 0 })
-    end
-  end
-end
-
 function M.load(dir)
   local path = session_path(dir)
   if vim.fn.filereadable(path) == 0 then
@@ -220,28 +172,14 @@ function M.load(dir)
     return false
   end
   local ok2, state = pcall(vim.json.decode, table.concat(lines, "\n"))
-  if not ok2 or type(state) ~= "table" then
-    return false
-  end
-
-  -- Backward compatibility with sessions saved before tab support.
-  if not state.tabs and state.files then
-    state = { tabs = { { files = state.files, current = state.current, cursors = state.cursors } } }
-  end
-
-  if not state.tabs or #state.tabs == 0 then
+  if not ok2 or type(state) ~= "table" or type(state.files) ~= "table" then
     return false
   end
 
   local any_readable = false
-  for _, t in ipairs(state.tabs) do
-    for _, f in ipairs(t.files or {}) do
-      if vim.fn.filereadable(f) == 1 then
-        any_readable = true
-        break
-      end
-    end
-    if any_readable then
+  for _, f in ipairs(state.files) do
+    if vim.fn.filereadable(f) == 1 then
+      any_readable = true
       break
     end
   end
@@ -249,14 +187,44 @@ function M.load(dir)
     return false
   end
 
-  for i, t in ipairs(state.tabs) do
+  for _, f in ipairs(state.files) do
+    if vim.fn.filereadable(f) == 1 then
+      pcall(vim.cmd, "badd " .. vim.fn.fnameescape(f))
+    end
+  end
+
+  -- One tab per saved "current" file; falls back to state.current (pre-tab
+  -- sessions) or the first readable file if nothing else is usable.
+  local tab_targets = {}
+  for _, f in ipairs(state.tabs or {}) do
+    if type(f) == "string" and vim.fn.filereadable(f) == 1 then
+      table.insert(tab_targets, f)
+    end
+  end
+  if #tab_targets == 0 and type(state.current) == "string" and vim.fn.filereadable(state.current) == 1 then
+    table.insert(tab_targets, state.current)
+  end
+  if #tab_targets == 0 then
+    for _, f in ipairs(state.files) do
+      if vim.fn.filereadable(f) == 1 then
+        table.insert(tab_targets, f)
+        break
+      end
+    end
+  end
+
+  for i, f in ipairs(tab_targets) do
     if i > 1 then
       vim.cmd("tabnew")
     end
-    open_tab_contents(t)
+    pcall(vim.cmd, "edit " .. vim.fn.fnameescape(f))
+    local line = state.cursors and state.cursors[f]
+    if line and line > 0 then
+      pcall(vim.api.nvim_win_set_cursor, 0, { math.min(line, vim.api.nvim_buf_line_count(0)), 0 })
+    end
   end
 
-  if state.active_tab and state.active_tab >= 1 and state.active_tab <= #state.tabs then
+  if state.active_tab and state.active_tab >= 1 and state.active_tab <= #tab_targets then
     pcall(vim.cmd, "tabnext " .. state.active_tab)
   end
 
@@ -274,7 +242,9 @@ vim.api.nvim_create_user_command(
     loading = true
     if ncwd ~= "" then
       vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
-      pcall(vim.cmd, "tabonly!")
+      if #vim.api.nvim_list_tabpages() > 1 then
+        pcall(vim.cmd, "tabonly!")
+      end
       close_non_file_windows()
       clean_bufs()
       wipe_non_file_buffers()
@@ -302,9 +272,13 @@ vim.api.nvim_create_autocmd({
   "BufNewFile",
   "BufDelete",
   "BufWipeout",
+  "BufEnter",
 }, {
-  callback = function()
+  callback = function(args)
     if pend or loading then
+      return
+    end
+    if args.event == "BufEnter" and not is_real_file_buf(args.buf) then
       return
     end
     pend = true
