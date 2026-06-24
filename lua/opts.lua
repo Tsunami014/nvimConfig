@@ -13,6 +13,10 @@ vim.opt.smartcase = true -- search matters if capital letter
 vim.opt.spell = require("profile").OPTS.Notes -- Spell check by default only if notes
 vim.opt.spelllang = 'en_au' -- Set spell check language
 
+-- Disable the builtin file explorer that has seen better days
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- These get overridden by later indent guessing anyway
 vim.opt.tabstop = 4    -- Sets the width of a tab character
 vim.opt.shiftwidth = 4 -- Sets the width used for auto-indentation and shifting commands

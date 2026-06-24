@@ -2,7 +2,7 @@ local wk = require("which-key")
 local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
-local sesh = require("resession")
+local seshs = require("user.seshs")
 local links = require("user.utils.links")
 
 function Register(prefix, group, icon, mappings, leader)
@@ -79,7 +79,7 @@ Map("n", "<C-A-l>", "<cmd>tabmove +1<cr>", "Move Layout +1")
 Register("b", "Buffer", "󰓩", {
     n = { "<cmd>enew<cr>", "New Buffer" },
     h = { "<cmd>new<cr>", "New Buffer Horizontal" },
-    h = { "<cmd>vnew<cr>", "New Buffer Vertical" },
+    v = { "<cmd>vnew<cr>", "New Buffer Vertical" },
     p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
     c = { "<cmd>BufferClose<cr>", "Close Buffer" },
     C = { "<cmd>BufferClose!<cr>", "Force close Buffer" },
@@ -115,10 +115,8 @@ Register("l", "Layouts", "", {
 Map("n", "<F4>", dbug.stop, "Stop debugging")
 Map("n", "<F17>", dbug.stop, "Stop debugging") -- Shift+F5
 Map("n", "<F5>", function()
-    if dap.session() then
-        dap.continue()
-    else
-        dbug.pick()
+    if dap.session() then dap.continue()
+    else dbug.pick()
     end
 end, "Continue or start debugging")
 Map("n", "<F6>", dbug.run_last, "Run last debug")
@@ -149,7 +147,7 @@ Register("g", "Git", "", {
         MiniDiff.config.view.style = MiniDiff.config.view.style == 'sign' and 'number' or 'sign'
         vim.cmd('edit')
     end, "Toggle diff style" },
-    p = { MiniDiff.toggle_overlay, "Toggle diff preview" },
+    p = { function() MiniDiff.toggle_overlay() end, "Toggle diff preview" },
 
     s = { function() return MiniDiff.operator('apply') .. "gh" end, "Stage Hunk", expr = true },
     S = { function() return "mggg" .. MiniDiff.operator('apply') .. "ghG`g" end, "Stage Buffer", expr = true },
@@ -179,7 +177,7 @@ Register("c", "Symbols", "󱔁", {
 Register("e", "Environment", "", {
     c = { function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
-        pcall(function() require("resession").load(vim.fn.getcwd(), { dir = "dirsession", reset = true }) end)
+        vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
     end, "Chdir to parent dir", "󰌑" },
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
     a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
@@ -203,18 +201,16 @@ Register("e", "Environment", "", {
         vim.notify("Reentering dir...")
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
     end, "Reenter directory", "" }, -- Fixes problems with some things
-    g = { string.format(":!cd %s && git pull<CR>", vim.fn.stdpath("config")), "Git sync config" }
+    g = { string.format(":!cd %s && git pull<CR>", vim.fn.stdpath("config")), "Git sync config" },
+
+    s = { seshs.pick, "Session picker", "" },
+    S = { seshs.save, "Force save Session", "" },
 })
 Register("|", "Profiles", "", {
     ["|"] = { function()
         vim.notify('The currently active profile is: "' .. require("profile").current_name() .. '"')
     end, "Show Current Profile" },
     S = { function() require('profile').choose_profile() end, "Switch Profile" },
-}, "<leader>e")
-Register("s", "Session", "", {
-    s = { sesh.save, "Save Session" },
-    l = { "<cmd>Telescope resession<CR>", "Session picker" },
-    d = { sesh.delete, "Delete Session" }
 }, "<leader>e")
 
 Register("t", "Terminal", "", {

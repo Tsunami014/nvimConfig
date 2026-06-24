@@ -1,6 +1,6 @@
 local M = {}
 
-local INDEX = "*index.md"
+local INDEX = "+index.md"
 
 -- Extensions safe to auto-create when a link points at a non-existent file
 local AUTO_CREATE = { md = true, txt = true, tex = true }

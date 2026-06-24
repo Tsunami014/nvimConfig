@@ -11,17 +11,7 @@ return {
   {
     'nvim-telescope/telescope.nvim',
     branch = 'master',
-    dependencies = { 'nvim-lua/plenary.nvim', "scottmckendry/pick-resession.nvim" },
-    config = function()
-        require("telescope").setup({
-            extensions = {
-                resession = {
-                    prompt_title = "Find Sessions",
-                    dir = "session", -- directory where resession stores sessions
-                },
-            },
-        })
-    end,
+    dependencies = { 'nvim-lua/plenary.nvim' },
   },
   {
     "nvim-treesitter/nvim-treesitter",
@@ -34,21 +24,6 @@ return {
             "bash", "yaml", "css", "html", "javascript", "latex", "tsx", "typst", "c", "cpp" },
       })
     end,
-  },
-  {
-    'stevearc/resession.nvim',
-    opts = {
-      buf_filter = function(bufnr)
-        local bt = vim.bo[bufnr].buftype
-        if bt ~= "" then return false end -- no special buffers
-        if not vim.bo[bufnr].buflisted then return false end
-        return true
-      end,
-      load_order = "modification_time",
-      autosave = {
-        enabled = false
-      },
-    },
   },
   {
     'akinsho/toggleterm.nvim',
@@ -89,7 +64,7 @@ return {
     opts = {
       type = "dir",
       async = true,
-      on_direnv_finished = function ()
+      on_direnv_finished = function()
         vim.cmd("LspRestart")
       end
     }

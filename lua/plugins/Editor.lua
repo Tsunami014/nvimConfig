@@ -8,7 +8,10 @@ return {
       "MunifTanjim/nui.nvim",
     },
     opts = {
+      sync_root_with_cwd = true,
       filesystem = {
+        hijack_netrw_behavior = "disabled", -- This gets done in seshs.lua instead
+        bind_to_cwd = true, -- Ensures the tree updates when you change directories
         filtered_items = {
           visible = true,
           hide_dotfiles = false,
