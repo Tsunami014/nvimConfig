@@ -59,6 +59,7 @@ return {{
     require('mini.ai').setup()
     require('mini.jump').setup()
     require('mini.comment').setup()
+    require('mini.surround').setup()
     require('mini.cursorword').setup()
     require('mini.trailspace').setup()
     require('mini.indentscope').setup({ symbol = '│' })
