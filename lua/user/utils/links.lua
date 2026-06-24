@@ -20,8 +20,8 @@ local state = {
 }
 
 local function floating_opts()
-  local width = math.floor(vim.o.columns * 0.6)
-  local height = math.floor(vim.o.lines * 0.6)
+  local width = math.floor(vim.o.columns * 0.7)
+  local height = math.floor(vim.o.lines * 0.8)
 
   return {
     relative = "editor",
@@ -62,7 +62,7 @@ function M.toggle()
     return
   end
 
-  local buf = new_scratch_buf()
+  local buf = vim.api.nvim_create_buf(false, true)
   local win = vim.api.nvim_open_win(buf, true, floating_opts())
   state.win = win
 
@@ -80,6 +80,14 @@ function M.toggle()
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].filetype = "index-toggle-prompt"
   state.buf = buf
+
+  local function close_window()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      vim.api.nvim_win_close(state.win, true)
+    end
+    state.win = nil
+    state.buf = nil
+  end
 
   local function confirm()
     local fd = uv.fs_open(path, "w", 420)
