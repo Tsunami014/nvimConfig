@@ -357,10 +357,17 @@ Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
 -- Links
-Map('n', '<Enter>', links.follow, 'Follow link')
-Map('n', '<S-Enter>', function() links.follow(true) end, 'Follow link in current buf')
-Map({ 'v', 'x' }, '<Enter>', links.visual_follow, 'Follow link')
-Map({ 'v', 'x' }, '<S-Enter>', function() links.visual_follow(true) end, 'Follow link in current buf')
+local function enter(fn, arg)
+  return function()
+    if vim.bo.filetype ~= 'markdown' then return '<CR>' end
+    vim.defer_fn(function() fn(arg) end, 0)
+    return ''
+  end
+end
+Map('n', '<Enter>', enter(links.follow), 'Follow link', { expr = true })
+Map('n', '<S-Enter>', enter(links.follow, true), 'Follow link in current buf', { expr = true })
+Map({ 'v', 'x' }, '<Enter>', enter(links.visual_follow), 'Follow link', { expr = true })
+Map({ 'v', 'x' }, '<S-Enter>', enter(links.visual_follow, true), 'Follow link in current buf', { expr = true })
 
 -- Misc stuff
 Map({ 'n', 'v' }, '<C-Space>', '<cmd>WhichKey<CR>', 'Activate which-key')
