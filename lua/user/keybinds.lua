@@ -282,7 +282,7 @@ Register("<leader>", "", "󱁐", {
 
     F = { RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉" },
     T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
-    D = { RunKeys("<leader>dd"), "Toggle DAP UI", "" },
+    D = { RunKeys("<leader>du"), "Toggle DAP UI", "" },
 
     ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
     [","] = { function()
