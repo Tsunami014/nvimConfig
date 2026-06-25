@@ -231,15 +231,23 @@ Register("x", "Todos & Troubles", "", {
     o = { "<C-q>", "Telescope->quickfix (<C-q>)", "󰌑" },
 })
 
-Register("u", "UI/Formatting", "󰉼", {
-    f = { "<cmd>GuessIndent<cr>", "Guess indentation" },
-    n = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
-    ["'"] = { "<Plug>(doge-generate)", "Generate Docstring", "󰏫" }, -- <cmd>DogeGenerate<cr>
+Register("u", "UI", "", {
+    d = { "<Plug>(doge-generate)", "Generate Docstring", "󰏫" }, -- <cmd>DogeGenerate<cr>
     s = { function()
         vim.opt.spell = not vim.opt.spell
         vim.notify((vim.opt.spell and "Checking" or "Not checking") .. " spelling")
     end, "Toggle spell check", "" },
-    S = { function()
+
+    w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
+    i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
+    h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
+    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
+})
+Register("m", "Formatting", "󰉼", {
+    m = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
+
+    g = { "<cmd>GuessIndent<cr>", "Guess indentation" },
+    i = { function()
         vim.ui.input({ prompt = "Set indent spacing & re-indent file: " }, function(input)
             local spaces = tonumber(input)
             if spaces then
@@ -258,15 +266,10 @@ Register("u", "UI/Formatting", "󰉼", {
             end
         end)
     end, "Set indentation" },
-    W = { function()
+    w = { function()
         MiniTrailspace.trim()
         MiniTrailspace.trim_last_lines()
     end, "Delete trailing whitespace" },
-
-    w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
-    i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
-    h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
-    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
 
 -- Commands following <leader>
