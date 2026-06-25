@@ -370,19 +370,20 @@ Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')
 
 -- Completion stuff
-local function t(keys)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
-end
-
 Map({ 'i', 's' }, '<Tab>', function()
-    if vim.fn.pumvisible() == 1 then
-        return t("<C-n>")
-    end
-    return vim.api.nvim_feedkeys(string.rep(" ", vim.o.tabstop), "i", false)
-end, 'Next completion')
+    if vim.fn.pumvisible() == 1 then return "<C-n>" end
+    return string.rep(" ", vim.o.tabstop)
+end, 'Next completion', { expr = true })
 Map({ 'i', 's' }, '<S-Tab>', function()
-    if vim.fn.pumvisible() == 1 then
-        return t("<C-p>")
-    end
-    return t("<C-h>")
-end, 'Previous completion')
+    if vim.fn.pumvisible() == 1 then return "<C-p>" end
+    return "<C-h>"
+end, 'Previous completion', { expr = true })
+-- Stop up/down from being used in completion popup
+Map({ 'i', 's' }, '<Up>', function()
+    if vim.fn.pumvisible() == 1 then return "<C-e><up>" end
+    return "<up>"
+end, 'Up', { expr = true })
+Map({ 'i', 's' }, '<Down>', function()
+    if vim.fn.pumvisible() == 1 then return "<C-e><down>" end
+    return "<down>"
+end, 'Down', { expr = true })

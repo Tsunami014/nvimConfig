@@ -16,7 +16,7 @@ return {
           visible = true,
           hide_dotfiles = false,
           hide_gitignored = false,
-          never_show = { ".git", "package-lock.json" },
+          never_show = { ".git", "package-lock.json", "__pycache__" },
         },
       },
     },

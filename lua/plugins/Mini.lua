@@ -48,7 +48,7 @@ return {{
     require('mini.completion').setup({
       window = {
         info = { border = 'rounded' },
-      }
+      },
     })
 
     require('user.utils.notifs').setup() -- Sets up mini.notify
