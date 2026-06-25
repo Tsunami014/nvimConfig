@@ -56,13 +56,43 @@ end
 local function collect_state()
   local files = {}
   local cursors = {}
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+
+  local win_for_buf = {}
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if not win_for_buf[buf] then
+        win_for_buf[buf] = win
+      end
+    end
+  end
+
+  local function add_buf(buf)
     if is_real_file_buf(buf) then
       local name = vim.api.nvim_buf_get_name(buf)
       table.insert(files, name)
-      local win = vim.fn.bufwinid(buf)
-      if win ~= -1 then
+      local win = win_for_buf[buf]
+      if win then
         cursors[name] = vim.api.nvim_win_get_cursor(win)[1]
+      end
+    end
+  end
+
+  local found = false
+  for _, mod in ipairs({ "barbar.state", "bufferline.state" }) do
+    local ok, state = pcall(require, mod)
+    if ok and type(state.buffers) == "table" then
+      found = true
+      for _, buf in ipairs(state.buffers) do
+        add_buf(buf)
+      end
+    end
+  end
+  if not found then
+    -- Fallback if barbar's internals aren't reachable
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.fn.buflisted(buf) == 1 and vim.api.nvim_buf_is_loaded(buf) then
+        add_buf(buf)
       end
     end
   end
