@@ -106,6 +106,8 @@ vim.schedule(function()
     end
     sethl("ItalicBold", { italic = true, bold = true })
     sethl("InlineQuote", { fg = gethl("Constant").fg, italic = true })
+    sethl("MarkdownUnderline", { underline = true })
+    sethl("MarkdownSquiggle", { undercurl = true })
 
     local bqBg = "#383838"
     sethl("BlockQuoteSurround", { fg = gethl("Macro").fg, bg = bqBg, bold = true })
@@ -116,6 +118,7 @@ vim.schedule(function()
     sethl("BlockQuoteImport", { fg = gethl("Statement").fg, bg = bqBg, bold = true })
     sethl("BlockQuoteWarn", { fg = gethl("DiagnosticWarn").fg, bg = bqBg, bold = true })
     sethl("BlockQuoteCaution", { fg = gethl("DiagnosticError").fg, bg = bqBg, bold = true })
+    sethl("BlockQuoteCode", { fg = gethl("Constant").fg, bg = bqBg })
 
     local normal_hl = gethl("Normal")
     sethl("MarkdownHide", { fg = normal_hl.bg, bg = normal_hl.bg })
@@ -246,6 +249,9 @@ function M.redraw(bufnr)
                 { pat = "(`)([^`][^`]-)(`)",           hl = "InlineQuote" },
                 { pat = "(~~)(..-)(~~)",               hl = "@markup.strikethrough" },
 
+                { pat = "(__)([^_]-[^_])(__)",         hl = "MarkdownSquiggle" },
+                { pat = "(_)([^_]-[^_])(_)",           hl = "MarkdownUnderline" },
+
                 { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
                 { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
                 { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
@@ -253,7 +259,7 @@ function M.redraw(bufnr)
                 -- Tables
                 {
                   handler = function(ln)
-                    local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(|.*|)(%s*)$") 
+                    local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(|.*|)(%s*)$")
                     if not trimmed then
                       return {}
                     end
@@ -650,7 +656,7 @@ function M.redraw(bufnr)
                         out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
                     else
                         if j ~= e then
-                            out = { { full_lines[j] or "", "BlockQuote" } }
+                            out = { { full_lines[j] or "", "BlockQuoteCode" } }
                         else
                             out = { { string.rep("━", max_length), "BlockQuoteSurroundIco" } }
                             tlen = max_length
@@ -687,7 +693,7 @@ function M.redraw(bufnr)
                         out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
                     else
                         if j ~= e then
-                            out = { { (full_lines[j] or ""):sub(x_scroll + 1), "BlockQuote" } }
+                            out = { { (full_lines[j] or ""):sub(x_scroll + 1), "BlockQuoteCode" } }
                             tlen = #txt + math.max(x_scroll - #txt, 0)
                         else
                             out = { { "━━━" .. string.rep("━", max_length - 3 - x_scroll), "BlockQuoteSurroundIco" } }
@@ -722,7 +728,7 @@ function M.setup()
     )
     -- also fire when entering or leaving visual mode
     vim.api.nvim_create_autocmd("ModeChanged", {
-      pattern = { "*:[vV]*", "[vV]*:*" },  -- entering or leaving any visual mode
+      pattern = { "*:[vV]*", "[vV]*:*" },  -- entering or leaving any visual mode
       callback = redraw,
     })
 end
