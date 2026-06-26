@@ -203,14 +203,14 @@ statlne.setup({ content = {
 
     local diff = statlne.is_truncated(65) and '' or (vim.b.minidiff_summary_string or '')
     local diagn = statlne.section_diagnostics({ trunc_width = 60, icon = '', signs = diag_signs })
-    local devinf
+    local devinf1 = ''; local devinf2 = ''
     local arr = true
     if diff ~= '' and diagn ~= '' then
-      devinf = diff, arr.left, diagn
+      devinf1 = diff
+      devinf2 = arrow.right .. diagn
     elseif diff ~= '' or diagn ~= '' then
-      devinf = (diff ~= '' and diff or diagn)
+      devinf1 = (diff ~= '' and diff or diagn)
     else
-      devinf = ''
       arr = false
     end
 
@@ -221,7 +221,8 @@ statlne.setup({ content = {
       ns({ hl = 'Status_1_Mid', strings = { bubble.left } }),
       { hl = 'Status_1', strings = { mode } },
       ns({ hl = 'Status_1_2', strings = { triang.right } }),
-      { hl = 'Status_2', strings = { devinf } },
+      { hl = 'Status_2', strings = { devinf1 } },
+      ns({ hl = 'Status_2', strings = { devinf2 } }),
       { hl = 'Status_2', strings = { arr and arrow.right or '' } },
       '%<', -- Truncate
       { hl = 'Status_2', strings = { filename } },
