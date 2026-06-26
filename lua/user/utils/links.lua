@@ -165,7 +165,7 @@ local function fenced_block_at(lnum)
         j = j + 1
       end
       if close_line then
-        if lnum > start and lnum < close_line then
+        if lnum >= start and lnum <= close_line then
           return {
             lang = block_lang,
             fence_start = start,
@@ -176,8 +176,7 @@ local function fenced_block_at(lnum)
         end
         i = close_line + 1
       else
-        -- unterminated fence to EOF; treat rest of file as inside it
-        if lnum > start then
+        if lnum >= start then
           return {
             lang = block_lang,
             fence_start = start,
@@ -367,7 +366,7 @@ function M.follow(replace)
       return
     end
   end
-  vim.notify("No link under cursor", vim.log.levels.INFO)
+  vim.notify("Nothing interesting under cursor", vim.log.levels.INFO)
 end
 
 local function wrap_range_as_code_block(s_line, s_col, e_line, e_col)
@@ -395,6 +394,7 @@ local function wrap_range_as_code_block(s_line, s_col, e_line, e_col)
 end
 
 function M.visual_follow(replace)
+  local vmode = vim.fn.mode()
   local start_pos = vim.fn.getpos("v")
   local end_pos = vim.fn.getpos(".")
   local s_line, s_col = start_pos[2], start_pos[3]
@@ -402,6 +402,12 @@ function M.visual_follow(replace)
 
   if s_line > e_line or (s_line == e_line and s_col > e_col) then
     s_line, e_line, s_col, e_col = e_line, s_line, e_col, s_col
+  end
+
+  if vmode == "V" then
+    s_col = 1
+    local end_line_text = vim.api.nvim_buf_get_lines(0, e_line - 1, e_line, false)[1] or ""
+    e_col = math.max(#end_line_text, 1)
   end
 
   vim.cmd("normal! \27")
