@@ -19,6 +19,14 @@ local state = {
   buf = nil,
 }
 
+local function close_window()
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    vim.api.nvim_win_close(state.win, true)
+  end
+  state.win = nil
+  state.buf = nil
+end
+
 local function floating_opts()
   local width = math.floor(vim.o.columns * 0.7)
   local height = math.floor(vim.o.lines * 0.8)
@@ -81,14 +89,6 @@ function M.toggle()
   vim.bo[buf].filetype = "index-toggle-prompt"
   state.buf = buf
 
-  local function close_window()
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-      vim.api.nvim_win_close(state.win, true)
-    end
-    state.win = nil
-    state.buf = nil
-  end
-
   local function confirm()
     local fd = uv.fs_open(path, "w", 420)
     if not fd then
@@ -145,6 +145,84 @@ local function open_system(target)
   vim.notify("Opening externally: " .. target, vim.log.levels.INFO)
 end
 
+local function fenced_block_at(lnum)
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local fence_pattern = "^%s*```"
+
+  local i = 1
+  while i <= #lines do
+    local line = lines[i]
+    if line:match(fence_pattern) then
+      local start = i
+      local block_lang = line:match("^%s*```%s*([%w_+-]*)")
+      local j = i + 1
+      local close_line = nil
+      while j <= #lines do
+        if lines[j]:match(fence_pattern) then
+          close_line = j
+          break
+        end
+        j = j + 1
+      end
+      if close_line then
+        if lnum > start and lnum < close_line then
+          return {
+            lang = block_lang,
+            fence_start = start,
+            fence_end = close_line,
+            content_start = start + 1,
+            content_end = close_line - 1,
+          }
+        end
+        i = close_line + 1
+      else
+        -- unterminated fence to EOF; treat rest of file as inside it
+        if lnum > start then
+          return {
+            lang = block_lang,
+            fence_start = start,
+            fence_end = nil,
+            content_start = start + 1,
+            content_end = #lines,
+          }
+        end
+        i = j
+      end
+    else
+      i = i + 1
+    end
+  end
+
+  return nil
+end
+
+local function copy_code_block_at_cursor()
+  local lnum = vim.api.nvim_win_get_cursor(0)[1]
+  local block = fenced_block_at(lnum)
+  if not block then
+    return false
+  end
+
+  if block.content_end < block.content_start then
+    vim.fn.setreg('"', "")
+    vim.fn.setreg("+", "")
+    vim.notify("Copied empty code block", vim.log.levels.INFO)
+    return true
+  end
+
+  local body = vim.api.nvim_buf_get_lines(
+    0, block.content_start - 1, block.content_end, false
+  )
+  local text = table.concat(body, "\n") .. "\n"
+
+  vim.fn.setreg('"', text, "l")
+  vim.fn.setreg("+", text, "l")
+
+  local label = (block.lang and block.lang ~= "") and (block.lang .. " ") or ""
+  vim.notify("Copied " .. label .. "code block (" .. #body .. " lines)", vim.log.levels.INFO)
+  return true
+end
+
 local function open_target(info, replace)
   if not info or (not info.file and not info.anchor) then
     return vim.notify("Link has no target", vim.log.levels.WARN)
@@ -192,7 +270,7 @@ local function open_target(info, replace)
   if state.win ~= nil
     and vim.api.nvim_win_is_valid(state.win)
     and vim.api.nvim_get_current_win() == state.win then
-      close_window()
+    close_window()
   end
   local aft = replace and " | bd #" or ""
   vim.cmd("edit " .. vim.fn.fnameescape(path) .. aft)
@@ -279,6 +357,8 @@ local function link_target(link)
 end
 
 function M.follow(replace)
+  if copy_code_block_at_cursor() then return end
+
   local line = vim.api.nvim_get_current_line()
   local col1 = vim.api.nvim_win_get_cursor(0)[2] + 1
   for _, link in ipairs(scan_links(line)) do
@@ -288,6 +368,30 @@ function M.follow(replace)
     end
   end
   vim.notify("No link under cursor", vim.log.levels.INFO)
+end
+
+local function wrap_range_as_code_block(s_line, s_col, e_line, e_col)
+  if s_col > 1 then
+    local line = vim.api.nvim_buf_get_lines(0, s_line - 1, s_line, false)[1] or ""
+    local before = line:sub(1, s_col - 1)
+    local after = line:sub(s_col)
+    vim.api.nvim_buf_set_lines(0, s_line - 1, s_line, false, { before, after })
+    e_line = e_line + 1
+    s_line = s_line + 1
+    s_col = 1
+  end
+
+  do
+    local line = vim.api.nvim_buf_get_lines(0, e_line - 1, e_line, false)[1] or ""
+    if e_col < #line then
+      local before = line:sub(1, e_col)
+      local after = line:sub(e_col + 1)
+      vim.api.nvim_buf_set_lines(0, e_line - 1, e_line, false, { before, after })
+    end
+  end
+
+  vim.api.nvim_buf_set_lines(0, e_line, e_line, false, { "```" })
+  vim.api.nvim_buf_set_lines(0, s_line - 1, s_line - 1, false, { "```" })
 end
 
 function M.visual_follow(replace)
@@ -302,7 +406,11 @@ function M.visual_follow(replace)
 
   vim.cmd("normal! \27")
 
-  if s_line ~= e_line then return nil end
+  if s_line ~= e_line then
+    wrap_range_as_code_block(s_line, s_col, e_line, e_col)
+    return
+  end
+
   local line = vim.api.nvim_buf_get_lines(0, s_line - 1, s_line, false)[1] or ""
   for _, link in ipairs(scan_links(line)) do
     if link.start_col <= s_col and link.end_col >= e_col then
