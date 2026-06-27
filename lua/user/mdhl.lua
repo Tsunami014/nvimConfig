@@ -443,26 +443,20 @@ function M.redraw(bufnr)
                 {
                     handler = function(ln)
                         local start_pos = 1
-                        local ln2 = ln .. " "
-                        local spacing = ""
-
                         while true do
-                            local s1, e1 = string.find(ln2, spacing .. "-> ", start_pos, true)
-                            local s2, e2 = string.find(ln2, spacing .. "<- ", start_pos, true)
+                            local s1, e1 = string.find(ln, "->", start_pos, true)
+                            local s2, e2 = string.find(ln, "<-", start_pos, true)
                             if not s1 and not s2 then break end
 
                             local s, e, icon
                             if s1 and (not s2 or s1 <= s2) then
                                 s, e = s1, e1
-                                icon = " "
+                                icon = (x_scroll == s and '' or "—") .. ""
                             else
                                 s, e = s2, e2
-                                icon = " "
+                                icon = "" .. (x_scroll == s and '' or "—")
                             end
-                            s = s + #spacing
-                            spacing = " "
-
-                            if x_scroll < s then
+                            if x_scroll <= s then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
                                     virt_text = { { icon, hl } },
                                     virt_text_pos = "overlay",
