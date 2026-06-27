@@ -1,25 +1,33 @@
-local wk = require("which-key")
 local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
 local seshs = require("user.seshs")
 local links = require("user.utils.links")
 
-function Register(prefix, group, icon, mappings, leader)
-    if leader == nil then
-        leader = "<leader>"
-    end
-    local result = {
-        { leader .. prefix, group = group, icon = icon }
-    }
+local group_clues = {}
 
+function Register(prefix, group, icon, mappings, leader)
+    if leader == nil then leader = "<leader>" end
+    if group ~= "" then
+        local desc = group
+        if icon ~= "" then
+            desc = icon .. " " .. group
+        end
+        table.insert(group_clues, { mode = "n", keys = leader .. prefix, desc = desc })
+    end
     for k, v in pairs(mappings) do
         local key = leader .. prefix .. k
-        table.insert(result, { key, v[1], desc = v[2], icon = v[3] or icon,
-            mode = v.mode or "n", expr = v.expr })
+        local desc = v[2]
+        local item_icon = v[3] or icon
+        if item_icon ~= "" and desc and desc ~= "" then
+            desc = item_icon .. " " .. desc
+        end
+        local opts = nil
+        if v.expr then
+            opts = { noremap = true, silent = true, expr = true }
+        end
+        Map(v.mode or "n", key, v[1], desc, opts)
     end
-
-    wk.add({ mode = 'n', result })
 end
 
 function Map(mode, lhs, rhs, desc, options)
@@ -27,7 +35,6 @@ function Map(mode, lhs, rhs, desc, options)
         vim.api.nvim_del_keymap(mode, lhs)
         return
     end
-
     if options == nil then
         options = { noremap = true, silent = true }
     end
@@ -140,7 +147,7 @@ Register("d", "Debug", "", {
     R = { "<cmd>LspRestart<cr>", "Restart lsp", "" },
 })
 
-Register("g", "Git", "", {
+Register("g", "Git", "", {
     g = { "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢" },
 
     u = { function()
@@ -343,10 +350,6 @@ Map('n', '[x', function() vim.diagnostic.jump({ count = -1, float = true, severi
 Map('n', '[w', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.WARN }) end, 'Prev warning')
 Map('n', '[e', function() vim.diagnostic.jump({ count = -1, float = true, severity = vim.diagnostic.severity.ERROR }) end, 'Prev error')
 
-local ji = require("user.utils.jump").interest
-vim.keymap.set("n", "]]", function() ji("next") end, { desc = "Next interesting thing" })
-vim.keymap.set("n", "[[", function() ji("prev") end, { desc = "Previous interesting thing" })
-
 -- Indent stuff
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
@@ -370,7 +373,6 @@ Map({ 'v', 'x' }, '<Enter>', enter(links.visual_follow), 'Follow link', { expr =
 Map({ 'v', 'x' }, '<S-Enter>', enter(links.visual_follow, true), 'Follow link in current buf', { expr = true })
 
 -- Misc stuff
-Map({ 'n', 'v' }, '<C-Space>', '<cmd>WhichKey<CR>', 'Activate which-key')
 Map('n', '<Esc>', '<C-l><cmd>noh<cr>', 'Clear annoying things off the screen')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
@@ -394,3 +396,38 @@ Map({ 'i', 's' }, '<Down>', function()
     if vim.fn.pumvisible() == 1 then return "<C-e><down>" end
     return "<down>"
 end, 'Down', { expr = true })
+
+
+
+local MiniClue = require("mini.clue")
+MiniClue.setup({
+    triggers = {
+        { mode = "n", keys = "<Leader>" }, { mode = "x", keys = "<Leader>" },
+        { mode = "n", keys = "g" }, { mode = "x", keys = "g" },
+        { mode = "n", keys = "z" }, { mode = "x", keys = "z" },
+        { mode = "n", keys = "s" }, { mode = "x", keys = "s" },
+        { mode = "n", keys = "<C-w>" },
+
+        { mode = "n", keys = '"' }, { mode = "x", keys = '"' },
+        { mode = "i", keys = "<C-r>" }, { mode = "c", keys = "<C-r>" },
+        { mode = "n", keys = "`" }, { mode = "x", keys = "`" },
+
+        { mode = "i", keys = "<C-x>" },
+        { mode = "n", keys = "[" }, { mode = "n", keys = "]" },
+    },
+    clues = {
+        group_clues,
+        MiniClue.gen_clues.g(),
+        MiniClue.gen_clues.z(),
+        MiniClue.gen_clues.windows(),
+        MiniClue.gen_clues.registers(),
+        MiniClue.gen_clues.marks(),
+        MiniClue.gen_clues.builtin_completion(),
+    },
+    window = {
+        delay = 300,
+        scroll_down = "<C-j>",
+        scroll_up = "<C-k>",
+        config = { width = "auto" },
+    },
+})

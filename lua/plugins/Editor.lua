@@ -34,16 +34,6 @@ return {
     "cohama/lexima.vim",
   },
 
-  -- Keybindings popup
-  {
-    "folke/which-key.nvim",
-    event = "VeryLazy",
-    opts_extend = { "spec" },
-    opts = {
-      preset = "helix",
-    },
-  },
-
   -- find and replace
   {
     "roobert/search-replace.nvim",
