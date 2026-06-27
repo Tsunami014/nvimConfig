@@ -13,6 +13,9 @@ local diag_signs = {
   HINT = '%#MiniStatuslineDevinfoHint#~',
 }
 
+local function hltxt(hl)
+  return '%#' .. hl .. '#'
+end
 local function ns(tbl)
   return '%#' .. tbl.hl .. '#' .. table.concat(tbl.strings, " ")
 end
@@ -92,6 +95,7 @@ end
 
 local modes = {
   "MiniStatuslineModeReplace",
+  "",
   "MiniStatuslineModeCommand",
   "MiniStatuslineModeInsert",
   "MiniStatuslineModeOther",
@@ -106,6 +110,7 @@ for i, mode in ipairs(modes) do
 end
 local colours = {
   "RainbowDelimiterRed",
+  "RainbowDelimiterOrange",
   "RainbowDelimiterYellow",
   "RainbowDelimiterGreen",
   "RainbowDelimiterCyan",
@@ -114,79 +119,67 @@ local colours = {
 }
 
 local decors = {
-  { mid = true,
-    next = true,
-    inv = true,
-    bold = true,
-  },
-  { mid = true,
-    bgmid = true,
-  },
-  { space = true,
-    bold = true,
-  },
-  { mid = true,
-    bgmid = true,
-    next = true,
-    colsep = true,
-  },
-  { next = true,
-    nxtinv = true,
-  },
-  { next = true,
-    nxtinv = true,
-    inv = true,
-    bold = true,
-  },
+  { mid = true, next = true, inv = true, bold = true },
+  { sepinv = true, next = true },
+  { mid = true, bgmid = true },
+  { space = true, bold = true },
+  { mid = true, bgmid = true, next = true, colsep = true },
+  { next = true, nxtinv = true },
+  { next = true, nxtinv = true, inv = true, bold = true },
 }
+
 local last = ""
+
 local function redecorate(mode_hl)
-    local idx = mode_idx[mode_hl]
-    local function rotate()
-      local out = colours[idx]
-      idx = (idx % #colours) + 1
-      return out
+  local idx = mode_idx[mode_hl]
+
+  local function rotate()
+    local out = colours[idx]
+    idx = (idx % #colours) + 1
+    return out
+  end
+
+  local function gen(name, fg, bg, dec, skipinv, isnxt, nxtfg, donesepinv)
+    local info = (((not skipinv) and dec.inv) or (isnxt and dec.nxtinv)) and
+            { fg = bg, bg = fg } or { fg = fg, bg = bg }
+    info.bold = dec.bold
+    vim.api.nvim_set_hl(0, name, info)
+
+    if dec.sepinv and not donesepinv then
+      gen(name .. '_Inv', nxtfg or bg, fg, dec, skipinv, isnxt, nxtfg, true)
     end
-    local function gen(name, fg, bg, dec, skipinv, isnxt)
-      local info
-      if ((not skipinv) and dec.inv) or (isnxt and dec.nxtinv) then
-        info = { fg = bg, bg = fg }
-      else
-        info = { fg = fg, bg = bg }
-      end
-      info.bold = dec.bold
-      vim.api.nvim_set_hl(0, name, info)
+  end
+
+  local norm = get_hl('Normal').bg
+  local reg = get_hl('MiniStatuslineFileinfo').bg
+
+  for index, dec in ipairs(decors) do
+    local name = 'Status_' .. index
+    local col = get_hl(rotate()).fg
+
+    if dec.mid then
+      local mid_fg = dec.bgmid and reg or col
+      gen(name .. '_Mid', mid_fg, norm, dec, true)
     end
-    local norm = get_hl('Normal').bg
-    local reg = get_hl('MiniStatuslineFileinfo').bg
-    for index, dec in ipairs(decors) do
-      local name = 'Status_' .. index
-      local col = get_hl(rotate()).fg
-      if dec.mid then
-        local cur
-        if dec.bgmid then cur = reg
-        else cur = col
-        end
-        gen(name .. '_Mid', cur, norm, dec, true)
-      end
-      if dec.next then
-        local nxti = (index % #colours) + 1
-        local cur
-        if not (dec.inv or dec.colsep) then cur = reg
-        else cur = col
-        end
-        local nxt
-        if not decors[nxti].inv then nxt = reg
-        else nxt = get_hl(colours[idx]).fg
-        end
-        gen(name .. '_' .. nxti, cur, nxt, dec, true, true)
-      end
-      if dec.space then
-        gen(name, col, norm, dec)
-      else
-        gen(name, col, reg, dec)
+
+    if dec.next then
+      local nxti = (index % #colours) + 1
+
+      local cur = (dec.inv or dec.colsep) and col or reg
+      local invcol = (cur == reg) and col or reg
+
+      local nxtcol = get_hl(colours[idx]).fg
+      local nxt = decors[nxti].inv and nxtcol or reg
+
+      gen(name .. '_' .. nxti, cur, nxt, dec, true, true, invcol)
+      if decors[nxti].sepinv then
+        local ninv_bg = (nxt == reg) and nxtcol or reg
+        gen(name .. '_' .. nxti .. '_NInv', cur, ninv_bg, dec, true, true, invcol)
       end
     end
+
+    gen(name, col, dec.space and norm or reg, dec)
+  end
 end
 vim.api.nvim_create_autocmd('ColorScheme', { callback = function() refresh_devinfo_fills(); last = "" end })
 
@@ -204,14 +197,15 @@ statlne.setup({ content = {
     local diff = statlne.is_truncated(65) and '' or (vim.b.minidiff_summary_string or '')
     local diagn = statlne.section_diagnostics({ trunc_width = 60, icon = '', signs = diag_signs })
     local devinf1 = ''; local devinf2 = ''
-    local arr = true
+    local nodi = false
+    local arrstart = hltxt('Status_2_Inv') .. triang.right
     if diff ~= '' and diagn ~= '' then
       devinf1 = diff
-      devinf2 = arrow.right .. diagn
+      devinf2 = arrstart .. hltxt('Status_2') .. triang.right .. diagn
     elseif diff ~= '' or diagn ~= '' then
       devinf1 = (diff ~= '' and diff or diagn)
     else
-      arr = false
+      nodi = true
     end
 
     local filename = statlne.is_truncated(90) and '%f' or '%F'
@@ -220,23 +214,25 @@ statlne.setup({ content = {
     return statlne.combine_groups({
       ns({ hl = 'Status_1_Mid', strings = { bubble.left } }),
       { hl = 'Status_1', strings = { mode } },
-      ns({ hl = 'Status_1_2', strings = { triang.right } }),
+      ns({ hl = 'Status_1_2' .. (nodi and '_NInv' or ''), strings = { triang.right } }),
+      ns({ hl = 'Status_2', strings = { nodi and triang.right..' ' or '' } }),
       { hl = 'Status_2', strings = { devinf1 } },
       ns({ hl = 'Status_2', strings = { devinf2 } }),
-      { hl = 'Status_2', strings = { arr and arrow.right or '' } },
+      ns({ hl = 'Status_2', strings = { nodi and '' or ' ' .. arrstart } }),
+      ns({ hl = 'Status_2_3_Inv', strings = { nodi and '' or triang.right..' ' } }),
       '%<', -- Truncate
-      { hl = 'Status_2', strings = { filename } },
-      ns({ hl = 'Status_2_Mid', strings = { slant.left } }),
+      { hl = 'Status_3', strings = { filename } },
+      ns({ hl = 'Status_3_Mid', strings = { slant.left } }),
       '%=', -- Pad
-      { hl = 'Status_3', strings = { get_runes(statlne.is_truncated(50) and 2 or (statlne.is_truncated(65) and 3 or (statlne.is_truncated(80) and 4 or 6))) } },
+      { hl = 'Status_4', strings = { get_runes(statlne.is_truncated(50) and 2 or (statlne.is_truncated(65) and 3 or (statlne.is_truncated(80) and 4 or 6))) } },
       '%=', -- Pad
-      ns({ hl = 'Status_4_Mid', strings = { slant.right } }),
-      { hl = 'Status_4', strings = { fi1 } },
-      ns({ hl = 'Status_4_5', strings = { fi1 == "" and line.left or arrow.left } }),
-      { hl = 'Status_5', strings = { fileinfo2() } },
-      ns({ hl = 'Status_5_6', strings = { triang.left } }),
-      { hl = 'Status_6', strings = { '%l:%c' } },
-      ns({ hl = 'Status_6_1', strings = { triang.left } }),
+      ns({ hl = 'Status_5_Mid', strings = { slant.right } }),
+      { hl = 'Status_5', strings = { fi1 } },
+      ns({ hl = 'Status_5_6', strings = { fi1 == "" and line.left or arrow.left } }),
+      { hl = 'Status_6', strings = { fileinfo2() } },
+      ns({ hl = 'Status_6_7', strings = { triang.left } }),
+      { hl = 'Status_7', strings = { '%l:%c' } },
+      ns({ hl = 'Status_7_1', strings = { triang.left } }),
       { hl = 'Status_1', strings = { statlne.is_truncated(30) and '' or '%p%%/%L' } },
       ns({ hl = 'Status_1_Mid', strings = { bubble.right } }),
     })
