@@ -13,6 +13,7 @@ return {{
     require('mini.extra').setup()
 
     local starter = require('mini.starter')
+    local foldp = require('user.utils.folder-pick')
     starter.setup({
       header = [[
  ███▄    █ ▓█████  ▒█████   ██▒   █▓ ██▓ ███▄ ▄███▓
@@ -29,11 +30,11 @@ return {{
       evaluate_single = true,
       items = {
         { name = "New", action = function() starter.close() vim.cmd('startinsert') end, section = "Open" },
-        { name = "Files", action = ":lua Snacks.dashboard.pick('files')", section = "Open" },
-        { name = "Folders", action = ":lua require('user.utils.folder-pick').pick_folder_in()", section = "Open" },
-        { name = "Config", action = ":lua require('user.utils.folder-pick').pick_folder_in('" .. confDir:gsub("'", "\\'") .. "')", section = "Open" },
-        { name = "Recent", action = ":lua Snacks.dashboard.pick('oldfiles')", section = "Open" },
-        { name = "Text", action = ":lua Snacks.dashboard.pick('live_grep')", section = "Open" },
+        { name = "Files", action = ":Telescope find_files", section = "Open" },
+        { name = "Folders", action = foldp.pick_folder_in, section = "Open" },
+        { name = "Config", action = function() foldp.pick_folder_in(confDir) end, section = "Open" },
+        { name = "Recent", action = MiniExtra.pickers.oldfiles, section = "Open" },
+        { name = "Text", action = ":Telescope live_grep", section = "Open" },
         { name = "Lazy", action = ":Lazy", section = "Actions" },
         starter.sections.recent_files(10, false),
       },

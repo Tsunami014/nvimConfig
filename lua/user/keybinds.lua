@@ -247,7 +247,8 @@ Register("u", "UI", "", {
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
-    h = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
+    h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
+    H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
 Register("m", "Formatting", "󰉼", {
@@ -286,6 +287,7 @@ Register("<leader>", "", "󱁐", {
     U = { "<cmd>UndotreeToggle<cr>", "Undo tree", "" },
     I = { links.toggle, "Toggle index file", "" },
     L = { require("user.utils.links-buf").toggle, "Toggle links panel", "" },
+    S = { MiniExtra.pickers.spellsuggest, "Suggest respelling", "" },
 
     F = { RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉" },
     T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
