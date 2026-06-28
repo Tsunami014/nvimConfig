@@ -231,10 +231,14 @@ function M.redraw(bufnr)
             local level, disp = make_bar_line(i, total, line)
             if disp and not_cursor_or_visual(i) then
                 local hl = heading_hl[level] or heading_hl[#heading_hl]
-                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                local heading_opts = {
                     virt_text = { { disp, hl } },
                     virt_text_pos = "overlay",
-                })
+                }
+                if vim.wo.wrap and vim.fn.strdisplaywidth(line) > vim.api.nvim_win_get_width(0) then
+                    heading_opts.line_hl_group = hl
+                end
+                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, heading_opts)
             end
         end
 
@@ -427,13 +431,20 @@ function M.redraw(bufnr)
                     else
                         ico = ""
                     end
-                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+
+                    local extmark_opts = {
                       virt_text = {
                         { bef:sub(x_scroll + 1):gsub(">", "│"), hl or "BlockQuoteSurroundIco" },
                         { (ico .. txt):sub(txtsub), hl or "BlockQuote" },
                       },
                       virt_text_pos = "overlay",
-                    })
+                    }
+
+                    if vim.wo.wrap and vim.fn.strdisplaywidth(ln) > vim.api.nvim_win_get_width(0) then
+                        extmark_opts.line_hl_group = hl or "BlockQuote"
+                    end
+
+                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, extmark_opts)
 
                     return {}
                     end,
