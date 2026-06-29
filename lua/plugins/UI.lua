@@ -8,7 +8,7 @@ return {
     lazy = false,
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme("tokyonight-night")
+      vim.cmd.colorscheme("tokyonight-moon")
     end,
     cond = not p.OPTS.Notes
   },
@@ -18,6 +18,12 @@ return {
     lazy = false,
     priority = 1000,
     config = function()
+      require("everforest").setup({
+        background = "soft",
+        colours_override = function (palette)
+          palette.bg_visual = "#4C5054"
+        end
+      })
       vim.cmd.colorscheme("everforest")
     end,
     cond = p.OPTS.Notes
