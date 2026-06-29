@@ -293,7 +293,7 @@ Register("<leader>", "", "󱁐", {
     T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
     D = { RunKeys("<leader>du"), "Toggle DAP UI", "" },
 
-    ["<Enter>"] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
+    ["."] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
     [","] = { function()
         for _, win in ipairs(vim.api.nvim_list_wins()) do
             local config = vim.api.nvim_win_get_config(win)
@@ -361,18 +361,17 @@ Map("n", "<C-,>", "<<", "De-indent line")
 Map("i", "<C-.>", "<C-t>", "Indent line")
 Map("i", "<C-,>", "<C-d>", "De-indent line")
 
--- Links
-local function enter(fn, arg)
-  return function()
-    if vim.bo.filetype ~= 'markdown' then return '<CR>' end
-    vim.defer_fn(function() fn(arg) end, 0)
-    return ''
-  end
-end
-Map('n', '<Enter>', enter(links.follow), 'Follow link', { expr = true })
-Map('n', '<S-Enter>', enter(links.follow, true), 'Follow link in current buf', { expr = true })
-Map({ 'v', 'x' }, '<Enter>', enter(links.visual_follow), 'Follow link', { expr = true })
-Map({ 'v', 'x' }, '<S-Enter>', enter(links.visual_follow, true), 'Follow link in current buf', { expr = true })
+-- Links (only appear in markdown files)
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function(args)
+    local buf = args.buf
+    Map('n', '<Enter>', links.follow, 'Follow link', { buffer = buf })
+    Map('n', '<S-Enter>', function() links.follow(true) end, 'Follow link in current buf', { buffer = buf })
+    Map({ 'v', 'x' }, '<Enter>', links.visual_follow, 'Follow link', { buffer = buf })
+    Map({ 'v', 'x' }, '<S-Enter>', function() links.visual_follow(true) end, 'Follow link in current buf', { buffer = buf })
+  end,
+})
 
 -- Misc stuff
 Map('n', '<Esc>', '<C-l><cmd>noh<cr>', 'Clear annoying things off the screen')
