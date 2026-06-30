@@ -11,11 +11,9 @@ function M.dirch(ignorefail)
     local vim_rc = cwd .. "/.nvimrc"
 
     if vim.fn.filereadable(lua_rc) == 1 then
-        dofile(lua_rc)
-        vim.notify("Loaded .nvim.lua from " .. lua_rc)
+        vim.secure.read(".nvim.lua")
     elseif vim.fn.filereadable(vim_rc) == 1 then
-        vim.cmd("source " .. vim_rc)
-        vim.notify("Sourced .nvimrc from " .. vim_rc)
+        vim.secure.read(".nvimrc")
     elseif not ignorefail then
         vim.notify("No .nvim.lua or .nvimrc found in current directory.")
     end
@@ -31,7 +29,8 @@ function DebugActions(actions)
     -- table.insert(actions, {
     --     label = "Name",
     --     terminal = function() return "cmd" end,
-    --     after = function() launch_cpp_dap("file") end,
+    --     after = function(code) if code == 0 then launch_cpp_dap("file") end end,
+    --     keepopen = true, -- keep terminal open on success; default false
     -- })
 end
 -- vim.g.askcppexec = "file" -- Instead of asking which executable to use, use this

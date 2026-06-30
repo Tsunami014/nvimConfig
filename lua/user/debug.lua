@@ -45,6 +45,13 @@ local function ensure_terminal_window()
     })
 end
 
+function M.close_terminal()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+        return
+    end
+end
 function M.toggle_terminal()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
         vim.api.nvim_win_close(state.win, true)
@@ -84,7 +91,7 @@ function M.stop()
     stop_dap()
 end
 
-local function run_terminal(command, on_exit)
+local function run_terminal(command, after)
     stop_terminal()
     -- Clear old buffer
     if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
@@ -106,9 +113,10 @@ local function run_terminal(command, on_exit)
             state.job = nil
             vim.cmd.stopinsert()
             vim.schedule(function()
-                if on_exit then
-                    on_exit(code)
+                if (not state.action.keepopen) and code == 0 then
+                    M.close_terminal()
                 end
+                if after then after(code) end
             end)
         end,
     })
@@ -221,10 +229,7 @@ local function get_actions()
                 )
             end,
             after = function(code)
-                if code == 0 then
-                    M.stop()
-                    launch_cpp_dap("/tmp/out")
-                end
+                if code == 0 then launch_cpp_dap("/tmp/out") end
             end,
         })
     end
@@ -244,10 +249,7 @@ local function get_actions()
                 return "make debug"
             end,
             after = function(code)
-                if code == 0 then
-                    M.stop()
-                    launch_cpp_dap(ask_executable())
-                end
+                if code == 0 then launch_cpp_dap(ask_executable()) end
             end,
         })
     end
@@ -264,7 +266,6 @@ local function get_actions()
             end,
             after = function(code)
                 if code == 0 then
-                    M.stop()
                     local old_buf = vim.api.nvim_get_current_buf()
                     local change = vim.bo.filetype ~= "tex"
                     if change then
@@ -288,11 +289,6 @@ local function get_actions()
                 local onfail = " || { rm " .. outfle .. "*; exit 1; }"
                 return build .. " && " .. build .. " && " .. copy .. onfail
             end,
-            after = function(code)
-                if code == 0 then
-                    M.stop()
-                end
-            end
         })
     end
     if ft == "markdown" then
@@ -303,11 +299,6 @@ local function get_actions()
                 local compile = "pandoc --standalone " .. state.fname .. " -o " .. outfname
                 return compile .. ";xdg-open " .. outfname
             end,
-            after = function(code)
-                if code == 0 then
-                    M.stop()
-                end
-            end
         })
     end
     if ft == "html" then
@@ -384,10 +375,7 @@ function M.run_last()
     end
 
     M.stop()
-
-    vim.defer_fn(function()
-        execute()
-    end, 50)
+    vim.defer_fn(execute, 50)
 end
 
 return M
