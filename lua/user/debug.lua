@@ -138,6 +138,9 @@ local function guess_executable()
 end
 
 local function ask_executable()
+    if vim.g.askcppexec then
+        return vim.g.askcppexec
+    end
     local result = vim.fn.input({
         prompt = "Executable: ",
         default = guess_executable(),
@@ -150,7 +153,7 @@ local function ask_executable()
     return result
 end
 
-local function launch_cpp_dap(progr)
+function launch_cpp_dap(progr) -- Global so can be used in env file
     dap.run({
         name = "Launch executable",
         type = "cppdbg",

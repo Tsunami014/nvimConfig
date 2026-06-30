@@ -31,9 +31,10 @@ function DebugActions(actions)
     -- table.insert(actions, {
     --     label = "Name",
     --     terminal = function() return "cmd" end,
-    --     after = function() end,
+    --     after = function() launch_cpp_dap("file") end,
     -- })
 end
+-- vim.g.askcppexec = "file" -- Instead of asking which executable to use, use this
 ]], 2},
 }
 local keys = {}
