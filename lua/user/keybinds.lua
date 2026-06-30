@@ -7,14 +7,29 @@ local links = require("user.utils.links")
 
 local group_clues = {}
 
-function Register(prefix, group, icon, mappings, leader)
+function Register(prefix, group, icon, mappings, leader, modes)
     if leader == nil then leader = "<leader>" end
+    modes = modes or "n"
     if group ~= "" then
         local desc = group
         if icon ~= "" then
             desc = icon .. " " .. group
         end
-        table.insert(group_clues, { mode = "n", keys = leader .. prefix, desc = desc })
+        local mode_set = {}
+        local function add_modes(m)
+            if type(m) == "table" then
+                for _, mm in ipairs(m) do mode_set[mm] = true end
+            else
+                mode_set[m] = true
+            end
+        end
+        add_modes(modes)
+        for _, v in pairs(mappings) do
+            add_modes(v.modes or v.mode or modes)
+        end
+        for m, _ in pairs(mode_set) do
+            table.insert(group_clues, { mode = m, keys = leader .. prefix, desc = desc })
+        end
     end
     for k, v in pairs(mappings) do
         local key = leader .. prefix .. k
@@ -27,7 +42,8 @@ function Register(prefix, group, icon, mappings, leader)
         if v.expr then
             opts = { noremap = true, silent = true, expr = true }
         end
-        Map(v.mode or "n", key, v[1], desc, opts)
+        local map_modes = v.modes or v.mode or modes
+        Map(map_modes, key, v[1], desc, opts)
     end
 end
 
@@ -45,6 +61,10 @@ end
 
 function RunKeys(keys)
     return function() vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "m", false) end
+end
+
+local function isvisual()
+    return vim.fn.mode():match("^[vV\22]")
 end
 
 
@@ -148,7 +168,14 @@ Register("d", "Debug", "", {
     R = { "<cmd>LspRestart<cr>", "Restart lsp", "" },
 })
 
-Register("g", "Git", "", {
+
+local function hunk_operator(action)
+    return function()
+        return MiniDiff.operator(action) .. (isvisual() and "" or "gh")
+    end
+end
+
+Register("g", "Git", "", {
     g = { "<cmd>LazyGit<cr>", "Open LazyGit", "󰊢" },
 
     u = { function()
@@ -157,11 +184,11 @@ Register("g", "Git", "", {
     end, "Toggle diff style" },
     p = { function() MiniDiff.toggle_overlay() end, "Toggle diff preview" },
 
-    s = { function() return MiniDiff.operator('apply') .. "gh" end, "Stage Hunk", expr = true },
+    s = { hunk_operator('apply'), "Stage Hunk", expr = true, modes = { 'n', 'x' } },
     S = { function() return "mggg" .. MiniDiff.operator('apply') .. "ghG`g" end, "Stage Buffer", expr = true },
-    r = { function() return MiniDiff.operator('reset') .. "gh" end, "Reset Hunk", expr = true },
+    r = { hunk_operator('reset'), "Reset Hunk", expr = true, modes = { 'n', 'x' } },
     R = { function() return "gg" .. MiniDiff.operator('reset') .. "ghG<C-o>mg" end, "Reset Buffer", expr = true },
-    y = { function() return MiniDiff.operator('yank') .. "gh" end, "Yank Hunk", expr = true },
+    y = { hunk_operator('yank'), "Yank Hunk", expr = true, modes = { 'n', 'x' } },
     Y = { function() return "gg" .. MiniDiff.operator('yank') .. "ghG<C-o>" end, "Yank Buffer", expr = true },
 })
 
@@ -295,21 +322,22 @@ Register("<leader>", "", "󱁐", {
     end, "Dismiss popups", "󱠡" },
 
     ["/"] = { function()
-        local line = vim.api.nvim_win_get_cursor(0)[1]
-        MiniComment.toggle_lines(line, line)
-    end, "Toggle comment", "/" },
-}, "")
-Map('v', "<leader>/", function()
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
-    vim.schedule(function()
-        local start_line = vim.fn.line("'<")
-        local end_line = vim.fn.line("'>")
-        if start_line > end_line then
-            start_line, end_line = end_line, start_line
+        if isvisual() then
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+            vim.schedule(function()
+                local start_line = vim.fn.line("'<")
+                local end_line = vim.fn.line("'>")
+                if start_line > end_line then
+                    start_line, end_line = end_line, start_line
+                end
+                MiniComment.toggle_lines(start_line, end_line)
+            end)
+        else
+            local line = vim.api.nvim_win_get_cursor(0)[1]
+            MiniComment.toggle_lines(line, line)
         end
-        MiniComment.toggle_lines(start_line, end_line)
-    end)
-end, "Toggle comments")
+    end, "Toggle comments", "/", modes = { 'n', 'x' } },
+}, "")
 
 
 -- A more convenient @@
