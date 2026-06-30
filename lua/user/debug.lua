@@ -333,10 +333,8 @@ local function execute()
 
         run_terminal(command, state.action.after)
         return
-    end
-
-    if state.action.after then
-        state.action.after()
+    elseif state.action.after then
+        state.action.after(0)
     end
 end
 
