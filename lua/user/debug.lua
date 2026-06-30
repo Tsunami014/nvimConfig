@@ -349,6 +349,9 @@ end
 -- Picker
 function M.pick()
     local actions = get_actions()
+    if type(_G.DebugActions) == "function" then
+        DebugActions(actions)
+    end
     if #actions == 0 then
         vim.notify("No file actions found for filetype: " .. vim.bo.filetype)
         return

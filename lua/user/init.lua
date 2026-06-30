@@ -1,4 +1,5 @@
 require "user.keybinds"
+require "user.envfile"
 require "user.daplsp"
 require "user.seshs"
 require "user.mdhl"

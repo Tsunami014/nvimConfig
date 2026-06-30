@@ -2,6 +2,7 @@ local dap = require("dap")
 local dapui = require("dapui")
 local dbug = require("user.debug")
 local seshs = require("user.seshs")
+local envf = require("user.envfile")
 local links = require("user.utils.links")
 
 local group_clues = {}
@@ -189,21 +190,8 @@ Register("e", "Environment", "", {
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
     a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
     A = { "<cmd>ASToggle<CR>", "Toggle autosave", "" },
-    L = { function()
-        local cwd = vim.fn.getcwd()
-        local lua_rc = cwd .. "/.nvim.lua"
-        local vim_rc = cwd .. "/.nvimrc"
-
-        if vim.fn.filereadable(lua_rc) == 1 then
-            dofile(lua_rc)
-            print("Loaded .nvim.lua from " .. lua_rc)
-        elseif vim.fn.filereadable(vim_rc) == 1 then
-            vim.cmd("source " .. vim_rc)
-            print("Sourced .nvimrc from " .. vim_rc)
-        else
-            print("No .nvim.lua or .nvimrc found in current directory.")
-        end
-    end, "Load .nvimrc", "" },
+    l = { envf.dirch, "Reload environment files" },
+    L = { envf.genfile, "Create template env file" },
     f = { function()
         vim.notify("Reentering dir...")
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
@@ -251,10 +239,19 @@ Register("u", "UI", "", {
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
+local function reindent()
+    local current_win = vim.api.nvim_get_current_win()
+    local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
+    vim.cmd("silent! retab!")
+    vim.cmd("normal! gg=G")
+    pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
+    vim.notify("File indented to " .. spaces .. " spaces.")
+end
 Register("m", "Formatting", "󰉼", {
     m = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
 
     g = { "<cmd>GuessIndent<cr>", "Guess indentation" },
+    r = { reindent, "Reindent file" },
     i = { function()
         vim.ui.input({ prompt = "Set indent spacing & re-indent file: " }, function(input)
             local spaces = tonumber(input)
@@ -262,13 +259,7 @@ Register("m", "Formatting", "󰉼", {
                 vim.opt_local.shiftwidth = spaces
                 vim.opt_local.tabstop = spaces
                 vim.opt_local.softtabstop = spaces
-
-                local current_win = vim.api.nvim_get_current_win()
-                local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
-                vim.cmd("silent! retab!")
-                vim.cmd("normal! gg=G")
-                pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
-                vim.notify("File indented to " .. spaces .. " spaces.")
+                reindent()
             elseif input ~= nil then
                 vim.notify("Invalid input", vim.log.levels.WARN)
             end
