@@ -393,7 +393,7 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 -- Misc stuff
-Map('n', '<Esc>', '<C-l><cmd>noh<cr>', 'Clear annoying things off the screen')
+Map('n', '<Esc>', '<C-l><cmd>noh | lua MiniSnippets.session.stop()<cr>', 'Clear annoying things off the screen')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')

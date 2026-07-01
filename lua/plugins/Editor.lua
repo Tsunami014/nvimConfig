@@ -1,3 +1,5 @@
+local p = require("profile")
+
 return {
   -- File system viewer
   {
@@ -18,6 +20,10 @@ return {
           hide_gitignored = false,
           never_show = { ".git", "package-lock.json", "__pycache__" },
         },
+      },
+      window = {
+        position = p.OPTS.Notes and "float" or "left",
+        width = 30,
       },
     },
   },

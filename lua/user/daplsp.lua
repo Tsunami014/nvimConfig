@@ -97,6 +97,7 @@ vim.lsp.config('clangd', {
     "--clang-tidy=false",
     "--pch-storage=memory",
     "--compile-commands-dir=.",
+    "--header-insertion=never",
   },
   flags = {
     debounce_text_changes = 200, -- prevents spamming, milliseconds
