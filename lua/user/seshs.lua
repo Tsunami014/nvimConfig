@@ -326,7 +326,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
     if vim.fn.argc(-1) > 0 then
       local dir = vim.fn.argv(0)
       if vim.fn.isdirectory(dir) == 1 then
-        vim.cmd("enew")
+        vim.cmd("new | only")
         vim.defer_fn(function()
           vim.cmd("LoadUI " .. vim.fn.fnameescape(dir))
         end, 10)
