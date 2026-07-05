@@ -216,10 +216,11 @@ Register("e", "Environment", "", {
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
     end, "Chdir to parent dir", "󰌑" },
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
+    l = { "<cmd>Lazy<cr>", "Open Lazy", "󰏗" },
     a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
-    A = { "<cmd>ASToggle<CR>", "Toggle autosave", "" },
-    l = { envf.dirch, "Reload environment files" },
-    L = { envf.genfile, "Create template env file" },
+    A = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
+    e = { envf.dirch, "Reload environment files" },
+    E = { envf.genfile, "Create template env file" },
     f = { function()
         vim.notify("Reentering dir...")
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
