@@ -232,7 +232,7 @@ Register("|", "Profiles", "", {
     ["|"] = { function()
         vim.notify('The currently active profile is: "' .. require("profile").current_name() .. '"')
     end, "Show Current Profile" },
-    S = { function() require('profile').choose_profile() end, "Switch Profile" },
+    s = { function() require('profile').choose_profile() end, "Switch Profile" },
 }, "<leader>e")
 
 Register("t", "Terminal", "", {
@@ -305,7 +305,7 @@ Register("<leader>", "", "󱁐", {
     U = { "<cmd>UndotreeToggle<cr>", "Undo tree", "" },
     I = { links.toggle, "Toggle index file", "" },
     L = { require("user.utils.links-buf").toggle, "Toggle links panel", "" },
-    S = { MiniExtra.pickers.spellsuggest, "Suggest respelling", "" },
+    ["="] = { MiniExtra.pickers.spellsuggest, "Suggest respelling", "" },
 
     F = { RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉" },
     T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
