@@ -40,6 +40,7 @@ return {
     },
   },
 
+  -- Popup suggestions for terminal and search
   {
     "gelguy/wilder.nvim",
     event = "CmdlineEnter",

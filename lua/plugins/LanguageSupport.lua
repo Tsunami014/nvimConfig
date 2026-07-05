@@ -92,5 +92,22 @@ return {
       vim.g.vimtex_view_method = "sioyek"
       vim.g.vimtex_mappings_enabled = false
     end
-  }
+  },
+
+  -- Venv selector
+  {
+    "linux-cultist/venv-selector.nvim",
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      "mfussenegger/nvim-dap",
+      "mfussenegger/nvim-dap-python",
+      { "nvim-telescope/telescope.nvim", branch = "0.1.x", dependencies = { "nvim-lua/plenary.nvim" } },
+    },
+    lazy = false,
+    opts = {
+      search = {
+        global = { command = "bash -lc 'which python3'" }
+      }
+    },
+  },
 }

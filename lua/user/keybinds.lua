@@ -3,6 +3,7 @@ local dapui = require("dapui")
 local dbug = require("user.debug")
 local seshs = require("user.seshs")
 local envf = require("user.envfile")
+local sig = require("user.signature")
 local links = require("user.utils.links")
 
 local group_clues = {}
@@ -272,7 +273,6 @@ local function reindent()
     vim.cmd("silent! retab!")
     vim.cmd("normal! gg=G")
     pcall(vim.api.nvim_win_set_cursor, current_win, cursor_pos)
-    vim.notify("File indented to " .. spaces .. " spaces.")
 end
 Register("m", "Formatting", "󰉼", {
     m = { require("user.utils.fixtables").fix_table, "Normalise md table", "󰓫" },
@@ -287,6 +287,7 @@ Register("m", "Formatting", "󰉼", {
                 vim.opt_local.tabstop = spaces
                 vim.opt_local.softtabstop = spaces
                 reindent()
+                vim.notify("File indented to " .. spaces .. " spaces.")
             elseif input ~= nil then
                 vim.notify("Invalid input", vim.log.levels.WARN)
             end
@@ -342,6 +343,11 @@ Register("<leader>", "", "󱁐", {
 
 -- A more convenient @@
 Map({ 'n', 'v' }, '\\', '@@', '@@')
+
+-- Signature stuff
+Map('i', '<C-s>', false)
+Map('i', '<C-j>', sig.next, "Next signature overload")
+Map('i', '<C-k>', sig.prev, "Previous signature overload")
 
 -- Window shenanigans
 Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')

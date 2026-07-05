@@ -70,23 +70,6 @@ return {
     opts = {},
   },
 
-  -- Venv selector
-  {
-    "linux-cultist/venv-selector.nvim",
-    dependencies = {
-      "neovim/nvim-lspconfig",
-      "mfussenegger/nvim-dap",
-      "mfussenegger/nvim-dap-python",
-      { "nvim-telescope/telescope.nvim", branch = "0.1.x", dependencies = { "nvim-lua/plenary.nvim" } },
-    },
-    lazy = false,
-    opts = {
-      search = {
-        global = { command = "bash -lc 'which python3'" }
-      }
-    },
-  },
-
   -- Autosave
   {
     'pocco81/auto-save.nvim',

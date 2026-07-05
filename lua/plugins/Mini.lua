@@ -96,6 +96,7 @@ return {{
       window = {
         info = { border = 'rounded' },
       },
+      delay = { signature = 10e8 }, -- Disable signature popup
       lsp_completion = {
         process_items = function(items, base)
           -- Cut off ending characters that are the same as the characters after the cursor
