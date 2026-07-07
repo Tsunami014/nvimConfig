@@ -119,9 +119,6 @@ Register("b", "Buffer", "󰓩", {
     ["1"] = { "<cmd>BufferGoto 1<cr>", "First buffer" },
     ["0"] = { "<cmd>BufferLast<cr>", "Last Buffer" },
 
-    h = { "<cmd>BufferMovePrevious<cr>", "Move Buffer Left" },
-    l = { "<cmd>BufferMoveNext<cr>", "Move Buffer Right" },
-
     x = { "<cmd>BufferPin<cr>", "Pin/Unpin Buffer" },
     X = { "<cmd>BufferCloseAllButPinned<cr>", "Close Unpinned Buffers" },
 
@@ -400,7 +397,8 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 -- Misc stuff
-Map('n', '<Esc>', '<C-l><cmd>noh | lua MiniSnippets.session.stop()<cr>', 'Clear annoying things off the screen')
+Map('n', '<Esc>', '<C-l><cmd>noh | lua MiniSnippets.session.stop()<cr><cmd>DapVirtualTextForceRefresh<cr>', 'Clear annoying things off the screen')
+Map('n', '<C-c>', '<esc>', 'Clear annoying things off the screen')
 
 Map({ 'n', 'v' }, "Q", "<cmd>q<CR>", "Quit")
 Map({ 'n', 'v', 'x' }, '<c-a>', '<esc>ggVG', 'Select all')

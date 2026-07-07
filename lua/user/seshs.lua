@@ -53,6 +53,43 @@ local function should_save_session(cwd)
   return true
 end
 
+-- Recursively walks a vim.fn.winlayout() dropping non-file buffers
+local function serialise_layout(node)
+  local kind = node[1]
+
+  if kind == "leaf" then
+    local win = node[2]
+    local buf = vim.api.nvim_win_get_buf(win)
+    if not is_real_file_buf(buf) then
+      return nil
+    end
+    return {
+      type = "leaf",
+      file = vim.api.nvim_buf_get_name(buf),
+      cursor = vim.api.nvim_win_get_cursor(win)[1],
+      current = (win == vim.api.nvim_get_current_win()),
+      width = vim.api.nvim_win_get_width(win),
+      height = vim.api.nvim_win_get_height(win),
+    }
+  end
+
+  local children = {}
+  for _, child in ipairs(node[2]) do
+    local s = serialise_layout(child)
+    if s then
+      table.insert(children, s)
+    end
+  end
+
+  if #children == 0 then
+    return nil
+  elseif #children == 1 then
+    return children[1]
+  end
+
+  return { type = kind, children = children }
+end
+
 local function collect_state()
   local files = {}
   local cursors = {}
@@ -97,20 +134,22 @@ local function collect_state()
     end
   end
 
+  -- Per-tab window layout (splits included), with non-file windows pruned.
   local current_tabpage = vim.api.nvim_get_current_tabpage()
-  local tabs = {}
+  local tab_layouts = {}
   local active_tab = nil
   for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
-    local buf = vim.api.nvim_win_get_buf(vim.api.nvim_tabpage_get_win(tab))
-    if is_real_file_buf(buf) then
-      table.insert(tabs, vim.api.nvim_buf_get_name(buf))
+    local tabnr = vim.api.nvim_tabpage_get_number(tab)
+    local layout = serialise_layout(vim.fn.winlayout(tabnr))
+    if layout then
+      table.insert(tab_layouts, layout)
       if tab == current_tabpage then
-        active_tab = #tabs
+        active_tab = #tab_layouts
       end
     end
   end
 
-  return { files = files, cursors = cursors, tabs = tabs, active_tab = active_tab }
+  return { files = files, cursors = cursors, tab_layouts = tab_layouts, active_tab = active_tab }
 end
 
 function M.save()
@@ -176,8 +215,7 @@ local function wipe_non_file_buffers()
   end
 end
 
--- Removes leftover unnamed scratch buffers left behind once a real file
--- has been :edit'd into their window.
+-- Removes leftover unnamed scratch buffers
 local function wipe_stray_scratch_buffers()
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if
@@ -189,6 +227,78 @@ local function wipe_stray_scratch_buffers()
     then
       pcall(vim.api.nvim_buf_delete, buf, { force = true })
     end
+  end
+end
+
+-- Rebuilds one tab's split layout
+local function build_tab_layout(layout)
+  local focus_win = nil
+  local leaves = {}
+  local splitright = vim.o.splitright
+  local splitbelow = vim.o.splitbelow
+  vim.o.splitright = true
+  vim.o.splitbelow = true
+
+  local function build(win, node)
+    if node.type == "leaf" then
+      vim.api.nvim_set_current_win(win)
+      if vim.fn.filereadable(node.file) == 1 then
+        pcall(vim.cmd, "edit " .. vim.fn.fnameescape(node.file))
+        if node.cursor and node.cursor > 0 then
+          pcall(vim.api.nvim_win_set_cursor, win, { math.min(node.cursor, vim.api.nvim_buf_line_count(0)), 0 })
+        end
+      end
+      if node.current then
+        focus_win = win
+      end
+      table.insert(leaves, { win = win, width = node.width, height = node.height })
+      return
+    end
+
+    -- "row" = windows side by side (vertical split), "col" = stacked (horizontal split)
+    local cmd = (node.type == "row") and "vsplit" or "split"
+
+    local wins = { win }
+    for i = 2, #node.children do
+      vim.api.nvim_set_current_win(wins[#wins])
+      vim.cmd(cmd)
+      table.insert(wins, vim.api.nvim_get_current_win())
+    end
+
+    for i, child in ipairs(node.children) do
+      build(wins[i], child)
+    end
+  end
+
+  pcall(build, vim.api.nvim_get_current_win(), layout)
+
+  -- Apply saved sizes once the full split tree for this tab exists
+  for _, leaf in ipairs(leaves) do
+    if vim.api.nvim_win_is_valid(leaf.win) then
+      if leaf.height then
+        pcall(vim.api.nvim_win_set_height, leaf.win, leaf.height)
+      end
+      if leaf.width then
+        pcall(vim.api.nvim_win_set_width, leaf.win, leaf.width)
+      end
+    end
+  end
+  for _, leaf in ipairs(leaves) do
+    if vim.api.nvim_win_is_valid(leaf.win) then
+      if leaf.height then
+        pcall(vim.api.nvim_win_set_height, leaf.win, leaf.height)
+      end
+      if leaf.width then
+        pcall(vim.api.nvim_win_set_width, leaf.win, leaf.width)
+      end
+    end
+  end
+
+  vim.o.splitright = splitright
+  vim.o.splitbelow = splitbelow
+
+  if focus_win and vim.api.nvim_win_is_valid(focus_win) then
+    pcall(vim.api.nvim_set_current_win, focus_win)
   end
 end
 
@@ -223,39 +333,17 @@ function M.load(dir)
     end
   end
 
-  -- One tab per saved "current" file; falls back to state.current (pre-tab
-  -- sessions) or the first readable file if nothing else is usable.
-  local tab_targets = {}
-  for _, f in ipairs(state.tabs or {}) do
-    if type(f) == "string" and vim.fn.filereadable(f) == 1 then
-      table.insert(tab_targets, f)
-    end
-  end
-  if #tab_targets == 0 and type(state.current) == "string" and vim.fn.filereadable(state.current) == 1 then
-    table.insert(tab_targets, state.current)
-  end
-  if #tab_targets == 0 then
-    for _, f in ipairs(state.files) do
-      if vim.fn.filereadable(f) == 1 then
-        table.insert(tab_targets, f)
-        break
+  if type(state.tab_layouts) == "table" and #state.tab_layouts > 0 then
+    for i, layout in ipairs(state.tab_layouts) do
+      if i > 1 then
+        vim.cmd("tabnew")
       end
+      build_tab_layout(layout)
     end
-  end
 
-  for i, f in ipairs(tab_targets) do
-    if i > 1 then
-      vim.cmd("tabnew")
+    if state.active_tab and state.active_tab >= 1 and state.active_tab <= #state.tab_layouts then
+      pcall(vim.cmd, "tabnext " .. state.active_tab)
     end
-    pcall(vim.cmd, "edit " .. vim.fn.fnameescape(f))
-    local line = state.cursors and state.cursors[f]
-    if line and line > 0 then
-      pcall(vim.api.nvim_win_set_cursor, 0, { math.min(line, vim.api.nvim_buf_line_count(0)), 0 })
-    end
-  end
-
-  if state.active_tab and state.active_tab >= 1 and state.active_tab <= #tab_targets then
-    pcall(vim.cmd, "tabnext " .. state.active_tab)
   end
 
   wipe_stray_scratch_buffers()
@@ -303,6 +391,8 @@ vim.api.nvim_create_autocmd({
   "BufDelete",
   "BufWipeout",
   "BufEnter",
+  "WinNew",
+  "WinClosed",
 }, {
   callback = function(args)
     if pend or loading then
