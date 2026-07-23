@@ -129,12 +129,14 @@ Register("b", "Buffer", "󰓩", {
     w = { "<cmd>BufferWipeout<cr>", "Wipeout Buffer" }, -- Completely purges it from memory
 })
 Register("l", "Layouts", "", {
-    n = { "<cmd>tabnew<cr>", "New Layout" },
-    c = { "<cmd>tabclose<cr>", "Close Layout" },
-    o = { "<cmd>tabonly<cr>", "Close other tab pages" },
+    n = { "<cmd>tabnew<cr>", "New layout" },
+    c = { "<cmd>tabclose<cr>", "Close layout" },
+    c = { "<cmd>tabclose!<cr>", "Force close layout" },
+    o = { "<cmd>tabonly<cr>", "Close other layouts" },
+    O = { "<cmd>tabonly!<cr>", "Force close other layouts" },
 
-    h = { "<cmd>tabmove -1<cr>", "Move Layout -1" },
-    l = { "<cmd>tabmove +1<cr>", "Move Layout +1" },
+    h = { "<cmd>tabmove -1<cr>", "Move layout -1" },
+    l = { "<cmd>tabmove +1<cr>", "Move layout +1" },
 })
 
 -- Debugger stuff
@@ -216,6 +218,7 @@ Register("e", "Environment", "", {
     l = { "<cmd>Lazy<cr>", "Open Lazy", "󰏗" },
     a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
     A = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
+    t = { envf.trust, "Remove config trust/untrust" },
     e = { envf.dirch, "Reload environment files" },
     E = { envf.genfile, "Create template env file" },
     f = { function()
