@@ -279,6 +279,39 @@ local function open_target(info, replace)
   end
 end
 
+local function scan_bare_urls(line, existing)
+  local out = {}
+  local pos = 1
+  while true do
+    local s, e = line:find("https?://[^%s%]%)>]+", pos)
+    if not s then break end
+
+    while e > s and line:sub(e, e):match("[%.,;:!?'\"]") do
+      e = e - 1
+    end
+
+    local overlaps = false
+    for _, link in ipairs(existing) do
+      if s <= link.end_col and e >= link.start_col then
+        overlaps = true
+        break
+      end
+    end
+
+    if not overlaps then
+      table.insert(out, {
+        type = "bare_url",
+        target = line:sub(s, e),
+        start_col = s,
+        end_col = e,
+      })
+    end
+
+    pos = e + 1
+  end
+  return out
+end
+
 local function scan_links(line)
   local links = {}
   local i, n = 1, #line
@@ -328,6 +361,10 @@ local function scan_links(line)
     end
     if not advanced then i = i + 1 end
   end
+
+  for _, url in ipairs(scan_bare_urls(line, links)) do
+    table.insert(links, url)
+  end
   return links
 end
 
@@ -338,6 +375,10 @@ end
 
 -- Converts a scanned link into the descriptor consumed by `open_target`.
 local function link_target(link)
+  if link.type == "bare_url" then
+    return { file = link.target, anchor = nil, anchor_is_slug = false }
+  end
+
   local file, anchor = split_anchor(link.target)
 
   if link.type == "wiki" then

@@ -552,6 +552,39 @@ function M.redraw(bufnr)
                         return {}
                     end,
                 },
+                -- Plain https:// links
+                {
+                    handler = function(ln)
+                        local occupied = {}
+                        for _, link in ipairs(parse_md_links(ln)) do
+                            table.insert(occupied, { s = link.start, e = link.finish })
+                        end
+
+                        local pos = 1
+                        while true do
+                            local s, e = ln:find("https?://[^%s%]%)>]+", pos)
+                            if not s then break end
+
+                            -- don't swallow trailing punctuation that's probably not part of the URL
+                            while e > s and ln:sub(e, e):match("[%.,;:!?'\"]") do
+                                e = e - 1
+                            end
+
+                            local inside_md_link = false
+                            for _, rng in ipairs(occupied) do
+                                if s >= rng.s and e <= rng.e then
+                                    inside_md_link = true
+                                    break
+                                end
+                            end
+                            if not inside_md_link then
+                                add_hl(s, e + 1, "markdownUrl")
+                            end
+                            pos = e + 1
+                        end
+                        return {}
+                    end,
+                },
             }
 
             local used = {}

@@ -20,14 +20,25 @@ local function read_text(path)
   return table.concat(lines, "\n")
 end
 
+local function link_file_part(link)
+  local hash = link:find("#", 1, true)
+  if hash then
+    return link:sub(1, hash - 1)
+  end
+  return link
+end
+
 --- Extract the unique, sorted set of [[wiki link]] targets in `text`.
 local function collect_links(text)
   local seen, out = {}, {}
   for link in text:gmatch("%[%[([^%]]+)%]%]") do
-    local name = normalise(link)
-    if not seen[name] then
-      seen[name] = true
-      table.insert(out, name)
+    local file_part = link_file_part(link)
+    if file_part ~= "" then
+      local name = normalise(file_part)
+      if not seen[name] then
+        seen[name] = true
+        table.insert(out, name)
+      end
     end
   end
   table.sort(out)
@@ -43,7 +54,8 @@ local function scan_inbound(root, current_name)
       local text = read_text(file)
       if text then
         for link in text:gmatch("%[%[([^%]]+)%]%]") do
-          if normalise(link) == current_name then
+          local file_part = link_file_part(link)
+          if file_part ~= "" and normalise(file_part) == current_name then
             table.insert(inbound, file)
             break
           end
