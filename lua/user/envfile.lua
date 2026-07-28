@@ -2,6 +2,10 @@ local M = {}
 
 -- Reset some common directory environment things
 local function resetEnv()
+    if type(_G.EnvReset) == "function" then
+        EnvReset()
+        _G.EnvReset = nil
+    end
     _G.DebugActions = nil
 end
 
@@ -75,6 +79,26 @@ function DebugActions(actions)
     -- })
 end
 -- vim.g.askcppexec = "file" -- Instead of asking which executable to use, use this
+]], 2},
+    ["Run on save"] = {[[
+local grp = vim.api.nvim_create_augroup("RunOnSave", { clear = true })
+
+vim.api.nvim_create_autocmd("BufWritePost", {
+  group = grp,
+  pattern = "*/file.txt",
+  callback = function(args)
+    -- local dir = vim.fn.fnamemodify(args.file, ":h")
+    vim.system({ "bash", "-c", "echo saved: " .. args.file }, {}, function(obj)
+      vim.schedule(function()
+        print(obj.stdout)
+      end)
+    end)
+  end,
+})
+
+function EnvReset()
+  vim.api.nvim_create_augroup("RunOnSave", { clear = true })
+end
 ]], 2},
 }
 local keys = {}
