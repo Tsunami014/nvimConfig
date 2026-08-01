@@ -296,8 +296,13 @@ local function get_actions()
             label = "Compile markdown",
             terminal = function()
                 local outfname = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".html")
-                local compile = "pandoc --standalone " .. state.fname .. " -o " .. outfname
-                return compile .. ";xdg-open " .. outfname
+                return string.format(
+                    "cd %s && pandoc --standalone --embed-resources --resource-path=. --include-in-header=%s %s -o %s && xdg-open %s",
+                    vim.fn.shellescape(vim.fn.fnamemodify(state.fname, ":h")),
+                    [[<(printf '%s\n' '<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">')]],
+                    vim.fn.shellescape(vim.fn.fnamemodify(state.fname, ":t")),
+                    outfname, outfname
+                )
             end,
         })
     end
@@ -310,9 +315,7 @@ local function get_actions()
         })
         table.insert(actions, {
             label = "Run http server",
-            terminal = function()
-                return "python3 -m http.server"
-            end
+            terminal = "python3 -m http.server"
         })
     end
 
