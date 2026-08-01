@@ -39,9 +39,7 @@ local pyconfig = {
 
     program = "${file}",
     console = "integratedTerminal",
-    pythonPath = function()
-      return vs.python()
-    end,
+    pythonPath = vs.python,
   }
 }
 dap.configurations.python = pyconfig

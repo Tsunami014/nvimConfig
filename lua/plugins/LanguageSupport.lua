@@ -60,8 +60,8 @@ return {
                   "stylua",
 
                   -- install debuggers
-                  "debugpy",
                   "cpptools",
+                  -- but not python (use a system python package for more versatility)
 
                   -- install any other package
                   "tree-sitter-cli",
@@ -106,7 +106,7 @@ return {
     lazy = false,
     opts = {
       search = {
-        global = { command = "bash -lc 'which python3'" }
+        global = { command = "which python3" }
       }
     },
   },
