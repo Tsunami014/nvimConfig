@@ -97,14 +97,18 @@ Register("r", "Find & replace", "󰗧", {
 Map({ 'n', 'v' }, "<A-BS>", "<cmd>BufferClose<cr>", "Close buffer")
 Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
 Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map("n", "<C-h>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map("n", "<C-l>", "<cmd>BufferNext<cr>", "Next Buffer")
 Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
 Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
 
 Map({ 'n', 'v' }, "<C-A-BS>", "<cmd>tabclose<cr>", "Close Layout")
 Map("n", "<C-Tab>", "<cmd>tabnext<cr>", "Next Layout")
 Map("n", "<C-S-Tab>", "<cmd>tabprev<cr>", "Previous Layout")
-Map("n", "<C-A-h>", "<cmd>tabmove -1<cr>", "Move Layout -1")
-Map("n", "<C-A-l>", "<cmd>tabmove +1<cr>", "Move Layout +1")
+Map("n", "<C-j>", "<cmd>tabprev<cr>", "Previous Layout")
+Map("n", "<C-k>", "<cmd>tabnext<cr>", "Next Layout")
+Map("n", "<A-j>", "<cmd>tabmove -1<cr>", "Move Layout -1")
+Map("n", "<A-k>", "<cmd>tabmove +1<cr>", "Move Layout +1")
 Register("b", "Buffer", "󰓩", {
     n = { "<cmd>enew<cr>", "New Buffer" },
     h = { "<cmd>new<cr>", "New Buffer Horizontal" },
