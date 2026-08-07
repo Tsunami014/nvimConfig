@@ -184,6 +184,30 @@ function launch_cpp_dap(progr) -- Global so can be used in env file
     })
 end
 
+function latex_compile(file)
+    local outfle = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(file, ":t:r"))
+    local onfail = " || { rm " .. outfle .. "*; exit 1; }"
+    local build = "texfot latexmk -pdf -file-line-error -halt-on-error -synctex=1 -outdir=/tmp " .. vim.fn.shellescape(file)
+    return build .. onfail
+end
+function latex_view(file)
+    local outfname = "/tmp/" .. vim.fn.fnamemodify(file, ":t:r") .. ".pdf"
+    local inverse_search = string.format(
+        'nvim --server %s --remote-send "<C-\\><C-N>:e %%1<CR>:%%2<CR>"',
+        vim.v.servername
+    )
+    vim.system({
+        "sioyek",
+        -- The current latex file and line in it
+        "--forward-search-file", vim.fn.expand('%:p'),
+        "--forward-search-line", tostring(vim.fn.line('.')),
+        -- Connect it to the current nvim instance
+        "--inverse-search", inverse_search,
+        -- And display the output file
+        outfname,
+    })
+end
+
 -- Actions
 local function get_actions()
     local actions = {}
@@ -254,46 +278,16 @@ local function get_actions()
         })
     end
     if ft == "tex" or ft == "plaintex" or ft == "latex" then
-        local buildLatex = function()
-            return "texfot latexmk -pdf -file-line-error -halt-on-error -synctex=1 -outdir=/tmp " .. vim.fn.shellescape(state.fname)
-        end
         table.insert(actions, {
-            label = "Build & view LaTeX",
-            terminal = function()
-                local outfle = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r"))
-                local onfail = " || { rm " .. outfle .. "*; exit 1; }"
-                return buildLatex() .. onfail
-            end,
+            label = "Compile & view LaTeX",
+            terminal = function() return latex_compile(state.fname) end,
             after = function(code)
-                if code == 0 then
-                    local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
-                    local inverse_search = string.format(
-                        'nvim --server %s --remote-send "<C-\\><C-N>:e %%1<CR>:%%2<CR>"',
-                        vim.v.servername
-                    )
-                    vim.system({
-                        "sioyek",
-                        -- The current latex file and line in it
-                        "--forward-search-file", vim.fn.expand('%:p'),
-                        "--forward-search-line", tostring(vim.fn.line('.')),
-                        -- Connect it to the current nvim instance
-                        "--inverse-search", inverse_search,
-                        -- And display the output file
-                        outfname,
-                    })
-                end
+                if code == 0 then latex_view(state.fname) end
             end
         })
         table.insert(actions, {
             label = "Compile LaTeX",
-            terminal = function()
-                local build = buildLatex()
-                local outfle = vim.fn.shellescape("/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r"))
-                local newfname = vim.fn.fnamemodify(state.fname, ":r") .. ".pdf"
-                local copy = "cp " .. outfle .. ".pdf " .. vim.fn.shellescape(newfname)
-                local onfail = " || { rm " .. outfle .. "*; exit 1; }"
-                return build .. " && " .. build .. " && " .. copy .. onfail
-            end,
+            terminal = function() return latex_compile(state.fname) end,
         })
     end
     if ft == "markdown" then

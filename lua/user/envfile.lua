@@ -55,30 +55,59 @@ end
 local options = {
     ["Blank .nvimrc"] = {"", 1},
     ["Blank .nvim.lua"] = {"", 2},
-    ["Override debug options"] = {[[
+    ["Generic debug template"] = {[[
 function DebugActions(actions)
     local ft = vim.bo.filetype
+    while #actions > 0 do table.remove(actions) end
+    table.insert(actions, {
+        label = "Name",
+        terminal = "cmd",
+        -- terminal = function() return "cmd" end,
+        after = function() end,
+        -- after = function(code) end, -- status code of terminal output
+        -- keepopen = true, -- keep terminal open even on success; default false
+    })
+end
+]], 2},
+    ["C++ template"] = {[[
+function DebugActions(actions)
     -- while #actions > 0 do table.remove(actions) end
-    -- table.insert(actions, {
-    --     label = "Name",
-    --     terminal = "cmd", -- Or use a function
-    --     after = function(code) if code == 0 then launch_cpp_dap("file") end end,
-    --     keepopen = true, -- keep terminal open even on success; default false
-    -- })
-    -- table.insert(actions, {
-    --     label = "Name2",
-    --     after = function()
-    --         dap.run({
-    --             name = "Launch Python",
-    --             type = "python",
-    --             request = "launch",
-    --             program = "file.py",
-    --             console = "integratedTerminal",
-    --         })
-    --     end,
-    -- })
+    table.insert(actions, {
+        label = "Name",
+        terminal = "make debug",
+        after = function(code) if code == 0 then launch_cpp_dap("file") end end,
+    })
 end
 -- vim.g.askcppexec = "file" -- Instead of asking which executable to use, use this
+]], 2},
+    ["Python template"] = {[[
+function DebugActions(actions)
+    -- while #actions > 0 do table.remove(actions) end
+    table.insert(actions, {
+        label = "Run file",
+        after = function()
+            dap.run({
+                name = "Launch Python",
+                type = "python",
+                request = "launch",
+                program = "file.py",
+                console = "integratedTerminal",
+            })
+        end,
+    })
+end
+]], 2},
+    ["Latex template"] = {[[
+function DebugActions(actions)
+    -- while #actions > 0 do table.remove(actions) end
+    table.insert(actions, {
+        label = "Compile & view LaTeX",
+        terminal = function() return latex_compile("file.tex") end,
+        after = function(code)
+            if code == 0 then latex_view("file.tex") end
+        end
+    })
+end
 ]], 2},
     ["Run on save"] = {[[
 local grp = vim.api.nvim_create_augroup("RunOnSave", { clear = true })
@@ -117,8 +146,15 @@ function M.genfile()
     local fles = { cwd .. "/.nvimrc", cwd .. "/.nvim.lua" }
     for _, f in ipairs(fles) do
         if vim.fn.filereadable(f) == 1 then
-            vim.notify("Environment file already exists!")
-            return
+            if vim.fn.confirm("Environment file already exists, do you want to replace it?", "&Yes\n&No") == 1 then
+                if vim.fn.delete(f) ~= 0 then
+                    vim.notify("Error: Failed to delete environment file.")
+                    return
+                end
+            else
+                vim.notify("Not deleting.")
+                return
+            end
         end
     end
     vim.ui.select(keys, {
