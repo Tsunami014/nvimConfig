@@ -270,7 +270,6 @@ Register("u", "UI", "", {
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
-    t = { "<plug>(vimtex-toc-toggle)", "Toggle Latex table of contents", "" },
 })
 local function reindent()
     local current_win = vim.api.nvim_get_current_win()

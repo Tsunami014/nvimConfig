@@ -266,16 +266,21 @@ local function get_actions()
             end,
             after = function(code)
                 if code == 0 then
-                    local old_buf = vim.api.nvim_get_current_buf()
-                    local change = vim.bo.filetype ~= "tex"
-                    if change then
-                      vim.cmd("drop " .. vim.fn.fnameescape(state.fname))
-                    end
                     local outfname = "/tmp/" .. vim.fn.fnamemodify(state.fname, ":t:r") .. ".pdf"
-                    vim.cmd({ cmd = "VimtexView", args = { outfname } })
-                    if change and vim.api.nvim_buf_is_valid(old_buf) then
-                      vim.api.nvim_set_current_buf(old_buf)
-                    end
+                    local inverse_search = string.format(
+                        'nvim --server %s --remote-send "<C-\\><C-N>:e %%1<CR>:%%2<CR>"',
+                        vim.v.servername
+                    )
+                    vim.system({
+                        "sioyek",
+                        -- The current latex file and line in it
+                        "--forward-search-file", vim.fn.expand('%:p'),
+                        "--forward-search-line", tostring(vim.fn.line('.')),
+                        -- Connect it to the current nvim instance
+                        "--inverse-search", inverse_search,
+                        -- And display the output file
+                        outfname,
+                    })
                 end
             end
         })

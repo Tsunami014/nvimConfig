@@ -84,16 +84,6 @@ return {
     end,
   },
 
-  -- Vim latex integration
-  {
-    "lervag/vimtex",
-    lazy = false,
-    init = function()
-      vim.g.vimtex_view_method = "sioyek"
-      vim.g.vimtex_mappings_enabled = false
-    end
-  },
-
   -- Venv selector
   {
     "linux-cultist/venv-selector.nvim",
