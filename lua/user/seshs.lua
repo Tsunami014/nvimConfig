@@ -179,24 +179,23 @@ end
 -- Closes the window (not just the buffer) so plugins like neo-tree/undotree
 -- get their normal close autocmds and don't end up in a stale state.
 local function close_non_file_windows()
-  if #vim.api.nvim_list_wins() == 1 then
-    local only_buf = vim.api.nvim_win_get_buf(vim.api.nvim_list_wins()[1])
-    if not is_real_file_buf(only_buf) then
+  local wins = vim.api.nvim_list_wins()
+  if #wins == 1 then
+    local win = wins[1]
+    if not is_real_file_buf(vim.api.nvim_win_get_buf(win)) then
       vim.cmd("new")
     end
   end
 
-  local progressed = true
-  while progressed do
-    progressed = false
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-      if vim.api.nvim_win_is_valid(win) and #vim.api.nvim_list_wins() > 1 then
-        local buf = vim.api.nvim_win_get_buf(win)
-        if not is_real_file_buf(buf) then
-          pcall(vim.api.nvim_win_close, win, true)
-          progressed = true
-          break
-        end
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if #vim.api.nvim_list_wins() <= 1 then
+      break
+    end
+
+    if vim.api.nvim_win_is_valid(win) then
+      local buf = vim.api.nvim_win_get_buf(win)
+      if not is_real_file_buf(buf) then
+        pcall(vim.api.nvim_win_close, win, true)
       end
     end
   end
