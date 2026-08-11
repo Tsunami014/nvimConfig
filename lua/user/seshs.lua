@@ -53,6 +53,19 @@ local function should_save_session(cwd)
   return true
 end
 
+-- Recursively strips saved width/height so a subtree stretches to fill
+-- whatever space it's given, instead of being pinned to a stale size.
+local function clear_sizes(node)
+  if node.type == "leaf" then
+    node.width = nil
+    node.height = nil
+  else
+    for _, c in ipairs(node.children) do
+      clear_sizes(c)
+    end
+  end
+end
+
 -- Recursively walks a vim.fn.winlayout() dropping non-file buffers
 local function serialise_layout(node)
   local kind = node[1]
@@ -74,17 +87,31 @@ local function serialise_layout(node)
   end
 
   local children = {}
+  local pruned = false
   for _, child in ipairs(node[2]) do
     local s = serialise_layout(child)
     if s then
       table.insert(children, s)
+    else
+      pruned = true
     end
   end
 
   if #children == 0 then
     return nil
   elseif #children == 1 then
+    if pruned then
+      -- A sibling (e.g. a terminal) was pruned; the saved size was
+      -- constrained by space that no longer needs to be shared.
+      clear_sizes(children[1])
+    end
     return children[1]
+  end
+
+  if pruned then
+    for _, c in ipairs(children) do
+      clear_sizes(c)
+    end
   end
 
   return { type = kind, children = children }
