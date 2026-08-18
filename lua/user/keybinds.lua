@@ -262,8 +262,9 @@ Register("x", "Todos & Troubles", "", {
 Register("u", "UI", "", {
     d = { "<Plug>(doge-generate)", "Generate Docstring", "󰏫" }, -- <cmd>DogeGenerate<cr>
     s = { function()
-        vim.opt.spell = not vim.opt.spell
-        vim.notify((vim.opt.spell and "Checking" or "Not checking") .. " spelling")
+        local nstate = not vim.opt.spell:get()
+        vim.opt.spell = nstate
+        vim.notify("Spell checking " .. (nstate and "enabled" or "disabled"))
     end, "Toggle spell check", "" },
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
