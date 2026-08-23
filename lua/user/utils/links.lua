@@ -119,20 +119,75 @@ local function split_anchor(target)
   return target:sub(1, hash - 1), target:sub(hash + 1)
 end
 
--- Jumps the cursor in the current buffer to the ATX heading matching
+-- A setext underline is a line that, once stripped of surrounding
+-- whitespace, consists of one or more of only "-" or only "=" characters.
+local function setext_underline(line)
+  local stripped = line:match("^%s*(.-)%s*$")
+  if stripped == "" then
+    return nil
+  end
+  if stripped:match("^%-+$") then
+    return "-"
+  end
+  if stripped:match("^=+$") then
+    return "="
+  end
+  return nil
+end
+
+-- Collects heading text found at each line number
+local function collect_headings(lines)
+  local headings = {}
+  local lnum = 1
+
+  while lnum <= #lines do
+    local line = lines[lnum]
+    local atx_text = line:match("^#+%s+(.-)%s*$")
+
+    if atx_text then
+      table.insert(headings, { lnum = lnum, text = atx_text })
+      lnum = lnum + 1
+    else
+      local stripped = line:match("^%s*(.-)%s*$")
+      if stripped ~= "" and not setext_underline(line) then
+        -- Look ahead for a contiguous run of non-blank lines terminated by
+        -- a setext underline; that whole run is the heading text.
+        local j = lnum + 1
+        local text_lines = { stripped }
+        while j <= #lines do
+          local under = setext_underline(lines[j])
+          if under then
+            local text = table.concat(text_lines, " ")
+            table.insert(headings, { lnum = lnum, text = text })
+            break
+          end
+          local next_stripped = lines[j]:match("^%s*(.-)%s*$")
+          if next_stripped == "" then
+            break
+          end
+          table.insert(text_lines, next_stripped)
+          j = j + 1
+        end
+      end
+      lnum = lnum + 1
+    end
+  end
+
+  return headings
+end
+
+-- Jumps the cursor in the current buffer to the heading matching `anchor`,
+-- recognising both ATX (`#`) and setext (underlined) headings.
 local function goto_heading(anchor, anchor_is_slug)
   local query = anchor_is_slug and slugify(anchor) or anchor:lower()
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
-  for lnum, line in ipairs(lines) do
-    local text = line:match("^#+%s+(.-)%s*$")
-    if text then
-      local candidate = anchor_is_slug and slugify(text) or text:lower()
-      if candidate == query then
-        vim.api.nvim_win_set_cursor(0, { lnum, 0 })
-        vim.cmd("normal! zz")
-        return true
-      end
+  for _, heading in ipairs(collect_headings(lines)) do
+    local candidate = anchor_is_slug and slugify(heading.text) or heading.text:lower()
+    if candidate == query then
+      vim.api.nvim_win_set_cursor(0, { heading.lnum, 0 })
+      vim.cmd("normal! zz")
+      return true
     end
   end
 
@@ -143,6 +198,27 @@ end
 local function open_system(target)
   vim.ui.open(target)
   vim.notify("Opening externally: " .. target, vim.log.levels.INFO)
+end
+
+-- Jumps to the definition line for a reference link or footnote
+local function goto_definition(label)
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local pattern = "^%s*%[" .. vim.pesc(label) .. "%]:%s*(%S+)"
+
+  for lnum, line in ipairs(lines) do
+    local target = line:match(pattern)
+    if target then
+      vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+      vim.cmd("normal! zz")
+      if target:match("^%a[%w+.-]*://") then
+        open_system(target)
+      end
+      return true
+    end
+  end
+
+  vim.notify("Definition not found: [" .. label .. "]", vim.log.levels.WARN)
+  return false
 end
 
 local function fenced_block_at(lnum)
@@ -279,16 +355,13 @@ local function open_target(info, replace)
   end
 end
 
-local function scan_bare_urls(line, existing)
+-- Scans `<target>` autolinks
+local function scan_angle_links(line, existing)
   local out = {}
   local pos = 1
   while true do
-    local s, e = line:find("https?://[^%s%]%)>]+", pos)
+    local s, e = line:find("<[^%s<>]+>", pos)
     if not s then break end
-
-    while e > s and line:sub(e, e):match("[%.,;:!?'\"]") do
-      e = e - 1
-    end
 
     local overlaps = false
     for _, link in ipairs(existing) do
@@ -300,8 +373,8 @@ local function scan_bare_urls(line, existing)
 
     if not overlaps then
       table.insert(out, {
-        type = "bare_url",
-        target = line:sub(s, e),
+        type = "angle",
+        target = line:sub(s + 1, e - 1),
         start_col = s,
         end_col = e,
       })
@@ -334,14 +407,31 @@ local function scan_links(line)
           i = close + 2
           advanced = true
         end
+      elseif line:sub(i + 1, i + 1) == "^" then
+        -- Footnote reference: [^label]
+        local close = line:find("%]", i + 2)
+        if close then
+          local label = line:sub(i + 1, close - 1) -- includes leading "^"
+          table.insert(links, {
+            type = "footnote",
+            target = label,
+            start_col = i,
+            end_col = close,
+          })
+          i = close + 1
+          advanced = true
+        end
       else
-        -- Markdown link: [text](target)
+        -- [text](target) or [text][label]
         local search_from = i + 1
         while true do
           local close_bracket = line:find("%]", search_from)
           if not close_bracket then break end
 
-          if line:sub(close_bracket + 1, close_bracket + 1) == "(" then
+          local next_char = line:sub(close_bracket + 1, close_bracket + 1)
+
+          if next_char == "(" then
+            -- Inline link: [text](target)
             local close_paren = line:find(")", close_bracket + 2, true)
             if close_paren then
               table.insert(links, {
@@ -354,36 +444,77 @@ local function scan_links(line)
               advanced = true
             end
             break
+          elseif next_char == "[" then
+            -- Reference link: [text][label] (label may be empty -> use text)
+            local close2 = line:find("%]", close_bracket + 2)
+            if close2 then
+              local label = line:sub(close_bracket + 2, close2 - 1)
+              if label == "" then
+                label = line:sub(i + 1, close_bracket - 1)
+              end
+              table.insert(links, {
+                type = "reference",
+                target = label,
+                start_col = i,
+                end_col = close2,
+              })
+              i = close2 + 1
+              advanced = true
+            end
+            break
+          else
+            -- Plain [text] with no ( ) or [ ] following
+            break
           end
-          search_from = close_bracket + 1
         end
       end
     end
     if not advanced then i = i + 1 end
   end
 
-  for _, url in ipairs(scan_bare_urls(line, links)) do
-    table.insert(links, url)
+  for _, angle in ipairs(scan_angle_links(line, links)) do
+    table.insert(links, angle)
   end
   return links
 end
 
+--- True if `text` already looks like a file reference rather than a bare
+--- page title: it has a path separator, or ends in a dotted extension.
+local function looks_like_path(text)
+  if text:find("/", 1, true) then
+    return true
+  end
+  return text:match("%.[%w]+$") ~= nil
+end
+
 function M.normalise(link)
   local page = link:match("^[^#]+") or link
+  page = page:match("^%s*(.-)%s*$")
+
+  if looks_like_path(page) then
+    return page
+  end
+
   return slugify(page) .. ".md"
 end
 
 -- Converts a scanned link into the descriptor consumed by `open_target`.
 local function link_target(link)
-  if link.type == "bare_url" then
-    return { file = link.target, anchor = nil, anchor_is_slug = false }
+  if link.type == "angle" then
+    local file, anchor = split_anchor(link.target)
+    return { file = file ~= "" and file or nil, anchor = anchor, anchor_is_slug = true }
   end
 
   local file, anchor = split_anchor(link.target)
 
   if link.type == "wiki" then
+    local normalised = file ~= "" and M.normalise(file) or nil
+    local prefixed = normalised
+    if normalised and not (normalised:match("^%.?%.?/") or normalised:match("^/")) then
+      prefixed = "./" .. normalised
+    end
     return {
-      file = file ~= "" and ("./" .. M.normalise(file)) or nil,
+      file = prefixed,
       anchor = anchor,
       anchor_is_slug = false,
     }
@@ -403,7 +534,11 @@ function M.follow(replace)
   local col1 = vim.api.nvim_win_get_cursor(0)[2] + 1
   for _, link in ipairs(scan_links(line)) do
     if col1 >= link.start_col and col1 <= link.end_col then
-      open_target(link_target(link), replace)
+      if link.type == "reference" or link.type == "footnote" then
+        goto_definition(link.target)
+      else
+        open_target(link_target(link), replace)
+      end
       return
     end
   end
@@ -461,6 +596,9 @@ function M.visual_follow(replace)
   local line = vim.api.nvim_buf_get_lines(0, s_line - 1, s_line, false)[1] or ""
   for _, link in ipairs(scan_links(line)) do
     if link.start_col <= s_col and link.end_col >= e_col then
+      if link.type == "reference" or link.type == "footnote" then
+        return goto_definition(link.target)
+      end
       return open_target(link_target(link), replace)
     end
   end

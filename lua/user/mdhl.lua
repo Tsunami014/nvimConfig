@@ -12,9 +12,9 @@ local heading_hl = {
     "@markup.heading.8.markdown",
 }
 
-local function make_bar(percent, level)
+local function make_bar(percent, level, offs)
     local parts = {}
-    for i = 1, level do
+    for i = offs, level do
         local threshold = (i / (level+1)) * 100
         local is_full = percent >= threshold
         if i == level then
@@ -28,15 +28,15 @@ local function make_bar(percent, level)
     return table.concat(parts)
 end
 
-local function make_bar_line(idx, total, line)
+local function make_bar_line(idx, total, line, offs)
     local hashes, text = string.match(line, "^(#+)%s*(.*)$")
     if not hashes then
         return
     end
     local level = #hashes
     local percent = math.floor((idx / total) * 100)
-    local bar = make_bar(percent, level)
-    return level, bar .. " " .. text
+    local bar = make_bar(percent, level, offs)
+    return level, bar
 end
 
 local function parse_md_links(line)
@@ -108,6 +108,7 @@ vim.schedule(function()
     sethl("InlineQuote", { fg = gethl("Constant").fg, italic = true })
     sethl("MarkdownUnderline", { underline = true })
     sethl("MarkdownSquiggle", { undercurl = true })
+    sethl("MarkdownDblUnderln", { underdouble = true })
 
     local bqBg = "#383838"
     sethl("BlockQuoteSurround", { fg = gethl("Macro").fg, bg = bqBg, bold = true })
@@ -228,7 +229,7 @@ function M.redraw(bufnr)
 
         if not inside then
             -- Heading overlays
-            local level, disp = make_bar_line(i, total, line)
+            local level, disp = make_bar_line(i, total, line, x_scroll+1)
             if disp and not_cursor_or_visual(i) then
                 local hl = heading_hl[level] or heading_hl[#heading_hl]
                 local heading_opts = {
@@ -250,25 +251,26 @@ function M.redraw(bufnr)
             end
 
             local specs = {
-                { pat = "(`)([^`][^`]-)(`)",           hl = "InlineQuote" },
-                { pat = "(~~)(..-)(~~)",               hl = "@markup.strikethrough" },
+                { pat = "(`)([^`]-[^`\\])(`)",           hl = "InlineQuote" },
+                { pat = "(~~)([^~]-[^~\\])(~~)",         hl = "@markup.strikethrough" },
 
-                { pat = "(__)([^_]-[^_])(__)",         hl = "MarkdownSquiggle" },
-                { pat = "(_)([^_]-[^_])(_)",           hl = "MarkdownUnderline" },
+                { pat = "(___)([^_]-[^_\\])(___)",       hl = "MarkdownDblUnderln" },
+                { pat = "(__)([^_]-[^_\\])(__)",         hl = "MarkdownSquiggle" },
+                { pat = "(_)([^_]-[^_\\])(_)",           hl = "MarkdownUnderline" },
 
-                { pat = "(%*%*%*)([^*]-[^*])(%*%*%*)", hl = "ItalicBold" },
-                { pat = "(%*%*)([^*]-[^*])(%*%*)",     hl = "@markup.strong" },
-                { pat = "(%*)([^*]-[^*])(%*)",         hl = "@markup.italic" },
+                { pat = "(%*%*%*)([^*]-[^*\\])(%*%*%*)", hl = "ItalicBold" },
+                { pat = "(%*%*)([^*]-[^*\\])(%*%*)",     hl = "@markup.strong" },
+                { pat = "(%*)([^*]-[^*\\])(%*)",         hl = "@markup.italic" },
 
                 -- Tables
                 {
                   handler = function(ln)
                     local lead_ws, trimmed, trail_ws = ln:match("^(%s*)(|.*|)(%s*)$")
                     if not trimmed then
-                      return {}
+                      return
                     end
                     if not trimmed:find("|", 1, true) then
-                      return {}
+                      return
                     end
 
                     local pipe_count = 0
@@ -289,100 +291,77 @@ function M.redraw(bufnr)
 
                     -- Separator: line is composed only of |, -, :, and spaces, and has >= 2 pipes and is not blank (|  |)
                     if all_sep_chars and has_cont and pipe_count >= 2 then
-                      local chars = {}
+                      local full = ""
                       local L = #trimmed
-                      for j = math.max(x_scroll-(#lead_ws)+1, 0), L do
+                      for j = x_scroll+1, L do
                         local c = trimmed:sub(j, j)
                         if c == "|" then
                           if j == 1 then
-                            table.insert(chars, "├")   -- left connector (middle-left)
+                            full = full .. "├"
                           elseif j == L then
-                            table.insert(chars, "┤")   -- right connector (middle-right)
+                            full = full .. "┤"
                           else
-                            table.insert(chars, "┼")   -- middle intersection (connects all around)
+                            full = full .. "┼"
                           end
                         elseif c == "-" or c == " " then
-                          table.insert(chars, "─")
+                          full = full .. "─"
                         elseif c == ":" then
-                          table.insert(chars, ":")    -- colon-specific horizontal marker
+                          full = full .. ":"
                         else
-                          table.insert(chars, c)
+                          full = full .. c
                         end
                       end
-
-                      local pad = math.max(#lead_ws-x_scroll, 0)
-                      local prefix = pad > 0 and string.rep(" ", pad) or ""
                       vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                        virt_text = { { prefix .. table.concat(chars), "Normal" } },
+                        virt_text = { { full, "@punctuation.special.markdown" } },
                         virt_text_pos = "overlay",
                       })
-
-                      return {}
-                    end
-
-                    -- Content row: is not all separators
-                    local new_line = lead_ws .. trimmed:gsub("|", "│")
-                    local byte_idx, pad = 1, 0
-
-                    if x_scroll > 0 then
-                      local i, disp, len = 1, 0, #new_line
-
-                      while i <= len do
-                        local b = string.byte(new_line, i)
-                        if not b then break end
-
-                        local clen = (b < 0x80) and 1 or (b < 0xE0) and 2 or (b < 0xF0) and 3 or 4
-                        if i + clen - 1 > len then
-                          clen = len - i + 1
-                        end
-
-                        local ch = new_line:sub(i, i + clen - 1)
-                        local w = vim.fn.strdisplaywidth(ch)
-
-                        if disp + w == x_scroll then
-                          byte_idx = i + clen
+                    else
+                      -- Content row: is not all separators
+                      local start = x_scroll
+                      while true do
+                        local pos = string.find(ln, "|", start, true)
+                        if not pos then
                           break
                         end
-
-                        if disp < x_scroll and disp + w > x_scroll then
-                          local cut = x_scroll - disp  -- how much of the character was “passed”
-                          pad = w - cut -- how many spaces needed
-                          byte_idx = i + clen -- skip whole character
-                          break
-                        end
-
-                        disp = disp + w
-                        i = i + clen
-                      end
-
-                      if byte_idx == 1 and disp < x_scroll then
-                        byte_idx = len + 1
+                        vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, pos - 1, {
+                          virt_text = { { "│", "Normal" } },
+                          virt_text_pos = "overlay",
+                        })
+                        start = pos + 1
                       end
                     end
-
-                    local prefix = pad > 0 and string.rep(" ", pad) or ""
-                    local visible = prefix .. new_line:sub(byte_idx)
-
-                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                      virt_text = { { visible, "Normal" } },
-                      virt_text_pos = "overlay",
-                    })
-                    return {}
                   end
                 },
 
-                -- Horizontal rules
+                -- Horizontal rules & ones for headings
                 {
                     handler = function(ln)
+                        local first_non_ws = line:find("%S")
+                        if not first_non_ws then return end
+                        local captures = vim.treesitter.get_captures_at_pos(0, i - 1, first_non_ws - 1)
+                        if #captures ~= 1 then return end
+                        local cap = captures[1]["capture"]
+                        local head = string.sub(cap, 1, string.len("markup.heading.")) == "markup.heading."
+
                         local trimmed = vim.trim(ln)
-                        if trimmed:match("^[%-%*_][%-%*_][%-%*_]+$") and trimmed:match("^[%-%*_]+$") then
-                            local width = vim.api.nvim_win_get_width(0)
-                            vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
-                                virt_text = { { string.rep("━", width), "@markup.heading.3" } },
-                                virt_text_pos = "overlay",
-                            })
-                        end
-                        return {}
+                        local fill
+                        if head and trimmed:match("^=+$") then
+                            fill = "═"
+                        elseif head and trimmed:match("^-+$") then
+                            fill = "─"
+                        elseif trimmed:match("^[%-%*_][%-%*_][%-%*_]+$") then
+                            fill = "━"
+                            local first = string.sub(trimmed, 1, 1)
+                            for i = 2, #trimmed do
+                                if string.sub(trimmed, i, i) ~= first then
+                                    return
+                                end
+                            end
+                        else return end
+                        vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, {
+                            virt_text = { { string.rep(fill, vim.api.nvim_win_get_width(0)), "@" .. cap .. ".markdown" } },
+                            virt_text_pos = "overlay",
+                        })
                     end,
                 },
 
@@ -390,9 +369,14 @@ function M.redraw(bufnr)
                 {
                   handler = function(ln)
                     local bef, txt = ln:match("^(%s*[>%s]+ )(.*)$")
-                    if not bef or not bef:find(">") then
-                      return {}
+                    if not bef then
+                        bef = ln:match("^(%s*[>%s]+)$")
+                        if bef then
+                            bef = bef .. " "
+                        end
+                        txt = ""
                     end
+                    if not bef or not bef:find(">") then return end
                     local txtsub = math.max(x_scroll - #bef + 1, 0)
                     local ico
                     local hl
@@ -443,11 +427,8 @@ function M.redraw(bufnr)
                     if vim.wo.wrap and vim.fn.strdisplaywidth(ln) > vim.api.nvim_win_get_width(0) then
                         extmark_opts.line_hl_group = hl or "BlockQuote"
                     end
-
                     vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, 0, extmark_opts)
-
-                    return {}
-                    end,
+                  end,
                 },
 
                 -- <- and -> arrows
@@ -475,7 +456,6 @@ function M.redraw(bufnr)
                             end
                             start_pos = e + 1
                         end
-                        return {}
                     end,
                 },
 
@@ -496,7 +476,6 @@ function M.redraw(bufnr)
                                 })
                             end
                         end
-                        return {}
                     end,
                 },
 
@@ -510,7 +489,6 @@ function M.redraw(bufnr)
                             add_hl(e-2, e-1, "TodoHide")
                             add_hl(e-1, e, "MarkdownHide")
                         end
-                        return {}
                     end,
                 },
 
@@ -538,51 +516,73 @@ function M.redraw(bufnr)
                                 add_hl(link.url_e + 1, link.finish + 1, "MarkdownHide")
                             end
                         end
-                        return {}
                     end,
                 },
                 -- [[wiki links]]
                 {
                     handler = function(ln)
                         for s, conts, e in ln:gmatch("()%[%[([^[%]]-[^[%]])%]%]()") do
-                            add_hl(s, s + 2, "markdownUrl")
-                            add_hl(s + 2, e - 2, "markdownLinkText")
-                            add_hl(e - 2, e, "markdownUrl")
+                            if s >= x_scroll then
+                                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
+                                    virt_text = { { "󰌷", "markdownLinkText" } },
+                                    virt_text_pos = "overlay",
+                                    hl_group = "markdownLinkText",
+                                })
+                            end
+                            add_hl(s, s + 2, "MarkdownHide")
+                            add_hl(s + 2, e - 2, "markdownUrl")
+                            add_hl(e - 2, e, "MarkdownHide")
                         end
-                        return {}
                     end,
                 },
-                -- Plain https:// links
+                -- <links>
                 {
                     handler = function(ln)
-                        local occupied = {}
-                        for _, link in ipairs(parse_md_links(ln)) do
-                            table.insert(occupied, { s = link.start, e = link.finish })
-                        end
-
-                        local pos = 1
-                        while true do
-                            local s, e = ln:find("https?://[^%s%]%)>]+", pos)
-                            if not s then break end
-
-                            -- don't swallow trailing punctuation that's probably not part of the URL
-                            while e > s and ln:sub(e, e):match("[%.,;:!?'\"]") do
-                                e = e - 1
+                        for s, e in line:gmatch("()<%a[%w+.-]*:[^<>%s]*>()") do
+                            if s > x_scroll then
+                                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
+                                    virt_text = { { "󰌷", "markdownLinkText" } },
+                                    virt_text_pos = "overlay",
+                                    hl_group = "markdownLinkText",
+                                })
                             end
-
-                            local inside_md_link = false
-                            for _, rng in ipairs(occupied) do
-                                if s >= rng.s and e <= rng.e then
-                                    inside_md_link = true
-                                    break
+                            add_hl(e - 1, e, "MarkdownHide")
+                        end
+                    end,
+                },
+                -- [References][name]
+                {
+                    handler = function(ln)
+                        for s, part1, e in line:gmatch("()(%[[^%[%]]+%])%[%d+%]()") do
+                            local midp = s + #part1 - 1
+                            if x_scroll <= midp then
+                                add_hl(s, s + 1, "MarkdownHide")
+                                add_hl(midp, midp + 2, "MarkdownHide")
+                                vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, midp, {
+                                    virt_text = { { "↩", "markdownLinkText" } },
+                                    virt_text_pos = "overlay",
+                                })
+                            end
+                            add_hl(e - 1, e, "MarkdownHide")
+                        end
+                    end,
+                },
+                -- Footnotes[^nme]
+                {
+                    handler = function(ln)
+                        local first_non_ws = line:find("%S") or 1
+                        for s, e in line:gmatch("()%[^[^%[%]]+%]()") do
+                            if s > first_non_ws then
+                                if x_scroll <= s then
+                                    add_hl(s, s + 1, "MarkdownHide")
+                                    vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s, {
+                                        virt_text = { { "↩", "markdownLinkText" } },
+                                        virt_text_pos = "overlay",
+                                    })
                                 end
+                                add_hl(e - 1, e, "MarkdownHide")
                             end
-                            if not inside_md_link then
-                                add_hl(s, e + 1, "markdownUrl")
-                            end
-                            pos = e + 1
                         end
-                        return {}
                     end,
                 },
             }
@@ -616,28 +616,24 @@ function M.redraw(bufnr)
                     for s, open, content, close, e in scan_line:gmatch("()" .. spec.pat .. "()") do
                         -- s..e are indices within scan_line; map them to original line indices:
                         local orig_s = s + line_offset
-                        local orig_e = e + line_offset
+                        if orig_s == 0 or line:sub(orig_s - 1, orig_s - 1) ~= "\\" then
+                            local orig_e = e + line_offset
 
-                        if is_range_free(orig_s, orig_e) then
-                            local open_len = #open
-                            local close_len = #close
-                            local content_s = orig_s + open_len
-                            local content_e = orig_e - close_len
+                            if is_range_free(orig_s, orig_e) then
+                                local open_len = #open
+                                local close_len = #close
+                                local content_s = orig_s + open_len
+                                local content_e = orig_e - close_len
 
-                            add_hl(orig_s, content_s, "MarkdownHide")
-                            add_hl(content_s, content_e, spec.hl)
-                            add_hl(content_e, orig_e, "MarkdownHide")
-                            mark_range(orig_s, orig_e)
+                                add_hl(orig_s, content_s, "MarkdownHide")
+                                add_hl(content_s, content_e, spec.hl)
+                                add_hl(content_e, orig_e, "MarkdownHide")
+                                mark_range(orig_s, orig_e)
+                            end
                         end
                     end
                 else
-                    -- handler branch unchanged (handlers operate on the original line)
-                    for _, m in ipairs(spec.handler(line)) do
-                        if is_range_free(m.s, m.e) then
-                            add_hl(m.s, m.e, m.hl)
-                            mark_range(m.s, m.e)
-                        end
-                    end
+                    spec.handler(line)
                 end
             end
 
@@ -725,18 +721,22 @@ function M.redraw(bufnr)
                     local txt = full_lines[j] or ""
                     local tlen
                     if j == s then
-                        local lang = vim.trim(txt:sub(4))
-                        local icon = lang_icons[lang] or ""
-                        tlen = 3 + #lang + x_scroll
-                        out = { { icon .. "  ", "BlockQuoteSurroundIco" }, { lang, "BlockQuoteSurround" } }
+                        local ico = ""
+                        local lang = txt:sub(4)
+                        if x_scroll <= 0 then ico = ico .. " " end
+                        if x_scroll <= 1 then ico = ico .. (lang_icons[vim.trim(lang)] or "") end
+                        if x_scroll <= 2 then ico = ico .. " " end
+                        out = { { ico, "BlockQuoteSurroundIco" }, { lang:sub(math.max(x_scroll-2, 0)), "BlockQuoteSurround" } }
                     else
                         if j ~= e then
                             out = { { (full_lines[j] or ""):sub(x_scroll + 1), "BlockQuoteCode" } }
-                            tlen = #txt + math.max(x_scroll - #txt, 0)
                         else
-                            out = { { "━━━" .. string.rep("━", max_length - 3 - x_scroll), "BlockQuoteSurroundIco" } }
+                            out = { { string.rep("━", max_length - x_scroll), "BlockQuoteSurroundIco" } }
                             tlen = max_length
                         end
+                    end
+                    if not tlen then
+                        tlen = #txt + math.max(x_scroll - #txt, 0)
                     end
                     if not_cursor_or_visual(j) then
                         local extmark_opts = {

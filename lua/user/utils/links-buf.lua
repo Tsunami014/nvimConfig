@@ -1,7 +1,8 @@
 local M = {}
 
-local normalise = require("user.utils.links").normalise
+local normalise = require("user.utils.links-shared").normalise
 
+local cleanup
 local state = {
   win = nil,
   buf = nil,
@@ -68,6 +69,98 @@ local function scan_inbound(root, current_name)
   return inbound
 end
 
+--- A setext underline is a line that, once stripped of surrounding
+--- whitespace, consists of one or more of only "-" or only "=" characters.
+local function setext_underline(line)
+  local stripped = line:match("^%s*(.-)%s*$")
+  if stripped == "" then
+    return nil
+  end
+  if stripped:match("^%-+$") then
+    return "-"
+  end
+  if stripped:match("^=+$") then
+    return "="
+  end
+  return nil
+end
+
+--- Extracts every heading in `text`
+local function collect_headings(text)
+  local lines = vim.split(text, "\n", { plain = true })
+  local headings = {}
+  local lnum = 1
+
+  while lnum <= #lines do
+    local line = lines[lnum]
+    local hashes, atx_text = line:match("^(#+)%s+(.-)%s*$")
+
+    if atx_text then
+      table.insert(headings, { level = #hashes, text = atx_text })
+      lnum = lnum + 1
+    else
+      local stripped = line:match("^%s*(.-)%s*$")
+      if stripped ~= "" and not setext_underline(line) then
+        local j = lnum + 1
+        local text_lines = { stripped }
+        local matched = false
+        while j <= #lines do
+          local under = setext_underline(lines[j])
+          if under then
+            local level = (under == "=") and 1 or 2
+            table.insert(headings, { level = level, text = table.concat(text_lines, " ") })
+            matched = true
+            break
+          end
+          local next_stripped = lines[j]:match("^%s*(.-)%s*$")
+          if next_stripped == "" then
+            break
+          end
+          table.insert(text_lines, next_stripped)
+          j = j + 1
+        end
+        if not matched then
+          lnum = lnum + 1
+        else
+          lnum = j + 1
+        end
+      else
+        lnum = lnum + 1
+      end
+    end
+  end
+
+  return headings
+end
+
+local function push_toc(rows, text)
+  local headings = collect_headings(text)
+
+  table.insert(rows, { text = "Contents", group = "markdownH1" })
+  table.insert(rows, { text = ("─"):rep(28), group = "markdownHeadingRule" })
+
+  if #headings == 0 then
+    table.insert(rows, { text = "  (none)", group = "markdownCode" })
+    return
+  end
+
+  -- Indent relative to the shallowest heading level present, so a document
+  -- that starts at "##" isn't needlessly indented.
+  local min_level = math.huge
+  for _, h in ipairs(headings) do
+    min_level = math.min(min_level, h.level)
+  end
+
+  for _, h in ipairs(headings) do
+    local indent = ("  "):rep(h.level - min_level)
+    table.insert(rows, {
+      text = "  " .. indent .. h.text,
+      group = "markdownUrlTitle",
+      heading = h,
+    })
+  end
+end
+
 local function push_section(rows, title, paths, noun)
   table.insert(rows, { text = title, group = "markdownH1" })
   table.insert(rows, { text = ("─"):rep(28), group = "markdownHeadingRule" })
@@ -129,6 +222,62 @@ local function open_target(target)
   state.main_win = vim.api.nvim_get_current_win()
 end
 
+--- Jumps the cursor in `win`'s buffer to the given heading, matching how
+--- index_toggle's goto_heading locates ATX/setext headings by exact text.
+local function goto_heading_in_win(win, heading)
+  if not (win and vim.api.nvim_win_is_valid(win)) then
+    return
+  end
+
+  local buf = vim.api.nvim_win_get_buf(win)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local target_text = heading.text:lower()
+  local lnum = 1
+
+  while lnum <= #lines do
+    local line = lines[lnum]
+    local atx_text = line:match("^#+%s+(.-)%s*$")
+
+    if atx_text then
+      if atx_text:lower() == target_text then
+        vim.api.nvim_set_current_win(win)
+        vim.api.nvim_win_set_cursor(win, { lnum, 0 })
+        vim.cmd("normal! zz")
+        return
+      end
+      lnum = lnum + 1
+    else
+      local stripped = line:match("^%s*(.-)%s*$")
+      if stripped ~= "" and not setext_underline(line) then
+        local j = lnum + 1
+        local text_lines = { stripped }
+        local matched_line = nil
+        while j <= #lines do
+          if setext_underline(lines[j]) then
+            matched_line = lnum
+            break
+          end
+          local next_stripped = lines[j]:match("^%s*(.-)%s*$")
+          if next_stripped == "" then
+            break
+          end
+          table.insert(text_lines, next_stripped)
+          j = j + 1
+        end
+        if matched_line and table.concat(text_lines, " "):lower() == target_text then
+          vim.api.nvim_set_current_win(win)
+          vim.api.nvim_win_set_cursor(win, { matched_line, 0 })
+          vim.cmd("normal! zz")
+          return
+        end
+        lnum = matched_line and (j + 1) or (lnum + 1)
+      else
+        lnum = lnum + 1
+      end
+    end
+  end
+end
+
 local function new_sidebar()
   local prev_win = vim.api.nvim_get_current_win()
   state.main_win = prev_win
@@ -164,8 +313,13 @@ local function new_sidebar()
   vim.keymap.set("n", "<CR>", function()
     local lnum = vim.api.nvim_win_get_cursor(0)[1]
     local target = state.targets[lnum]
-    if target then
-      open_target(target)
+    if not target then
+      return
+    end
+    if target.kind == "file" then
+      open_target(target.path)
+    elseif target.kind == "heading" then
+      goto_heading_in_win(find_main_win(), target.heading)
     end
   end, { buffer = buf, silent = true, nowait = true })
   vim.keymap.set("n", "q", function()
@@ -198,15 +352,18 @@ local function render()
 
   local root = vim.fs.dirname(src)
   local current_name = vim.fs.basename(src)
+  local src_text = read_text(src) or ""
 
   local outbound = {}
-  for _, name in ipairs(collect_links(read_text(src) or "")) do
+  for _, name in ipairs(collect_links(src_text)) do
     table.insert(outbound, vim.fs.joinpath(root, name))
   end
 
   local inbound = scan_inbound(root, current_name)
 
   local rows = {}
+  push_toc(rows, src_text)
+  table.insert(rows, { text = "" })
   push_section(rows, "Inbound", inbound, "file")
   table.insert(rows, { text = "" })
   push_section(rows, "Outbound", outbound, "link")
@@ -229,19 +386,21 @@ local function render()
         state.ns,
         row.group,
         i - 1,
-        row.target and 2 or 0,
+        (row.target or row.heading) and 2 or 0,
         -1
       )
     end
     if row.target then
-      state.targets[i] = row.target
+      state.targets[i] = { kind = "file", path = row.target }
+    elseif row.heading then
+      state.targets[i] = { kind = "heading", heading = row.heading }
     end
   end
 
   vim.bo[state.buf].modifiable = false
 end
 
-local function cleanup()
+cleanup = function()
   if state.augroup then
     pcall(vim.api.nvim_del_augroup_by_id, state.augroup)
     state.augroup = nil
