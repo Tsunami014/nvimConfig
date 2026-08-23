@@ -59,7 +59,8 @@ local options = {
 function DebugActions(actions)
     local ft = vim.bo.filetype
     while #actions > 0 do table.remove(actions) end
-    table.insert(actions, {
+    -- table.insert(actions, 1, { -- Insert at top of list
+    table.insert(actions, { -- Insert at bottom of list
         label = "Name",
         terminal = "cmd",
         -- terminal = function() return "cmd" end,
@@ -72,7 +73,7 @@ end
     ["C++ template"] = {[[
 function DebugActions(actions)
     -- while #actions > 0 do table.remove(actions) end
-    table.insert(actions, {
+    table.insert(actions, 1, {
         label = "Name",
         terminal = "make debug",
         after = function(code) if code == 0 then launch_cpp_dap("file") end end,
@@ -83,14 +84,15 @@ end
     ["Python template"] = {[[
 function DebugActions(actions)
     -- while #actions > 0 do table.remove(actions) end
-    table.insert(actions, {
+    table.insert(actions, 1, {
         label = "Run file",
         after = function()
-            dap.run({
+            require("dap").run({
                 name = "Launch Python",
                 type = "python",
                 request = "launch",
                 program = "file.py",
+                -- args = {"arg", "here"},
                 console = "integratedTerminal",
             })
         end,
@@ -100,7 +102,7 @@ end
     ["Latex template"] = {[[
 function DebugActions(actions)
     -- while #actions > 0 do table.remove(actions) end
-    table.insert(actions, {
+    table.insert(actions, 1, {
         label = "Compile & view LaTeX",
         terminal = function() return latex_compile("file.tex") end,
         after = function(code)
@@ -127,6 +129,17 @@ vim.api.nvim_create_autocmd("BufWritePost", {
 
 function EnvReset()
   vim.api.nvim_create_augroup("RunOnSave", { clear = true })
+end
+]], 2},
+    ["Inline terminal"] = {[[
+function DebugActions(actions)
+    -- while #actions > 0 do table.remove(actions) end
+    table.insert(actions, {
+        label = "Open a non-floating terminal",
+        after = function()
+            new_terminal("echo 'hello'") -- , "vertical")
+        end
+    })
 end
 ]], 2},
 }

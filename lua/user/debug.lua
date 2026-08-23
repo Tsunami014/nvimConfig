@@ -15,6 +15,29 @@ local state = {
     last_executable = "",
 }
 
+-- Include a non-floating terminal for custom debug configs
+function new_terminal(cmd, dir, size)
+    require("toggleterm.terminal").Terminal:new({
+        direction = dir or "horizontal",
+        cmd = cmd,
+        on_open = function(t)
+            local winid = vim.api.nvim_get_current_win()
+            local group = vim.api.nvim_create_augroup("ServeTerm_" .. winid, { clear = true })
+
+            vim.api.nvim_create_autocmd("WinClosed", {
+                group = group,
+                pattern = tostring(winid),
+                once = true,
+                callback = function()
+                    if t.job_id then
+                        vim.fn.jobstop(t.job_id)
+                    end
+                end,
+            })
+        end,
+    }):open(size)
+end
+
 -- Terminal
 local function create_terminal_buffer()
     state.buf = vim.api.nvim_create_buf(false, true)
