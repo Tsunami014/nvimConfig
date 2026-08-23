@@ -95,20 +95,20 @@ Register("r", "Find & replace", "󰗧", {
 
 -- Buffer things
 Map({ 'n', 'v' }, "<A-BS>", "<cmd>BufferClose<cr>", "Close buffer")
-Map("n", "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
-Map("n", "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
-Map("n", "<C-h>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
-Map("n", "<C-l>", "<cmd>BufferNext<cr>", "Next Buffer")
-Map("n", "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
-Map("n", "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
+Map({ 'n', 'v' }, "<Tab>", "<cmd>BufferNext<cr>", "Next Buffer")
+Map({ 'n', 'v' }, "<S-Tab>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map({ 'n', 'v', 'i' }, "<C-h>", "<cmd>BufferPrevious<cr>", "Previous Buffer")
+Map({ 'n', 'v', 'i' }, "<C-l>", "<cmd>BufferNext<cr>", "Next Buffer")
+Map({ 'n', 'v', 'i' }, "<A-h>", "<cmd>BufferMovePrevious<cr>", "Move Buffer Left")
+Map({ 'n', 'v', 'i' }, "<A-l>", "<cmd>BufferMoveNext<cr>", "Move Buffer Right")
 
 Map({ 'n', 'v' }, "<C-A-BS>", "<cmd>tabclose<cr>", "Close Layout")
-Map("n", "<C-Tab>", "<cmd>tabnext<cr>", "Next Layout")
-Map("n", "<C-S-Tab>", "<cmd>tabprev<cr>", "Previous Layout")
-Map("n", "<C-j>", "<cmd>tabprev<cr>", "Previous Layout")
-Map("n", "<C-k>", "<cmd>tabnext<cr>", "Next Layout")
-Map("n", "<A-j>", "<cmd>tabmove -1<cr>", "Move Layout -1")
-Map("n", "<A-k>", "<cmd>tabmove +1<cr>", "Move Layout +1")
+Map({ 'n', 'v', 'i' }, "<C-Tab>", "<cmd>tabnext<cr>", "Next Layout")
+Map({ 'n', 'v', 'i' }, "<C-S-Tab>", "<cmd>tabprev<cr>", "Previous Layout")
+Map({ 'n', 'v', 'i' }, "<C-j>", "<cmd>tabprev<cr>", "Previous Layout")
+Map({ 'n', 'v', 'i' }, "<C-k>", "<cmd>tabnext<cr>", "Next Layout")
+Map({ 'n', 'v', 'i' }, "<A-j>", "<cmd>tabmove -1<cr>", "Move Layout -1")
+Map({ 'n', 'v', 'i' }, "<A-k>", "<cmd>tabmove +1<cr>", "Move Layout +1")
 Register("b", "Buffer", "󰓩", {
     n = { "<cmd>enew<cr>", "New Buffer" },
     h = { "<cmd>new<cr>", "New Buffer Horizontal" },
@@ -220,8 +220,7 @@ Register("e", "Environment", "", {
     end, "Chdir to parent dir", "󰌑" },
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
     l = { "<cmd>Lazy<cr>", "Open Lazy", "󰏗" },
-    a = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
-    A = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
+    d = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
     t = { envf.trust, "Remove config trust/untrust" },
     e = { envf.dirch, "Reload environment files" },
     E = { envf.genfile, "Create template env file" },
@@ -271,6 +270,7 @@ Register("u", "UI", "", {
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
     h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
+    a = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
 })
 local function reindent()
     local current_win = vim.api.nvim_get_current_win()
@@ -351,8 +351,8 @@ Map({ 'n', 'v' }, '\\', '@@', '@@')
 
 -- Signature stuff
 Map('i', '<C-s>', false)
-Map('i', '<C-j>', sig.next, "Next signature overload")
-Map('i', '<C-k>', sig.prev, "Previous signature overload")
+Map('i', '<C-]>', sig.next, "Next signature overload")
+Map('i', '<C-[>', sig.prev, "Previous signature overload")
 
 -- Window shenanigans
 Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
