@@ -5,6 +5,7 @@ local seshs = require("user.seshs")
 local envf = require("user.envfile")
 local sig = require("user.signature")
 local links = require("user.utils.links")
+local prof = require('profile')
 
 local group_clues = {}
 
@@ -235,10 +236,11 @@ Register("e", "Environment", "", {
 })
 Register("|", "Profiles", "", {
     ["|"] = { function()
-        vim.notify('The currently active profile is: "' .. require("profile").current_name() .. '"')
+        vim.notify('The currently active profile is: "' .. prof.current_name() .. '"')
     end, "Show Current Profile" },
-    s = { function() require('profile').choose_profile() end, "Switch Profile" },
-}, "<leader>e")
+    c = { prof.choose_profile, "Change Profile" },
+    o = { function() prof.choose_profile(true) end, "Change Profile Once" },
+})
 
 Register("t", "Terminal", "", {
     t = { "<cmd>ToggleTerm<cr>", "Toggle Terminal" },
