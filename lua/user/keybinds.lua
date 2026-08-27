@@ -58,7 +58,7 @@ end
 
 function Map(mode, lhs, rhs, desc, options)
     if rhs == false then
-        vim.api.nvim_del_keymap(mode, lhs)
+        pcall(vim.api.nvim_del_keymap, mode, lhs)
         return
     end
     if options == nil then

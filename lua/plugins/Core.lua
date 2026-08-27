@@ -69,6 +69,7 @@ return {
       on_direnv_finished = function()
         vim.cmd("LspRestart")
       end
-    }
+    },
+    cond = not p.OPTS.Minimal,
   },
 }
