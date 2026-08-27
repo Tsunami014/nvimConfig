@@ -332,7 +332,7 @@ local function get_actions()
         table.insert(actions, {
             label = "View file",
             terminal = function()
-                return "xdg-open " .. state.fname
+                return "xdg-open " .. vim.fn.shellescape(state.fname)
             end
         })
         table.insert(actions, {
