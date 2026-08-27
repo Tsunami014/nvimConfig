@@ -1,6 +1,10 @@
 local M = {}
+local p = require("profile")
 
-local dap = require("dap")
+local dap
+if not p.OPTS.Minimal then
+    dap = require("dap")
+end
 
 local state = {
     buf = nil,
@@ -106,7 +110,7 @@ local function stop_terminal()
 end
 
 local function stop_dap()
-    pcall(dap.disconnect)
+    if dap then pcall(dap.disconnect) end
 end
 
 function M.stop()
@@ -236,7 +240,7 @@ local function get_actions()
     local actions = {}
     local ft = vim.bo.filetype
 
-    if ft ~= "cpp" and ft ~= "c" then
+    if dap and ft ~= "cpp" and ft ~= "c" then
         -- Auto import dap configs
         local bufnr = vim.api.nvim_get_current_buf()
 

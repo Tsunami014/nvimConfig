@@ -25,6 +25,7 @@ return {
             "bash", "yaml", "css", "html", "javascript", "latex", "tsx", "typst", "c", "cpp" },
       })
     end,
+    cond = not p.OPTS.Minimal,
   },
   {
     'akinsho/toggleterm.nvim',

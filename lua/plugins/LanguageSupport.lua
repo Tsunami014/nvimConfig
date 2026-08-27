@@ -1,3 +1,5 @@
+local p = require("profile")
+
 return {
   {
     "williamboman/mason.nvim",
@@ -12,9 +14,11 @@ return {
         },
       },
     },
+    cond = not p.OPTS.Minimal,
   },
   {
     "neovim/nvim-lspconfig",
+    cond = not p.OPTS.Minimal,
   },
   -- The debugger
   {
@@ -82,6 +86,7 @@ return {
         command = vim.fs.joinpath(vim.fn.stdpath('data'), 'mason', 'bin', 'OpenDebugAD7'),
       }
     end,
+    cond = not p.OPTS.Minimal,
   },
 
   -- Venv selector
@@ -99,5 +104,6 @@ return {
         global = { command = "which python3" }
       }
     },
+    cond = not p.OPTS.Minimal,
   },
 }

@@ -1,5 +1,12 @@
-local dap = require("dap")
-local dapui = require("dapui")
+local p = require("profile")
+
+local dap
+local dapui
+if not p.OPTS.Minimal then
+    dap = require("dap")
+    dapui = require("dapui")
+end
+
 local dbug = require("user.debug")
 local seshs = require("user.seshs")
 local envf = require("user.envfile")
@@ -63,6 +70,16 @@ end
 
 function RunKeys(keys)
     return function() vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "m", false) end
+end
+
+local function merge(...)
+    local res = {}
+    for _, tbl in ipairs({ ... }) do
+        for key, value in pairs(tbl) do
+            res[key] = value
+        end
+    end
+    return res
 end
 
 local function isvisual()
@@ -147,18 +164,23 @@ Register("l", "Layouts", "", {
 -- Debugger stuff
 Map("n", "<F4>", dbug.stop, "Stop debugging")
 Map("n", "<F17>", dbug.stop, "Stop debugging") -- Shift+F5
-Map("n", "<F5>", function()
-    if dap.session() then dap.continue()
-    else dbug.pick()
-    end
-end, "Continue or start debugging")
 Map("n", "<F6>", dbug.run_last, "Run last debug")
-Map("n", "<F9>", dap.step_into, "DAP Step Into")
-Map("n", "<F10>", dap.step_over, "DAP Step Over")
-Map("n", "<F11>", dap.step_out, "DAP Step Out")
-Map("n", "<C-CR>", require("dapui").eval, "DAP Hover")
-Register("d", "Debug", "", {
+if p.OPTS.Minimal then
+    Map("n", "<F5>", dbug.pick, "Continue or start debugging")
+else
+    Map("n", "<F5>", function()
+        if dap.session() then dap.continue()
+        else dbug.pick()
+        end
+    end, "Continue or start debugging")
+    Map("n", "<F9>", dap.step_into, "DAP Step Into")
+    Map("n", "<F10>", dap.step_over, "DAP Step Over")
+    Map("n", "<F11>", dap.step_out, "DAP Step Out")
+    Map("n", "<C-CR>", require("dapui").eval, "DAP Hover")
+end
+Register("d", "Debug", "", merge({
     d = { dbug.toggle_terminal, "Toggle Debug Terminal", "" },
+}, p.OPTS.Minimal and {} or {
     v = { "<cmd>VenvSelect<cr>", "Select venv python" },
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
@@ -171,7 +193,7 @@ Register("d", "Debug", "", {
     s = { "<cmd>LspStart<cr>", "Start lsp", "" },
     S = { "<cmd>LspStop<cr>", "Stop lsp", "" },
     R = { "<cmd>LspRestart<cr>", "Restart lsp", "" },
-})
+}))
 
 
 local function hunk_operator(action)
@@ -238,8 +260,8 @@ Register("|", "Profiles", "", {
     ["|"] = { function()
         vim.notify('The currently active profile is: "' .. prof.current_name() .. '"')
     end, "Show Current Profile" },
-    c = { prof.choose_profile, "Change Profile" },
-    o = { function() prof.choose_profile(true) end, "Change Profile Once" },
+    s = { prof.choose_profile, "Switch Profile" },
+    o = { function() prof.choose_profile(true) end, "Switch Profile Once" },
 })
 
 Register("t", "Terminal", "", {
@@ -317,7 +339,7 @@ Register("<leader>", "", "󱁐", {
 
     F = { RunKeys("<leader>fg"), "Find grep in all dirs", "󰍉" },
     T = { RunKeys("<leader>tt"), "Toggle terminal", "" },
-    D = { RunKeys("<leader>du"), "Toggle DAP UI", "" },
+    D = p.OPTS.Minimal and nil or { RunKeys("<leader>du"), "Toggle DAP UI", "" },
 
     ["."] = { vim.diagnostic.open_float, "Show diagnostics popup", "" },
     [","] = { function()
