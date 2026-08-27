@@ -20,10 +20,12 @@ local state = {
 }
 
 -- Include a non-floating terminal for custom debug configs
-function new_terminal(cmd, dir, size)
+function new_terminal(cmd, extra)
+    if not extra then extra = {} end
     require("toggleterm.terminal").Terminal:new({
-        direction = dir or "horizontal",
+        direction = extra.dir or "horizontal",
         cmd = cmd,
+        close_on_exit = not extra.keep_open,
         on_open = function(t)
             local winid = vim.api.nvim_get_current_win()
             local group = vim.api.nvim_create_augroup("ServeTerm_" .. winid, { clear = true })
@@ -39,7 +41,7 @@ function new_terminal(cmd, dir, size)
                 end,
             })
         end,
-    }):open(size)
+    }):open(extra.size)
 end
 
 -- Terminal

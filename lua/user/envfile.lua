@@ -137,7 +137,9 @@ function DebugActions(actions)
     table.insert(actions, {
         label = "Open a non-floating terminal",
         after = function()
-            new_terminal("echo 'hello'") -- , "vertical")
+            new_terminal("echo 'hello'", {
+                -- dir = "vertical", size = 50, keep_open = true,
+            })
         end
     })
 end
