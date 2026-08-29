@@ -1,6 +1,13 @@
 local M = {}
 
 M.OptNams = { "Minimal", "Full", "Notes" }
+
+M.PopupOrder = {
+    "Notes",
+    "Full",
+    "Minimal",
+}
+
 M.OPTS = {}
 M.DEFAULT = 1
 
@@ -17,17 +24,35 @@ end
 
 local profile_file = vim.fn.stdpath("config") .. "/profile.txt"
 
+local function profile_index(profile_name)
+    for i, name in ipairs(M.OptNams) do
+        if name == profile_name then
+            return i
+        end
+    end
+    return nil
+end
+
 local function get_env_profile()
     local profile = vim.env.NVIM_PROFILE
     if not profile or profile == "" then
         return nil
     end
-    for i, profile_name in ipairs(M.OptNams) do
-        if profile_name == profile then
-            return i
+    if profile == "choose" then
+        local list = { "Select profile:" }
+        for i, item in ipairs(M.PopupOrder) do
+            table.insert(list, string.format("%d. %s", i, item))
         end
+        local choice = vim.fn.inputlist(list)
+        if choice < 1 or choice > #M.PopupOrder then
+            return nil
+        end
+        return profile_index(M.PopupOrder[choice])
+    else
+        return profile_index(profile)
     end
 end
+
 
 local function load_profile()
     local cli_profile = get_env_profile()
@@ -36,7 +61,7 @@ local function load_profile()
         local content = f:read("*a")
         f:close()
 
-        local m1, m2 = content:match("^(%d+):(%d+)$")
+        local m1, m2 = content:match("^%s*(%d+):(%d+)%s*$")
         local now, def = tonumber(m1), tonumber(m2)
         if cli_profile then
             now = cli_profile
@@ -62,10 +87,9 @@ local function save_profile()
         f:write(tostring(next_prof) .. ":" .. tostring(newdefault))
         f:close()
         return true
-    else
-        vim.notify("Error saving profile index!", vim.log.levels.ERROR)
-        return false
     end
+    vim.notify("Error saving profile index!", vim.log.levels.ERROR)
+    return false
 end
 
 current, newdefault = load_profile()
@@ -73,17 +97,10 @@ next_prof = newdefault
 update_opts()
 save_profile()
 
-function M.set_profile(profile_name, once)
-    local index = 0
-    for i, name in ipairs(M.OptNams) do
-        if name == profile_name then
-            index = i
-            break
-        end
-    end
 
-    if index == 0 then
-        -- This should not happen if called from choose_profile
+function M.set_profile(profile_name, once)
+    local index = profile_index(profile_name)
+    if not index then
         vim.notify("Error: Profile name not found!", vim.log.levels.ERROR)
         return
     end
@@ -93,12 +110,17 @@ function M.set_profile(profile_name, once)
         newdefault = index
     end
     if save_profile() then
-        vim.notify("Profile will be " .. profile_name .. (once and " for the next launch only" or " by default from the next launch"))
+        vim.notify("Profile will be " .. profile_name .. (
+            once and " for the next launch only"
+                  or " by default from the next launch"
+        ))
     end
 end
 
 function M.choose_profile(once)
-    vim.ui.select(M.OptNams, { prompt = "Select " .. (once and "next launch" or "default") .. " profile:" }, function(choice)
+    vim.ui.select(M.OptNams, {
+        prompt = "Select " .. (once and "next launch" or "default") .. " profile:"
+    }, function(choice)
         if choice then
             M.set_profile(choice, once)
         end
