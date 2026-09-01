@@ -6,12 +6,25 @@ else
 end
 
 
--- Prevent mini.completions in some filetypes
+-- Prevent some mini functions in some filetypes
+local function disable_mini_ui_modules()
+  vim.b.minicompletion_disable = true
+  vim.b.miniindentscope_disable = true
+  vim.b.minitrailspace_disable = true
+  vim.b.minicursorword_disable = true
+  vim.b.minidiff_disable = true
+end
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "neo-tree-popup",
-  callback = function()
-    vim.b.minicompletion_disable = true
-  end,
+  callback = disable_mini_ui_modules,
+})
+vim.api.nvim_create_autocmd("TermOpen", {
+  callback = disable_mini_ui_modules,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "MiniStarterOpened",
+  callback = disable_mini_ui_modules,
 })
 
 vim.api.nvim_create_autocmd('User', {
@@ -53,47 +66,6 @@ return {{
     require("mini.pick").setup()
     require('mini.extra').setup()
 
-    local starter = require('mini.starter')
-    local foldp = require('user.utils.folder-pick')
-    starter.setup({
-      header = [[
-                  ▄▄▓█
-                ▄▓▀░▒▓▄
- ▄▄           ▄▓▓▀    █
-█▒▒█▀▀▄▄   ▄▄▄▓▒▓▄  ▒░██▄▄▄▄▄
-█▒░ ▀▀▓▒▓▓▓▒▒▒▒▒▒▒▓▒▒▓▓▓▒▒▒▒▒▓▓▄
- █░   █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒▒▒▒▒▓▓▄
- █▒░ ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▀▓▒▒▒▒▒▒▒▒▒▒█
-  █▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓░  █▒▒▒▓▓▓▓▒▒▒▒█
-  ▀▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒█    █▓▓▓▒▒▒▒▒▒▒▒█
-   ▀▓█░▒▒▒▒▒▒▒▒▒▒▒▒▓  ▄▓▒▒▒▒▒▒▒▒▒▒▒▒▒█
-     █  ░▀▀▀▓▓▒▒▒▒▒  █░░░▒░░░░▒▒▒▒▒▒▓▀
-      ▀▄          ▀▄▓█ ░     ▒░▒▒▒▒▒█
-        ▀▀▀█▓▀▀▀█▓▓▒▒█          ▒▒▓▀
-           █▒▒▄█▒▒▒▓▀█         ░▓▀
-            ▀▀▀▓▓▓▀  █     ▄▄▄▀▀
-                      █▄▄▀▀
-      ]],
-
-      evaluate_single = true,
-      items = {
-        { name = "New", action = function() starter.close() vim.cmd('startinsert') end, section = "Open" },
-        { name = "Files", action = ":Telescope find_files", section = "Open" },
-        { name = "Folders", action = foldp.pick_folder_in, section = "Open" },
-        { name = "Config", action = function() foldp.pick_folder_in(confDir) end, section = "Open" },
-        { name = "Recent", action = MiniExtra.pickers.oldfiles, section = "Open" },
-        { name = "Text", action = ":Telescope live_grep", section = "Open" },
-        { name = "Lazy", action = ":Lazy", section = "Actions" },
-        starter.sections.recent_files(10, false),
-      },
-      content_hooks = {
-        starter.gen_hook.adding_bullet(),
-        starter.gen_hook.indexing('all', { 'Open', 'Actions' }),
-        starter.gen_hook.aligning('center', 'center'),
-        starter.gen_hook.padding(0, 2),
-      },
-    })
-
     require('mini.snippets').setup({
       snippets = {
         require('mini.snippets').gen_loader.from_lang(),
@@ -128,6 +100,8 @@ return {{
         end,
       },
     })
+
+    require('user.starter') -- Sets up mini.starter
 
     require('user.utils.notifs').setup() -- Sets up mini.notify
 
