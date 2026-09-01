@@ -131,6 +131,7 @@ Register("b", "Buffer", "󰓩", {
     n = { "<cmd>enew<cr>", "New Buffer" },
     h = { "<cmd>new<cr>", "New Buffer Horizontal" },
     v = { "<cmd>vnew<cr>", "New Buffer Vertical" },
+    t = { "<cmd>terminal<cr>", "New Terminal Buffer" },
     p = { "<cmd>BufferPick<cr>", "Pick Buffer" },
     c = { "<cmd>BufferClose<cr>", "Close Buffer" },
     C = { "<cmd>BufferClose!<cr>", "Force close Buffer" },
