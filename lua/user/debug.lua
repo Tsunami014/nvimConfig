@@ -393,7 +393,7 @@ function M.pick()
             return item.label
         end,
     }, function(choice)
-        if choice then run_action(choice) end
+        if choice then run_debug(choice) end
     end)
 end
 
