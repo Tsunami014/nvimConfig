@@ -127,6 +127,17 @@ local two_column_hook = function(content, buf_id)
   return center_block(merged, width, height)
 end
 
+local function genStarter(ft)
+  if ft then
+    return function()
+      starter.close()
+      vim.cmd("set ft=" .. ft .. " | startinsert")
+    end
+  else
+    return function() starter.close() vim.cmd("startinsert") end
+  end
+end
+
 local foldp = require('user.utils.folder-pick')
 starter.setup({
   header = [[
@@ -150,19 +161,22 @@ starter.setup({
 
   evaluate_single = true,
   items = {
-    { name = "New", action = function() starter.close() vim.cmd('startinsert') end, section = "Open" },
     { name = "Files", action = ":Telescope find_files", section = "Open" },
     { name = "Folders", action = foldp.pick_folder_in, section = "Open" },
     { name = "Config", action = function() foldp.pick_folder_in(confDir) end, section = "Open" },
     { name = "Recent", action = MiniExtra.pickers.oldfiles, section = "Open" },
     { name = "Text", action = ":Telescope live_grep", section = "Open" },
     { name = "Lazy", action = ":Lazy", section = "Actions" },
+    { name = "New", action = genStarter(), section = "New" },
+    { name = "+Markdown", action = genStarter("markdown"), section = "New" },
+    { name = "+Python", action = genStarter("py"), section = "New" },
     starter.sections.recent_files(10, false),
   },
   content_hooks = {
     starter.gen_hook.adding_bullet(),
-    starter.gen_hook.indexing('all', { 'Open', 'Actions' }),
+    starter.gen_hook.indexing('all', { 'Open', 'New', 'Actions' }),
     two_column_hook,
     starter.gen_hook.padding(2, 0),
   },
+  query_updaters = 'abcdefghijklmnopqrstuvwxyz0123456789_-.+',
 })

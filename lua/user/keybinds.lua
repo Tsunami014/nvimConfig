@@ -298,7 +298,17 @@ Register("u", "UI", "", {
     h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     a = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
+    l = { "<cmd>set ft=", "Set buffer filetype", "" },
 })
+Register("L", "Choose buffer filetype", "", {
+    L = { "<cmd>set ft?<cr>", "Get filetype", "" },
+    p = { "<cmd>set ft=py<cr>", "Python filetype" },
+    c = { "<cmd>set ft=cpp<cr>", "C++ filetype" },
+    l = { "<cmd>set ft=lua<cr>", "Lua filetype" },
+    m = { "<cmd>set ft=markdown<cr>", "Markdown filetype" },
+    s = { "<cmd>set ft=sh<cr>", "Shell filetype" },
+}, "<leader>u")
+
 local function reindent()
     local current_win = vim.api.nvim_get_current_win()
     local cursor_pos = vim.api.nvim_win_get_cursor(current_win)
