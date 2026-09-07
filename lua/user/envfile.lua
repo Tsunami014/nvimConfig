@@ -66,7 +66,7 @@ function DebugActions(actions)
         -- terminal = function() return "cmd" end,
         after = function() end,
         -- after = function(code) end, -- status code of terminal output
-        -- keepopen = true, -- keep terminal open even on success; default false
+        -- keep_open = true, -- keep terminal open even on success; default false
     })
 end
 ]], 2},

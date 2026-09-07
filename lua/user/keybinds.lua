@@ -257,12 +257,17 @@ Register("e", "Environment", "", {
     s = { seshs.pick, "Session picker", "" },
     S = { seshs.save, "Force save Session", "" },
 })
-Register("|", "Profiles", "", {
+Register("|", "Nvim", "", {
     ["|"] = { function()
         vim.notify('The currently active profile is: "' .. prof.current_name() .. '"')
     end, "Show Current Profile" },
     s = { prof.choose_profile, "Switch Profile" },
     o = { function() prof.choose_profile(true) end, "Switch Profile Once" },
+
+    g = { function() run_debug({
+        terminal = "git -C " .. vim.fn.shellescape(vim.fn.stdpath('config')) .. " pull",
+        keep_open = true,
+    }) end, "Sync git" },
 })
 
 Register("t", "Terminal", "", {
@@ -298,7 +303,10 @@ Register("u", "UI", "", {
     h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     a = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },
-    l = { "<cmd>set ft=", "Set buffer filetype", "" },
+
+    -- Use feedkeys to properly update the screen
+    l = { function() vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(":set ft=", true, false, true), 'm', false)
+    end, "Set buffer filetype", "" },
 })
 Register("L", "Choose buffer filetype", "", {
     L = { "<cmd>set ft?<cr>", "Get filetype", "" },

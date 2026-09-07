@@ -142,7 +142,7 @@ local function run_terminal(command, after)
             state.job = nil
             vim.cmd.stopinsert()
             vim.schedule(function()
-                if (not state.action.keepopen) and code == 0 then
+                if (not state.action.keep_open) and code == 0 then
                     M.close_terminal()
                 end
                 if after then after(code) end
@@ -369,6 +369,14 @@ local function execute()
     end
 end
 
+function run_debug(action)
+    state.fname = vim.fn.expand("%")
+    state.cwd = vim.fn.getcwd()
+    state.line = vim.fn.line(".")
+    state.action = action
+    execute()
+end
+
 -- Picker
 function M.pick()
     local actions = get_actions()
@@ -385,15 +393,7 @@ function M.pick()
             return item.label
         end,
     }, function(choice)
-        if not choice then
-            return
-        end
-
-        state.fname = vim.fn.expand("%")
-        state.cwd = vim.fn.getcwd()
-        state.line = vim.fn.line(".")
-        state.action = choice
-        execute()
+        if choice then run_action(choice) end
     end)
 end
 
