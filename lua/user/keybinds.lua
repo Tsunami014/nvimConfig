@@ -293,6 +293,8 @@ Register("u", "UI", "", {
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
+    t = { "<cmd>InspectTree<cr>", "Inspect tree", "󰍉" },
+    T = { "<cmd>EditQuery<cr>", "UI tree editor", "" },
     h = { MiniExtra.pickers.hl_groups, "Pick highlights" },
     H = { "<cmd>DumpHighlights<cr>", "Dump highlights" },
     a = { "<cmd>ASToggle<cr>", "Toggle autosave", "" },

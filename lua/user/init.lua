@@ -1,6 +1,7 @@
 require "user.signature"
 require "user.envfile"
 require "user.daplsp"
+require "user.syntax"
 require "user.seshs"
 require "user.mdhl"
 require "user.misc"
