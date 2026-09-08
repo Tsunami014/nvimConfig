@@ -22,6 +22,11 @@ require("lazy").setup({
     { import = "plugins" },
   },
   checker = { enabled = true },
+  -- Stop auto updating config. Just open a new Neovim instance!
+  change_detection = {
+    enabled = false,
+    notify = false,
+  },
 })
 -- Run user plugins after plugins have loaded
 require "user"

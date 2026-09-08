@@ -7,9 +7,10 @@ if not p.OPTS.Minimal then
     dapui = require("dapui")
 end
 
-local dbug = require("user.debug")
+local dbug = require("dbug.debug")
+local envf = require("dbug.envfile")
+
 local seshs = require("user.seshs")
-local envf = require("user.envfile")
 local sig = require("user.signature")
 local links = require("user.utils.links")
 local prof = require('profile')
@@ -238,6 +239,12 @@ Register("c", "Symbols", "󱔁", {
 })
 
 Register("e", "Environment", "", {
+    e = { envf.dirch, "Reload env files" },
+    E = { envf.genfile, "Create template env file" },
+    o = { envf.showfile, "Edit env file" },
+    t = { "<cmd>DbugTemplates<cr>", "Display debug templates" },
+    T = { envf.untrust, "Remove env file trust" },
+
     c = { function()
         vim.cmd('cd ' .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h'))
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
@@ -245,9 +252,6 @@ Register("e", "Environment", "", {
     m = { "<cmd>Mason<cr>", "Open Mason", "󰏗" },
     l = { "<cmd>Lazy<cr>", "Open Lazy", "󰏗" },
     d = { "<cmd>DirenvAllow<cr>", "Allow direnv" },
-    t = { envf.trust, "Remove config trust/untrust" },
-    e = { envf.dirch, "Reload environment files" },
-    E = { envf.genfile, "Create template env file" },
     f = { function()
         vim.notify("Reentering dir...")
         vim.api.nvim_exec_autocmds("DirChanged", { pattern = "global", })
