@@ -293,7 +293,6 @@ Register("x", "Todos & Troubles", "", {
 })
 
 Register("u", "UI", "", {
-    d = { "<Plug>(doge-generate)", "Generate Docstring", "󰏫" }, -- <cmd>DogeGenerate<cr>
     s = { function()
         local nstate = not vim.opt.spell:get()
         vim.opt.spell = nstate
