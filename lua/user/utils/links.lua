@@ -96,6 +96,7 @@ function M.toggle()
       return
     end
     uv.fs_close(fd)
+    close_window()
     open_real_file(path)
   end
 
