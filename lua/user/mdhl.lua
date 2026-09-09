@@ -390,7 +390,7 @@ function M.redraw(bufnr)
                           break
                         end
                         vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, pos - 1, {
-                          virt_text = { { "│", "Normal" } },
+                          virt_text = { { "│", "@punctuation.special.markdown" } },
                           virt_text_pos = "overlay",
                           hl_mode = "combine",
                         })
