@@ -28,19 +28,19 @@ vim.api.nvim_create_user_command("DumpHighlights", function()
 end, {})
 
 
--- Wrap in certain filetypes
-local wrapIn = {"markdown", "tex"}
-local function doWrap(filetype)
-  for index, value in pairs(wrapIn) do
-    if filetype == value then
-      return true
-    end
-  end
-  return false
-end
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile", "BufEnter"}, {
-  pattern = "*",
+-- Wrap some filetypes
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "markdown", "tex" },
   callback = function()
-    vim.opt_local.wrap = doWrap(vim.bo.filetype)
-  end
+    vim.opt_local.wrap = true
+  end,
+})
+
+-- Enforce a max length for help filetypes
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "help",
+  callback = function()
+    vim.opt_local.textwidth = 78
+    vim.opt_local.colorcolumn = "79"
+  end,
 })
