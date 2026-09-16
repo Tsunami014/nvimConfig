@@ -30,9 +30,10 @@ end, {})
 
 -- Wrap some filetypes
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown", "tex" },
   callback = function()
-    vim.opt_local.wrap = true
+    vim.opt_local.wrap = vim.tbl_contains({
+      "markdown", "tex"
+    }, vim.bo.filetype)
   end,
 })
 
