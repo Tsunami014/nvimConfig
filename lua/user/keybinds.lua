@@ -268,7 +268,7 @@ Register("|", "Nvim", "", {
     s = { prof.choose_profile, "Switch Profile" },
     o = { function() prof.choose_profile(true) end, "Switch Profile Once" },
 
-    g = { function() run_debug({
+    g = { function() Dbug.run_debug({
         terminal = "git -C " .. vim.fn.shellescape(vim.fn.stdpath('config')) .. " pull",
         keep_open = true,
     }) end, "Sync git" },
