@@ -24,7 +24,12 @@ vim.api.nvim_create_autocmd("TermOpen", {
 })
 vim.api.nvim_create_autocmd("User", {
   pattern = "MiniStarterOpened",
-  callback = disable_mini_ui_modules,
+  callback = function(ev)
+    disable_mini_ui_modules()
+    vim.schedule(function()
+      if _G.MiniClue then MiniClue.ensure_buf_triggers(ev.buf) end
+    end)
+  end,
 })
 
 vim.api.nvim_create_autocmd('User', {

@@ -3,10 +3,17 @@ local M = {}
 M.OptNams = { "Minimal", "Full", "Full2", "Notes" }
 
 M.PopupOrder = {
-    "Notes",
     "Full",
     "Full2",
+    "Notes",
     "Minimal",
+}
+
+M.colourschemes = {
+    Minimal = "default",
+    Full    = "tokyonight-moon",
+    Full2   = "catppuccin-frappe",
+    Notes   = "everforest",
 }
 
 M.OPTS = {}
@@ -111,21 +118,41 @@ function M.set_profile(profile_name, once)
         newdefault = index
     end
     if save_profile() then
-        vim.notify("Profile will be " .. profile_name .. (
-            once and " for the next launch only"
-                  or " by default from the next launch"
-        ))
+        vim.notify("Set " .. (
+            once and "next" or "default"
+        ) .. " profile to " .. profile_name)
+        M.apply_colourscheme(profile_name)
     end
 end
 
 function M.choose_profile(once)
-    vim.ui.select(M.OptNams, {
+    vim.ui.select(M.PopupOrder, {
         prompt = "Select " .. (once and "next launch" or "default") .. " profile:"
     }, function(choice)
         if choice then
             M.set_profile(choice, once)
         end
     end)
+end
+
+function M.apply_colourscheme(profile_name)
+    local scheme = M.colourschemes[profile_name]
+    if not scheme then return false end
+    return (pcall(vim.cmd.colorscheme, scheme))
+end
+
+function M.available_colourschemes()
+    local installed = {}
+    for _, c in ipairs(vim.fn.getcompletion("", "color")) do installed[c] = true end
+    local seen, out = {}, {}
+    for _, name in ipairs(M.OptNams) do
+        local s = M.colourschemes[name]
+        if s and installed[s] and not seen[s] then
+            seen[s] = true
+            table.insert(out, s)
+        end
+    end
+    return out
 end
 
 return M

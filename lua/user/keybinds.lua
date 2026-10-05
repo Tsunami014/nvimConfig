@@ -262,11 +262,11 @@ Register("e", "Environment", "", {
     S = { seshs.save, "Force save Session", "" },
 })
 Register("|", "Nvim", "", {
-    ["|"] = { function()
+    s = { function()
         vim.notify('The currently active profile is: "' .. prof.current_name() .. '"')
     end, "Show Current Profile" },
-    s = { prof.choose_profile, "Switch Profile" },
-    o = { function() prof.choose_profile(true) end, "Switch Profile Once" },
+    ["|"] = { prof.choose_profile, "Switch Profile" },
+    ["\\"] = { function() prof.choose_profile(true) end, "Switch Profile Once" },
 
     g = { function() Dbug.run_debug({
         terminal = "git -C " .. vim.fn.shellescape(vim.fn.stdpath('config')) .. " pull",
@@ -298,6 +298,14 @@ Register("u", "UI", "", {
         vim.opt.spell = nstate
         vim.notify("Spell checking " .. (nstate and "enabled" or "disabled"))
     end, "Toggle spell check", "" },
+
+    u = { function()
+        vim.ui.select(p.available_colourschemes(), {
+            prompt = "Select a new colour theme:"
+        }, function(choice)
+            if choice then vim.cmd.colorscheme(choice) end
+        end)
+    end, "Switch colour theme" },
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },

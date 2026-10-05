@@ -1,5 +1,11 @@
 local p = require("profile")
 
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LazyDone",
+  once = true,
+  callback = function() p.apply_colourscheme(p.current_name()) end,
+})
+
 return {
   { "nvim-web-devicons" }, -- Icons
   -- Theme
@@ -7,20 +13,14 @@ return {
     "folke/tokyonight.nvim",
     lazy = false,
     priority = 1000,
-    config = function()
-      vim.cmd.colorscheme("tokyonight-moon")
-    end,
-    cond = (not p.OPTS.Notes) and (not p.OPTS.Full2)
+    cond = not p.OPTS.Notes
   },
   {
     "catppuccin/nvim",
     name = "catppuccin",
     lazy = false,
     priority = 1000,
-    config = function()
-      vim.cmd.colorscheme("catppuccin-frappe")
-    end,
-    cond = p.OPTS.Full2
+    cond = not p.OPTS.Notes
   },
   {
     "neanias/everforest-nvim",
@@ -34,7 +34,6 @@ return {
           palette.bg_visual = "#4C5054"
         end
       })
-      vim.cmd.colorscheme("everforest")
     end,
     cond = p.OPTS.Notes
   },
