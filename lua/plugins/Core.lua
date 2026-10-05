@@ -42,7 +42,7 @@ return {
     requires = "kyazdani42/nvim-web-devicons",  -- for icons
     opts = {
       animation = true,
-      auto_hide = false,
+      auto_hide = true,
       tabpages = true,
       clickable = true,
       icons = {

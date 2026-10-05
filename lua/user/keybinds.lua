@@ -298,14 +298,20 @@ Register("u", "UI", "", {
         vim.opt.spell = nstate
         vim.notify("Spell checking " .. (nstate and "enabled" or "disabled"))
     end, "Toggle spell check", "" },
-
     u = { function()
         vim.ui.select(p.available_colourschemes(), {
             prompt = "Select a new colour theme:"
         }, function(choice)
             if choice then vim.cmd.colorscheme(choice) end
         end)
-    end, "Switch colour theme" },
+    end, "Switch colour theme", "" },
+    b = { function()
+        if vim.o.showtabline == 2 then
+            vim.o.showtabline = 0
+        else
+            vim.o.showtabline = 2
+        end
+    end, "Toggle tab bar", "" },
 
     w = { function() vim.cmd("set wrap!") end, "Toggle wrap", "󰖶" },
     i = { "<cmd>Inspect<cr>", "Inspect", "󰍉" },
