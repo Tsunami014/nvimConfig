@@ -10,7 +10,17 @@ return {
     config = function()
       vim.cmd.colorscheme("tokyonight-moon")
     end,
-    cond = not p.OPTS.Notes
+    cond = (not p.OPTS.Notes) and (not p.OPTS.Full2)
+  },
+  {
+    "catppuccin/nvim",
+    name = "catppuccin",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      vim.cmd.colorscheme("catppuccin-frappe")
+    end,
+    cond = p.OPTS.Full2
   },
   {
     "neanias/everforest-nvim",

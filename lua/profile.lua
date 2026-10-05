@@ -1,10 +1,11 @@
 local M = {}
 
-M.OptNams = { "Minimal", "Full", "Notes" }
+M.OptNams = { "Minimal", "Full", "Full2", "Notes" }
 
 M.PopupOrder = {
     "Notes",
     "Full",
+    "Full2",
     "Minimal",
 }
 
