@@ -109,7 +109,7 @@ function M.toggle()
 end
 
 local function slugify(text)
-  return text:lower():gsub("%s+", "-"):gsub("[^%w%-]", "")
+  return text:lower():gsub("%s*/%s*", "/"):gsub("%s+", "-")
 end
 
 local function split_anchor(target)
@@ -479,22 +479,12 @@ local function scan_links(line)
   return links
 end
 
---- True if `text` already looks like a file reference rather than a bare
---- page title: it has a path separator, or ends in a dotted extension.
-local function looks_like_path(text)
-  if text:find("/", 1, true) then
-    return true
-  end
-  return text:match("%.[%w]+$") ~= nil
-end
-
 function M.normalise(link)
+  if link:sub(-3) == ".md" then
+    return link
+  end
   local page = link:match("^[^#]+") or link
   page = page:match("^%s*(.-)%s*$")
-
-  if looks_like_path(page) then
-    return page
-  end
 
   return slugify(page) .. ".md"
 end

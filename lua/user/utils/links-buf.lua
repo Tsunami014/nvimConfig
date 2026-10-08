@@ -1,6 +1,6 @@
 local M = {}
 
-local normalise = require("user.utils.links-shared").normalise
+local normalise = require("user.utils.links").normalise
 
 local cleanup
 local state = {
