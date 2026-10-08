@@ -136,9 +136,16 @@ function M.choose_profile(once)
 end
 
 function M.apply_colourscheme(profile_name)
-    local scheme = M.colourschemes[profile_name]
+    local scheme = M.colourschemes[profile_name or M.current_name()]
     if not scheme then return false end
     return (pcall(vim.cmd.colorscheme, scheme))
+end
+function M.apply_if_active(scheme_prefix)
+    local active = M.colourschemes[M.current_name()]
+    if active and vim.startswith(active, scheme_prefix) then
+        return M.apply_colourscheme()
+    end
+    return false
 end
 
 function M.available_colourschemes()
