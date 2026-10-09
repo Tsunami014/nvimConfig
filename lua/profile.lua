@@ -10,7 +10,7 @@ M.PopupOrder = {
 }
 
 M.colourschemes = {
-    Minimal = "default",
+    Minimal = "tokyonight-moon",
     Full    = "tokyonight-moon",
     Full2   = "catppuccin-frappe",
     Notes   = "everforest",
