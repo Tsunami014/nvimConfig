@@ -5,6 +5,7 @@ local sig = {
     result = nil,
     client_id = nil,
     request_id = nil,
+    last_key = nil,
 }
 
 local ns = vim.api.nvim_create_namespace("CustomSignatureHelp")
@@ -17,12 +18,29 @@ local function build_title()
     local active = (sig.result.activeSignature or 0) + 1
     return string.format("Signature (%d/%d)", active, count)
 end
+local function update_footer()
+    local win = sig.win
+    if not (win and vim.api.nvim_win_is_valid(win)) then return end
+
+    local buf = vim.api.nvim_win_get_buf(win)
+    local last = vim.api.nvim_buf_line_count(buf)
+    local view = vim.api.nvim_win_call(win, function()
+        return { top = vim.fn.line("w0"), bot = vim.fn.line("w$") }
+    end)
+
+    local footer = (view.top > 1 and "↑" or "") .. (view.bot < last and "↓" or "")
+    pcall(vim.api.nvim_win_set_config, win, {
+        footer = footer ~= "" and (" " .. footer .. " ") or "",
+        footer_pos = "right",
+    })
+end
 
 local function close_window()
     if sig.win and vim.api.nvim_win_is_valid(sig.win) then
         vim.api.nvim_win_close(sig.win, true)
     end
     sig.win = nil
+    sig.last_key = nil
 end
 
 local function render()
@@ -39,13 +57,23 @@ local function render()
         return
     end
 
+    local title = build_title()
+
+    -- Skip re-rendering if nothing changed
+    local key = vim.inspect({ lines, hl, title })
+    if key == sig.last_key and sig.win and vim.api.nvim_win_is_valid(sig.win) then
+        return
+    end
+    sig.last_key = key
+
     local prev_win = sig.win
 
     local buf, win = vim.lsp.util.open_floating_preview(lines, "markdown", {
         border = "rounded",
         focusable = false,
         close_events = {},
-        title = build_title(),
+        title = title,
+        max_height = 10,
     })
     sig.win = win
 
@@ -57,6 +85,7 @@ local function render()
     if prev_win and vim.api.nvim_win_is_valid(prev_win) and prev_win ~= win then
         vim.api.nvim_win_close(prev_win, true)
     end
+    update_footer()
 end
 
 local function request()
@@ -92,6 +121,22 @@ end
 
 function M.next() cycle(1) end
 function M.prev() cycle(-1) end
+
+local function scroll(delta)
+    local win = sig.win
+    if not (win and vim.api.nvim_win_is_valid(win)) then
+        return false
+    end
+    vim.api.nvim_win_call(win, function()
+        local key = delta > 0 and "\5" or "\25" -- <C-e> / <C-y>
+        vim.cmd("normal! " .. math.abs(delta) .. key)
+    end)
+    update_footer()
+    return true
+end
+
+function M.scroll_down() return scroll(3) end
+function M.scroll_up() return scroll(-3) end
 
 local throttled = false
 local group = vim.api.nvim_create_augroup("AutoSignatureHelp", { clear = true })

@@ -413,8 +413,10 @@ Map({ 'n', 'v' }, '\\', '@@', '@@')
 
 -- Signature stuff
 Map('i', '<C-s>', false)
-Map('i', '<C-]>', sig.next, "Next signature overload")
-Map('i', '<C-[>', sig.prev, "Previous signature overload")
+Map('i', '<A-f>', sig.next, "Next signature overload")
+Map('i', '<A-b>', sig.prev, "Previous signature overload")
+Map('i', '<C-f>', sig.scroll_down, "Scroll signature popup down")
+Map('i', '<C-b>', sig.scroll_up, "Scroll signature popup up")
 
 -- Window shenanigans
 Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
