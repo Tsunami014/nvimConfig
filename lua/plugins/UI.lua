@@ -4,21 +4,6 @@ return {
   { "nvim-web-devicons" }, -- Icons
   -- Theme
   {
-    "folke/tokyonight.nvim",
-    lazy = false,
-    priority = 1000,
-    config = function() p.apply_if_active("tokyonight") end,
-    cond = not p.OPTS.Notes,
-  },
-  {
-    "catppuccin/nvim",
-    name = "catppuccin",
-    lazy = false,
-    priority = 1000,
-    config = function() p.apply_if_active("catppuccin") end,
-    cond = not p.OPTS.Notes,
-  },
-  {
     "neanias/everforest-nvim",
     version = false,
     lazy = false,

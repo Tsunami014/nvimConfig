@@ -1,18 +1,16 @@
 local M = {}
 
-M.OptNams = { "Minimal", "Full", "Full2", "Notes" }
+M.OptNams = { "Minimal", "Full", "Notes" }
 
 M.PopupOrder = {
     "Full",
-    "Full2",
     "Notes",
     "Minimal",
 }
 
 M.colourschemes = {
-    Minimal = "tokyonight-moon",
-    Full    = "tokyonight-moon",
-    Full2   = "catppuccin-frappe",
+    Minimal = "wallpaper",
+    Full    = "wallpaper",
     Notes   = "everforest",
 }
 

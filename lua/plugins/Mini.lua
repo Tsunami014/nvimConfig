@@ -71,6 +71,8 @@ return {{
     require("mini.pick").setup()
     require('mini.extra').setup()
 
+    require('user.cols') -- Sets up mini.base16
+
     require('mini.snippets').setup({
       snippets = {
         require('mini.snippets').gen_loader.from_lang(),

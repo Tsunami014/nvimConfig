@@ -5,7 +5,7 @@ return {
   {
     'wakatime/vim-wakatime',
     lazy = false,
-    cond = p.OPTS.Full or p.OPTS.Full2
+    cond = p.OPTS.Full
   },
 
   {
