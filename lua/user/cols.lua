@@ -1,3 +1,8 @@
+local p = require("profile")
+if p.OPTS.Notes then
+  return {}
+end
+
 local dir  = vim.fn.expand("~/.local/state/theme/current")
 local file = dir .. "/palette.json"
 
@@ -46,8 +51,6 @@ local function apply()
 end
 
 apply()
-
-local p = require("profile")
 
 if p.OPTS.Full then
   -- Live reload
