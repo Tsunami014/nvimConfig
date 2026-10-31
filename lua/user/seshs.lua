@@ -10,6 +10,7 @@ local ignored_exact = {
   "/",
 }
 local ignored_trees = {
+  "/mnt",
   "/tmp",
   "/var/tmp",
 }
