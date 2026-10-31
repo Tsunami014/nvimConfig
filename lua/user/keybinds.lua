@@ -419,7 +419,9 @@ Map('i', '<C-f>', sig.scroll_down, "Scroll signature popup down")
 Map('i', '<C-b>', sig.scroll_up, "Scroll signature popup up")
 
 -- Window shenanigans
-Map('n', ',', "<C-w><C-w>", 'Go to/toggle window')
+Map('n', ',', require('user.windowstuff').activate, 'Enable window stuff mode')
+Map('n', '<C-,>', "<C-w>w", 'Go to prev window')
+Map('n', '<C-.>', "<C-w>w", 'Go to next window')
 Map('t', '<A-esc>', "<C-\\><C-n>", 'Exit terminal mode')
 Map({ 'n', 'i', 'v', 't' }, '<A-space>', function()
     dbug.toggle_terminal()
@@ -449,11 +451,6 @@ Map('n', '[e', function() vim.diagnostic.jump({ count = -1, float = true, severi
 -- Indent stuff
 Map("v", ">", ">gv", "Indent selection")
 Map("v", "<", "<gv", "Deindent selection")
-
-Map("n", "<C-.>", ">>", "Indent line")
-Map("n", "<C-,>", "<<", "De-indent line")
-Map("i", "<C-.>", "<C-t>", "Indent line")
-Map("i", "<C-,>", "<C-d>", "De-indent line")
 
 -- Links (only appear in markdown files)
 vim.api.nvim_create_autocmd('FileType', {
