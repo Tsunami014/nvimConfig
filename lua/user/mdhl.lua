@@ -162,6 +162,27 @@ local function setup_highlights()
         link_base = { link = "markdownLinkText" }
     end
     sethl("markdownLinkTextBQ", vim.tbl_extend("force", link_base, tint and { bg = tint } or {}))
+
+    -- Find the first usable foreground that isn't the background
+    local function first_fg(...)
+        for _, name in ipairs({ ... }) do
+            local c = gethl(name)
+            if c.fg and c.fg ~= normal_bg then
+                return c.fg
+            end
+        end
+        return special_fg or normal_fg
+    end
+    local icon_fg = first_fg(
+        "markdownLinkText",
+        "@markup.link.label.markdown_inline",
+        "@markup.link.label",
+        "@markup.link",
+        "Underlined",
+        "Special"
+    )
+    sethl("MarkdownLinkIcon", { fg = icon_fg })
+    sethl("MarkdownLinkIconBQ", { fg = icon_fg, bg = tint })
 end
 
 vim.schedule(setup_highlights)
@@ -299,6 +320,7 @@ function M.redraw(bufnr)
 
         local hide_hl = in_blockquote and "MarkdownHideBQ" or "MarkdownHide"
         local link_hl = in_blockquote and "markdownLinkTextBQ" or "markdownLinkText"
+        local icon_hl = in_blockquote and "MarkdownLinkIconBQ" or "MarkdownLinkIcon"
 
         if not inside then
             local highlights = {}
@@ -576,7 +598,7 @@ function M.redraw(bufnr)
                             end
                             if x_scroll <= pos + 1 then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, pos, {
-                                    virt_text = { { icon, in_blockquote and "BlockQuote" or "@markup.link.label.markdown_inline" } },
+                                    virt_text = { { icon, icon_hl } },
                                     virt_text_pos = "overlay",
                                     hl_mode = "combine",
                                 })
@@ -618,7 +640,7 @@ function M.redraw(bufnr)
                                 icon = icon:sub(x_scroll - link.start + 1)
                             end
                             vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, link.start - 1, {
-                                virt_text = { { icon, link_hl } },
+                                virt_text = { { icon, icon_hl } },
                                 virt_text_pos = "overlay",
                                 hl_group = link_hl,
                                 hl_mode = "combine",
@@ -638,7 +660,7 @@ function M.redraw(bufnr)
                         for s, conts, e in ln:gmatch("()%[%[([^[%]]-[^[%]])%]%]()") do
                             if s >= x_scroll then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
-                                    virt_text = { { "󰌷", link_hl } }, -- CHECKCHAR
+                                    virt_text = { { "󰌷", icon_hl } }, -- CHECKCHAR
                                     virt_text_pos = "overlay",
                                     hl_group = link_hl,
                                     hl_mode = "combine",
@@ -657,7 +679,7 @@ function M.redraw(bufnr)
                         for s, e in line:gmatch("()<%a[%w+.-]*:[^<>%s]*>()") do
                             if s > x_scroll then
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s - 1, {
-                                    virt_text = { { "󰌷", link_hl } }, -- CHECKCHAR
+                                    virt_text = { { "󰌷", icon_hl } }, -- CHECKCHAR
                                     virt_text_pos = "overlay",
                                     hl_group = link_hl,
                                     hl_mode = "combine",
@@ -677,7 +699,7 @@ function M.redraw(bufnr)
                                 add_hl(s, s + 1, hide_hl)
                                 add_hl(midp, midp + 2, hide_hl)
                                 vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, midp, {
-                                    virt_text = { { "↩", link_hl } }, -- CHECKCHAR
+                                    virt_text = { { "↩", icon_hl } }, -- CHECKCHAR
                                     virt_text_pos = "overlay",
                                     hl_mode = "combine",
                                 })
@@ -696,7 +718,7 @@ function M.redraw(bufnr)
                                 if x_scroll <= s then
                                     add_hl(s, s + 1, hide_hl)
                                     vim.api.nvim_buf_set_extmark(bufnr, ns, i - 1, s, {
-                                        virt_text = { { "↩", link_hl } }, -- CHECKCHAR
+                                        virt_text = { { "↩", icon_hl } }, -- CHECKCHAR
                                         virt_text_pos = "overlay",
                                         hl_mode = "combine",
                                     })
