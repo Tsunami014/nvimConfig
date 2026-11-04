@@ -299,6 +299,23 @@ local function copy_code_block_at_cursor()
   return true
 end
 
+local function resolve_path(file)
+  local expanded = vim.fn.expand(file) -- handles ~ and $VARS
+  if expanded:match("^/") or expanded:match("^%a:[/\\]") then
+    return vim.fs.normalize(expanded)
+  end
+
+  local bufname = vim.api.nvim_buf_get_name(0)
+  local base
+  if bufname ~= "" then
+    base = vim.fs.dirname(vim.fn.fnamemodify(bufname, ":p"))
+  else
+    base = vim.fn.getcwd()
+  end
+
+  return vim.fs.normalize(vim.fs.joinpath(base, expanded))
+end
+
 local function open_target(info, replace)
   if not info or (not info.file and not info.anchor) then
     return vim.notify("Link has no target", vim.log.levels.WARN)
@@ -320,7 +337,7 @@ local function open_target(info, replace)
     return
   end
 
-  local path = vim.fs.normalize(vim.fn.fnamemodify(info.file, ":p"))
+  local path = resolve_path(info.file)
   if vim.fn.isdirectory(path) == 1 then
     return vim.notify("Link is a directory", vim.log.levels.WARN)
   end

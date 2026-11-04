@@ -29,35 +29,84 @@ local function link_file_part(link)
   return link
 end
 
---- Extract the unique, sorted set of [[wiki link]] targets in `text`.
-local function collect_links(text)
+-- Resolve file against dir unless it is already absolute
+local function resolve(dir, file)
+  local f = vim.fs.normalize(file)
+  if f:match("^/") or f:match("^%a:[/\\]") then
+    return f
+  end
+  return vim.fs.normalize(vim.fs.joinpath(dir, f))
+end
+
+local function parse_md_target(inner)
+  inner = inner:match("^%s*(.-)%s*$")
+  local target = inner:match("^<([^>]*)>") or inner:match("^(%S+)")
+  return target
+end
+
+local function is_external(target)
+  return target:match("^%a[%w+.-]*://") ~= nil or target:match("^mailto:") ~= nil
+end
+
+local function collect_links(text, dir)
   local seen, out = {}, {}
+
+  local function add(file_part)
+    if file_part == "" then
+      return
+    end
+    local path = resolve(dir, file_part)
+    -- Must be markdown
+    if not path:lower():match("%.md$") then
+      return
+    end
+    if not seen[path] then
+      seen[path] = true
+      table.insert(out, path)
+    end
+  end
+
+  -- [[wiki links]]
   for link in text:gmatch("%[%[([^%]]+)%]%]") do
     local file_part = link_file_part(link)
     if file_part ~= "" then
-      local name = normalise(file_part)
-      if not seen[name] then
-        seen[name] = true
-        table.insert(out, name)
+      add(normalise(file_part))
+    end
+  end
+
+  -- [text](path) links (skipping images, URLs and pure #anchors)
+  local init = 1
+  while true do
+    local s, e, inner = text:find("%[[^%]]*%]%(([^)]*)%)", init)
+    if not s then
+      break
+    end
+    init = e + 1
+
+    if text:sub(s - 1, s - 1) ~= "!" then
+      local target = parse_md_target(inner)
+      if target and target ~= "" and not is_external(target) then
+        add(link_file_part(target))
       end
     end
   end
+
   table.sort(out)
   return out
 end
 
---- Every *.md file in `root` (other than `current_name`) that links to it.
-local function scan_inbound(root, current_name)
+--- Find all files linking to this one
+local function scan_inbound(current_path)
   local inbound = {}
-
-  for _, file in ipairs(vim.fn.globpath(root, "*.md", false, true)) do
-    if vim.fs.basename(file) ~= current_name then
+  for _, file in ipairs(vim.fn.globpath(vim.fn.getcwd(), "**/*.md", false, true)) do
+    local normalised_file = vim.fs.normalize(file)
+    -- Skip hidden files
+    if normalised_file ~= current_path and not normalised_file:find("/%.") then
       local text = read_text(file)
       if text then
-        for link in text:gmatch("%[%[([^%]]+)%]%]") do
-          local file_part = link_file_part(link)
-          if file_part ~= "" and normalise(file_part) == current_name then
-            table.insert(inbound, file)
+        for _, path in ipairs(collect_links(text, vim.fs.dirname(normalised_file))) do
+          if path == current_path then
+            table.insert(inbound, normalised_file)
             break
           end
         end
@@ -161,19 +210,20 @@ local function push_toc(rows, text)
   end
 end
 
-local function push_section(rows, title, paths, noun)
+local function push_section(rows, title, paths, noun, root)
   table.insert(rows, { text = title, group = "markdownH1" })
   table.insert(rows, { text = ("─"):rep(28), group = "markdownHeadingRule" })
 
-  if #paths == 0 then
-    table.insert(rows, { text = "  (none)", group = "markdownCode" })
-    return
-  end
+  table.insert(rows, { text = ("%d %ss"):format(#paths, noun), group = "markdownCode" })
+  if #paths == 0 then return end
 
-  table.insert(rows, { text = ("  %d %s(s)"):format(#paths, noun), group = "markdownCode" })
   for _, path in ipairs(paths) do
+    local display = path
+    if root and vim.startswith(path, root .. "/") then
+      display = path:sub(#root + 2)
+    end
     table.insert(rows, {
-      text = "  " .. vim.fs.basename(path),
+      text = "  " .. display,
       group = "markdownUrlTitle",
       target = path,
     })
@@ -350,23 +400,20 @@ local function render()
 
   src = vim.fn.fnamemodify(src, ":p")
 
+  src = vim.fs.normalize(src)
   local root = vim.fs.dirname(src)
-  local current_name = vim.fs.basename(src)
   local src_text = read_text(src) or ""
 
-  local outbound = {}
-  for _, name in ipairs(collect_links(src_text)) do
-    table.insert(outbound, vim.fs.joinpath(root, name))
-  end
-
-  local inbound = scan_inbound(root, current_name)
+  local outbound = collect_links(src_text, root)
+  local inbound = scan_inbound(src)
+  local cwd = vim.fn.getcwd()
 
   local rows = {}
   push_toc(rows, src_text)
   table.insert(rows, { text = "" })
-  push_section(rows, "Inbound", inbound, "file")
+  push_section(rows, "Inbound", inbound, "file", cwd)
   table.insert(rows, { text = "" })
-  push_section(rows, "Outbound", outbound, "link")
+  push_section(rows, "Outbound", outbound, "link", cwd)
 
   local lines = {}
   state.targets = {}
