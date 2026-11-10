@@ -187,14 +187,14 @@ Register("d", "Debug", "", merge({
     b = { dap.toggle_breakpoint, "Toggle Breakpoint" },
     B = { function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, "Conditional Breakpoint" },
     l = { "<cmd>DapShowLog<cr>", "Show logs" },
-    L = { "<cmd>LspLog<cr>", "Lsp logs", "" },
-    i = { "<cmd>LspInfo<cr>", "Lsp info", "" },
+    L = { "<cmd>lsp log<cr>", "Lsp logs", "" },
+    i = { "<cmd>lsp info<cr>", "Lsp info", "" },
     u = { dapui.toggle, "DAP UI Toggle" },
     r = { dap.repl.open, "Open REPL" },
     e = { dapui.eval, "DAP Eval" },
-    s = { "<cmd>LspStart<cr>", "Start lsp", "" },
-    S = { "<cmd>LspStop<cr>", "Stop lsp", "" },
-    R = { "<cmd>LspRestart<cr>", "Restart lsp", "" },
+    s = { "<cmd>lsp start<cr>", "Start lsp", "" },
+    S = { "<cmd>lsp stop<cr>", "Stop lsp", "" },
+    R = { "<cmd>lsp restart<cr>", "Restart lsp", "" },
 }))
 
 

@@ -68,7 +68,7 @@ return {
       type = "dir",
       async = true,
       on_direnv_finished = function()
-        vim.cmd("LspRestart")
+        vim.cmd("silent! lsp restart")
       end
     },
     cond = not p.OPTS.Minimal,
