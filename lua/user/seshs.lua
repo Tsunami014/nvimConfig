@@ -15,6 +15,11 @@ local ignored_trees = {
   "/var/tmp",
 }
 
+local function flag_set(v)
+  return v ~= nil and v ~= "" and v ~= "0" and v ~= false and v ~= 0
+end
+local disabled = flag_set(vim.env.NVIM_NO_SESSION) or flag_set(vim.g.no_session)
+
 local function is_real_file_buf(buf)
   local name = vim.api.nvim_buf_get_name(buf)
   if name == "" then
@@ -181,6 +186,7 @@ local function collect_state()
 end
 
 function M.save()
+  if disabled then return end
   local cwd = vim.fs.normalize(vim.fn.getcwd())
   if not should_save_session(cwd) then
     return
@@ -384,6 +390,9 @@ vim.api.nvim_create_user_command(
   'LoadUI',
   function(opts)
     local ncwd = opts.args
+    if ncwd ~= "" then
+      disabled = false
+    end
     loading = true
     if ncwd ~= "" then
       vim.cmd("cd " .. vim.fn.fnameescape(ncwd))
@@ -440,6 +449,7 @@ vim.api.nvim_create_autocmd({
 
 vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()
+    if disabled then return end
     if vim.fn.argc(-1) > 0 then
       local dir = vim.fn.argv(0)
       if vim.fn.isdirectory(dir) == 1 then
